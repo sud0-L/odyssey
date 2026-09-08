@@ -50,14 +50,14 @@ render() {
     shift
     tmp=$(mktemp "${target_file}.odyssey.XXXXXX"); awk -v b="$begin" -v e="$end" '$0==b{inside=1;next}$0==e{inside=0;next}!inside{print}' "$target_file" > "$tmp"
     if [[ $target == true ]]; then
-        printf '%s\n' "$begin" >> "$tmp"; local keys=(A V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R') actions=('launcher toggle' 'clipboard toggle' 'settings open' 'notifications toggle' 'insights wallpaper' 'control-center toggle' 'session lock' 'capture screenshot region both' 'capture record region') index=0 enabled
-        for enabled in "$@"; do if [[ $enabled == true ]]; then [[ $format == lua ]] && printf 'hl.bind("SUPER + %s", hl.dsp.exec_cmd("%s %s"))\n' "${keys[$index]}" "$command" "${actions[$index]}" >> "$tmp" || printf 'bind = SUPER, %s, exec, %s %s\n' "${keys[$index]}" "$command" "${actions[$index]}" >> "$tmp"; fi; ((index+=1)); done
+        printf '%s\n' "$begin" >> "$tmp"; local keys=(A V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R') actions=('launcher toggle' 'clipboard toggle' 'settings open' 'notifications toggle' 'insights wallpaper' 'control-center toggle' 'session lock' 'capture screenshot region both' 'capture record region') labels=('Open application launcher' 'Open clipboard history' 'Open Odyssey settings' 'Open notifications' 'Open wallpaper library' 'Open Control Center' 'Lock session' 'Capture and save a region screenshot' 'Record a screen region') index=0 enabled
+        for enabled in "$@"; do if [[ $enabled == true ]]; then [[ $format == lua ]] && printf 'hl.bind("SUPER + %s", hl.dsp.exec_cmd("%s %s"), { description = "%s" })\n' "${keys[$index]}" "$command" "${actions[$index]}" "${labels[$index]}" >> "$tmp" || printf 'bind = SUPER, %s, exec, %s %s\n' "${keys[$index]}" "$command" "${actions[$index]}" >> "$tmp"; fi; ((index+=1)); done
         if [[ $configuration_mode != managed && $format == lua ]]; then
             printf '%s\n' \
-                'hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("odyssey ipc audio increment 3"), { locked = true, repeating = true })' \
-                'hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("odyssey ipc audio decrement 3"), { locked = true, repeating = true })' \
-                'hl.bind("XF86AudioMute", hl.dsp.exec_cmd("odyssey ipc audio mute"), { locked = true })' \
-                'hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("odyssey ipc audio micmute"), { locked = true })' >> "$tmp"
+                'hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("odyssey ipc audio increment 3"), { locked = true, repeating = true, description = "Raise volume" })' \
+                'hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("odyssey ipc audio decrement 3"), { locked = true, repeating = true, description = "Lower volume" })' \
+                'hl.bind("XF86AudioMute", hl.dsp.exec_cmd("odyssey ipc audio mute"), { locked = true, description = "Toggle audio mute" })' \
+                'hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("odyssey ipc audio micmute"), { locked = true, description = "Toggle microphone mute" })' >> "$tmp"
         elif [[ $configuration_mode != managed ]]; then
             printf '%s\n' \
                 'bindel = , XF86AudioRaiseVolume, exec, odyssey ipc audio increment 3' \

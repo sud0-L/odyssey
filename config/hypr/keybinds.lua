@@ -7,127 +7,127 @@ local function odyssey(command)
 end
 
 -- Application launchers
-hl.bind(mod .. " + Return", hl.dsp.exec_cmd("kitty"))
-hl.bind(mod .. " + C", hl.dsp.exec_cmd("code"))
-hl.bind(mod .. " + B", hl.dsp.exec_cmd("firefox"))
-hl.bind(mod .. " + SHIFT + F", odyssey("capture screenshot region both"))
-hl.bind(mod .. " + E", hl.dsp.exec_cmd("thunar"))
+hl.bind(mod .. " + Return", hl.dsp.exec_cmd("kitty"), { description = "Open terminal (Kitty)" })
+hl.bind(mod .. " + C", hl.dsp.exec_cmd("code"), { description = "Open code editor (Visual Studio Code)" })
+hl.bind(mod .. " + B", hl.dsp.exec_cmd("firefox"), { description = "Open web browser (Firefox)" })
+hl.bind(mod .. " + SHIFT + F", odyssey("capture screenshot region both"), { description = "Capture and save a region screenshot" })
+hl.bind(mod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "Open file manager (Thunar)" })
 
 -- Audio controls
-hl.bind("XF86AudioRaiseVolume", odyssey("audio increment 3"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", odyssey("audio decrement 3"), { locked = true, repeating = true })
-hl.bind("XF86AudioMute", odyssey("audio mute"), { locked = true })
-hl.bind("XF86AudioMicMute", odyssey("audio micmute"), { locked = true })
+hl.bind("XF86AudioRaiseVolume", odyssey("audio increment 3"), { locked = true, repeating = true, description = "Raise volume" })
+hl.bind("XF86AudioLowerVolume", odyssey("audio decrement 3"), { locked = true, repeating = true, description = "Lower volume" })
+hl.bind("XF86AudioMute", odyssey("audio mute"), { locked = true, description = "Toggle audio mute" })
+hl.bind("XF86AudioMicMute", odyssey("audio micmute"), { locked = true, description = "Toggle microphone mute" })
 
 -- Keyboard backlight
 -- Uses the standard Linux keyboard-backlight LED device when available.
-hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd("brightnessctl -d '*::kbd_backlight' set +1"), { repeating = true })
-hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd("brightnessctl -d '*::kbd_backlight' set 1-"), { repeating = true })
+hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd("brightnessctl -d '*::kbd_backlight' set +1"), { repeating = true, description = "Raise keyboard brightness" })
+hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd("brightnessctl -d '*::kbd_backlight' set 1-"), { repeating = true, description = "Lower keyboard brightness" })
 
 -- Display brightness
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true, description = "Raise display brightness" })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true, description = "Lower display brightness" })
 
 -- Window management
-hl.bind(mod .. " + Q", hl.dsp.window.close())
-hl.bind(mod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
-hl.bind(mod .. " + T", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mod .. " + W", hl.dsp.group.toggle())
-hl.bind(mod .. " + M", hl.dsp.window.fullscreen())
+hl.bind(mod .. " + Q", hl.dsp.window.close(), { description = "Close active window" })
+hl.bind(mod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }), { description = "Toggle maximized window" })
+hl.bind(mod .. " + T", hl.dsp.window.float({ action = "toggle" }), { description = "Toggle floating window" })
+hl.bind(mod .. " + W", hl.dsp.group.toggle(), { description = "Toggle window group" })
+hl.bind(mod .. " + M", hl.dsp.window.fullscreen(), { description = "Toggle fullscreen window" })
 
 -- Focus navigation
-hl.bind(mod .. " + left", hl.dsp.focus({ direction = "left" }))
-hl.bind(mod .. " + down", hl.dsp.focus({ direction = "down" }))
-hl.bind(mod .. " + up", hl.dsp.focus({ direction = "up" }))
-hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }))
+hl.bind(mod .. " + left", hl.dsp.focus({ direction = "left" }), { description = "Focus window left" })
+hl.bind(mod .. " + down", hl.dsp.focus({ direction = "down" }), { description = "Focus window down" })
+hl.bind(mod .. " + up", hl.dsp.focus({ direction = "up" }), { description = "Focus window up" })
+hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }), { description = "Focus window right" })
 
 -- Window movement
-hl.bind(mod .. " + SHIFT + left", hl.dsp.window.move({ direction = "left" }))
-hl.bind(mod .. " + SHIFT + down", hl.dsp.window.move({ direction = "down" }))
-hl.bind(mod .. " + SHIFT + up", hl.dsp.window.move({ direction = "up" }))
-hl.bind(mod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" }))
+hl.bind(mod .. " + SHIFT + left", hl.dsp.window.move({ direction = "left" }), { description = "Move window left" })
+hl.bind(mod .. " + SHIFT + down", hl.dsp.window.move({ direction = "down" }), { description = "Move window down" })
+hl.bind(mod .. " + SHIFT + up", hl.dsp.window.move({ direction = "up" }), { description = "Move window up" })
+hl.bind(mod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" }), { description = "Move window right" })
 
 -- Monitor navigation
-hl.bind(mod .. " + CTRL + left", hl.dsp.focus({ monitor = "left" }))
-hl.bind(mod .. " + CTRL + right", hl.dsp.focus({ monitor = "right" }))
-hl.bind(mod .. " + CTRL + H", hl.dsp.focus({ monitor = "left" }))
-hl.bind(mod .. " + CTRL + J", hl.dsp.focus({ monitor = "down" }))
-hl.bind(mod .. " + CTRL + K", hl.dsp.focus({ monitor = "up" }))
-hl.bind(mod .. " + CTRL + L", hl.dsp.focus({ monitor = "right" }))
+hl.bind(mod .. " + CTRL + left", hl.dsp.focus({ monitor = "left" }), { description = "Focus monitor left" })
+hl.bind(mod .. " + CTRL + right", hl.dsp.focus({ monitor = "right" }), { description = "Focus monitor right" })
+hl.bind(mod .. " + CTRL + H", hl.dsp.focus({ monitor = "left" }), { description = "Focus monitor left" })
+hl.bind(mod .. " + CTRL + J", hl.dsp.focus({ monitor = "down" }), { description = "Focus monitor down" })
+hl.bind(mod .. " + CTRL + K", hl.dsp.focus({ monitor = "up" }), { description = "Focus monitor up" })
+hl.bind(mod .. " + CTRL + L", hl.dsp.focus({ monitor = "right" }), { description = "Focus monitor right" })
 
 -- Move window to monitor
-hl.bind(mod .. " + SHIFT + CTRL + left", hl.dsp.window.move({ monitor = "left" }))
-hl.bind(mod .. " + SHIFT + CTRL + down", hl.dsp.window.move({ monitor = "down" }))
-hl.bind(mod .. " + SHIFT + CTRL + up", hl.dsp.window.move({ monitor = "up" }))
-hl.bind(mod .. " + SHIFT + CTRL + right", hl.dsp.window.move({ monitor = "right" }))
-hl.bind(mod .. " + SHIFT + CTRL + H", hl.dsp.window.move({ monitor = "left" }))
-hl.bind(mod .. " + SHIFT + CTRL + J", hl.dsp.window.move({ monitor = "down" }))
-hl.bind(mod .. " + SHIFT + CTRL + K", hl.dsp.window.move({ monitor = "up" }))
-hl.bind(mod .. " + SHIFT + CTRL + L", hl.dsp.window.move({ monitor = "right" }))
+hl.bind(mod .. " + SHIFT + CTRL + left", hl.dsp.window.move({ monitor = "left" }), { description = "Move window to monitor left" })
+hl.bind(mod .. " + SHIFT + CTRL + down", hl.dsp.window.move({ monitor = "down" }), { description = "Move window to monitor down" })
+hl.bind(mod .. " + SHIFT + CTRL + up", hl.dsp.window.move({ monitor = "up" }), { description = "Move window to monitor up" })
+hl.bind(mod .. " + SHIFT + CTRL + right", hl.dsp.window.move({ monitor = "right" }), { description = "Move window to monitor right" })
+hl.bind(mod .. " + SHIFT + CTRL + H", hl.dsp.window.move({ monitor = "left" }), { description = "Move window to monitor left" })
+hl.bind(mod .. " + SHIFT + CTRL + J", hl.dsp.window.move({ monitor = "down" }), { description = "Move window to monitor down" })
+hl.bind(mod .. " + SHIFT + CTRL + K", hl.dsp.window.move({ monitor = "up" }), { description = "Move window to monitor up" })
+hl.bind(mod .. " + SHIFT + CTRL + L", hl.dsp.window.move({ monitor = "right" }), { description = "Move window to monitor right" })
 
 -- Workspace navigation
-hl.bind(mod .. " + Page_Down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mod .. " + Page_Up", hl.dsp.focus({ workspace = "e-1" }))
-hl.bind(mod .. " + U", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mod .. " + I", hl.dsp.focus({ workspace = "e-1" }))
-hl.bind(mod .. " + CTRL + down", hl.dsp.window.move({ workspace = "e+1" }))
-hl.bind(mod .. " + CTRL + up", hl.dsp.window.move({ workspace = "e-1" }))
-hl.bind(mod .. " + CTRL + U", hl.dsp.window.move({ workspace = "e+1" }))
-hl.bind(mod .. " + CTRL + I", hl.dsp.window.move({ workspace = "e-1" }))
+hl.bind(mod .. " + Page_Down", hl.dsp.focus({ workspace = "e+1" }), { description = "Switch to next workspace" })
+hl.bind(mod .. " + Page_Up", hl.dsp.focus({ workspace = "e-1" }), { description = "Switch to previous workspace" })
+hl.bind(mod .. " + U", hl.dsp.focus({ workspace = "e+1" }), { description = "Switch to next workspace" })
+hl.bind(mod .. " + I", hl.dsp.focus({ workspace = "e-1" }), { description = "Switch to previous workspace" })
+hl.bind(mod .. " + CTRL + down", hl.dsp.window.move({ workspace = "e+1" }), { description = "Move window to next workspace" })
+hl.bind(mod .. " + CTRL + up", hl.dsp.window.move({ workspace = "e-1" }), { description = "Move window to previous workspace" })
+hl.bind(mod .. " + CTRL + U", hl.dsp.window.move({ workspace = "e+1" }), { description = "Move window to next workspace" })
+hl.bind(mod .. " + CTRL + I", hl.dsp.window.move({ workspace = "e-1" }), { description = "Move window to previous workspace" })
 
 -- Move window to workspace
-hl.bind(mod .. " + SHIFT + Page_Down", hl.dsp.window.move({ workspace = "e+1" }))
-hl.bind(mod .. " + SHIFT + Page_Up", hl.dsp.window.move({ workspace = "e-1" }))
-hl.bind(mod .. " + SHIFT + U", hl.dsp.window.move({ workspace = "e+1" }))
-hl.bind(mod .. " + SHIFT + I", hl.dsp.window.move({ workspace = "e-1" }))
+hl.bind(mod .. " + SHIFT + Page_Down", hl.dsp.window.move({ workspace = "e+1" }), { description = "Move window to next workspace" })
+hl.bind(mod .. " + SHIFT + Page_Up", hl.dsp.window.move({ workspace = "e-1" }), { description = "Move window to previous workspace" })
+hl.bind(mod .. " + SHIFT + U", hl.dsp.window.move({ workspace = "e+1" }), { description = "Move window to next workspace" })
+hl.bind(mod .. " + SHIFT + I", hl.dsp.window.move({ workspace = "e-1" }), { description = "Move window to previous workspace" })
 
 -- Mouse-wheel workspace navigation
-hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
-hl.bind(mod .. " + CTRL + mouse_down", hl.dsp.window.move({ workspace = "e+1" }))
-hl.bind(mod .. " + CTRL + mouse_up", hl.dsp.window.move({ workspace = "e-1" }))
+hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), { description = "Switch to next workspace" })
+hl.bind(mod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }), { description = "Switch to previous workspace" })
+hl.bind(mod .. " + CTRL + mouse_down", hl.dsp.window.move({ workspace = "e+1" }), { description = "Move window to next workspace" })
+hl.bind(mod .. " + CTRL + mouse_up", hl.dsp.window.move({ workspace = "e-1" }), { description = "Move window to previous workspace" })
 
 -- Numbered workspaces
 for i = 1, 9 do
-	hl.bind(mod .. " + " .. i, hl.dsp.focus({ workspace = i }))
-	hl.bind(mod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
-	hl.bind(mod .. " + ALT + " .. i, hl.dsp.window.move({ workspace = i, silent = true }))
+	hl.bind(mod .. " + " .. i, hl.dsp.focus({ workspace = i }), { description = "Switch to workspace " .. i })
+	hl.bind(mod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }), { description = "Move window to workspace " .. i })
+	hl.bind(mod .. " + ALT + " .. i, hl.dsp.window.move({ workspace = i, silent = true }), { description = "Move window silently to workspace " .. i })
 end
 
 -- Special workspaces
-hl.bind(mod .. " + F1", hl.dsp.workspace.toggle_special("magic"))
-hl.bind(mod .. " + SHIFT + F1", hl.dsp.window.move({ workspace = "special:magic" }))
-hl.bind(mod .. " + ALT + F1", hl.dsp.window.move({ workspace = "special:magic", silent = true }))
-hl.bind(mod .. " + F2", hl.dsp.workspace.toggle_special("magic1"))
-hl.bind(mod .. " + SHIFT + F2", hl.dsp.window.move({ workspace = "special:magic1" }))
-hl.bind(mod .. " + ALT + F2", hl.dsp.window.move({ workspace = "special:magic1", silent = true }))
+hl.bind(mod .. " + F1", hl.dsp.workspace.toggle_special("magic"), { description = "Toggle special workspace magic" })
+hl.bind(mod .. " + SHIFT + F1", hl.dsp.window.move({ workspace = "special:magic" }), { description = "Move window to special workspace magic" })
+hl.bind(mod .. " + ALT + F1", hl.dsp.window.move({ workspace = "special:magic", silent = true }), { description = "Move window silently to special workspace magic" })
+hl.bind(mod .. " + F2", hl.dsp.workspace.toggle_special("magic1"), { description = "Toggle special workspace magic1" })
+hl.bind(mod .. " + SHIFT + F2", hl.dsp.window.move({ workspace = "special:magic1" }), { description = "Move window to special workspace magic1" })
+hl.bind(mod .. " + ALT + F2", hl.dsp.window.move({ workspace = "special:magic1", silent = true }), { description = "Move window silently to special workspace magic1" })
 
 -- Layout management
-hl.bind(mod .. " + bracketleft", hl.dsp.layout("preselect l"))
-hl.bind(mod .. " + bracketright", hl.dsp.layout("preselect r"))
-hl.bind(mod .. " + J", hl.dsp.layout("togglesplit"))
-hl.bind(mod .. " + CTRL + F", hl.dsp.window.fullscreen())
+hl.bind(mod .. " + bracketleft", hl.dsp.layout("preselect l"), { description = "Preselect left split" })
+hl.bind(mod .. " + bracketright", hl.dsp.layout("preselect r"), { description = "Preselect right split" })
+hl.bind(mod .. " + J", hl.dsp.layout("togglesplit"), { description = "Toggle split direction" })
+hl.bind(mod .. " + CTRL + F", hl.dsp.window.fullscreen(), { description = "Toggle fullscreen window" })
 
 -- Mouse move / resize
-hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
-hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
-hl.bind(mod .. " + Z", hl.dsp.window.drag(), { mouse = true })
-hl.bind(mod .. " + X", hl.dsp.window.resize(), { mouse = true })
+hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, description = "Drag window" })
+hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Resize window" })
+hl.bind(mod .. " + Z", hl.dsp.window.drag(), { mouse = true, description = "Drag window" })
+hl.bind(mod .. " + X", hl.dsp.window.resize(), { mouse = true, description = "Resize window" })
 
 -- Resize by keycode
 hl.bind(mod .. " + code:20", hl.dsp.window.resize({ x = -100, y = 0 }), { description = "Expand window left" })
 hl.bind(mod .. " + code:21", hl.dsp.window.resize({ x = 100, y = 0 }), { description = "Shrink window left" })
 
 -- Manual sizing
-hl.bind(mod .. " + minus", hl.dsp.window.resize({ x = -50, y = 0 }), { repeating = true })
-hl.bind(mod .. " + equal", hl.dsp.window.resize({ x = 50, y = 0 }), { repeating = true })
-hl.bind(mod .. " + SHIFT + minus", hl.dsp.window.resize({ x = 0, y = -50 }), { repeating = true })
-hl.bind(mod .. " + SHIFT + equal", hl.dsp.window.resize({ x = 0, y = 50 }), { repeating = true })
+hl.bind(mod .. " + minus", hl.dsp.window.resize({ x = -50, y = 0 }), { repeating = true, description = "Shrink window width" })
+hl.bind(mod .. " + equal", hl.dsp.window.resize({ x = 50, y = 0 }), { repeating = true, description = "Expand window width" })
+hl.bind(mod .. " + SHIFT + minus", hl.dsp.window.resize({ x = 0, y = -50 }), { repeating = true, description = "Shrink window height" })
+hl.bind(mod .. " + SHIFT + equal", hl.dsp.window.resize({ x = 0, y = 50 }), { repeating = true, description = "Expand window height" })
 
 -- Screenshots and Odyssey power control
-hl.bind("XF86Launch1", odyssey("power cycle"))
-hl.bind("CTRL + XF86Launch1", odyssey("capture screenshot full copy"))
-hl.bind("ALT + XF86Launch1", odyssey("capture screenshot active copy"))
-hl.bind("Print", odyssey("capture screenshot region copy"))
-hl.bind("CTRL + Print", odyssey("capture screenshot full copy"))
-hl.bind("ALT + Print", odyssey("capture screenshot active copy"))
+hl.bind("XF86Launch1", odyssey("power cycle"), { description = "Cycle power profile" })
+hl.bind("CTRL + XF86Launch1", odyssey("capture screenshot full copy"), { description = "Copy full-screen screenshot" })
+hl.bind("ALT + XF86Launch1", odyssey("capture screenshot active copy"), { description = "Copy active-window screenshot" })
+hl.bind("Print", odyssey("capture screenshot region copy"), { description = "Copy region screenshot" })
+hl.bind("CTRL + Print", odyssey("capture screenshot full copy"), { description = "Copy full-screen screenshot" })
+hl.bind("ALT + Print", odyssey("capture screenshot active copy"), { description = "Copy active-window screenshot" })

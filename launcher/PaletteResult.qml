@@ -96,6 +96,7 @@ Rectangle {
 
         Text {
             visible: root.selected && root.result.enabled
+                && root.result.executable !== false
             text: "↵"
             color: Theme.primaryContainerText
             font.family: Config.appearance.monoFontFamily
@@ -112,7 +113,7 @@ Rectangle {
         }
     }
     TapHandler {
-        enabled: root.result.enabled
+        enabled: root.result.enabled && root.result.executable !== false
         onTapped: root.activated()
     }
 

@@ -1,5 +1,6 @@
 module Odyssey.Launcher.Providers
 singleton ApplicationsProvider 1.0 ApplicationsProvider.qml
 singleton ClipboardProvider 1.0 ClipboardProvider.qml
+singleton KeybindsProvider 1.0 KeybindsProvider.qml
 singleton OdysseyActionsProvider 1.0 OdysseyActionsProvider.qml
 singleton WorkspacesProvider 1.0 WorkspacesProvider.qml

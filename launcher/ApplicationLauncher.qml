@@ -53,6 +53,7 @@ Item {
     onVisibleChanged: {
         if (visible) {
             ClipboardService.refresh()
+            KeybindService.refresh()
             searchField.text = ""
             Qt.callLater(() => searchField.forceActiveFocus())
         }

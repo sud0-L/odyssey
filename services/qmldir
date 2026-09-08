@@ -9,6 +9,7 @@ singleton ClipboardService 1.0 ClipboardService.qml
 singleton HyprlandService 1.0 HyprlandService.qml
 singleton IdentityService 1.0 IdentityService.qml
 singleton IdleService 1.0 IdleService.qml
+singleton KeybindService 1.0 KeybindService.qml
 singleton MediaService 1.0 MediaService.qml
 singleton NetworkService 1.0 NetworkService.qml
 singleton NotificationService 1.0 NotificationService.qml
