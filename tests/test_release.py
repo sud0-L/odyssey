@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import redirect_stderr, redirect_stdout
+import io
 import json
 import os
 from pathlib import Path
@@ -8,12 +10,20 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from manager.artifact import write_build
-from manager.dependencies import ARCH_PACKAGES, OPTIONAL_PACKAGES
+from manager.cli import main as cli_main
+from manager.dependencies import (
+    ARCH_PACKAGES,
+    OPTIONAL_PACKAGES,
+    ArchDependencies,
+    DependencyError,
+)
 from manager.install import Command, Installer, _atomic_link
 from manager.inventory import XdgPaths
 from manager.lifecycle import Lifecycle
+from manager.reconcile import Reconciler
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -47,6 +57,10 @@ def healthy_report() -> dict[str, object]:
     }}
 
 
+def healthy_dependencies() -> dict[str, object]:
+    return {"missingPackages": [], "errors": []}
+
+
 class DependencyTests(unittest.TestCase):
     def test_zsh_is_optional_and_required_fonts_are_exact(self) -> None:
         required = {item.name: item for item in ARCH_PACKAGES}
@@ -64,6 +78,35 @@ class DependencyTests(unittest.TestCase):
             ("/usr/share/fonts/TTF/JetBrainsMonoNerdFont-Regular.ttf",),
         )
         self.assertIn("hyprpicker", required)
+
+    def test_broken_quickshell_is_rejected_before_dependency_install(self) -> None:
+        commands: list[list[str]] = []
+
+        def run(args: list[str]) -> Command:
+            commands.append(args)
+            return Command(127, "", "undefined symbol: Qt_6_PRIVATE_API")
+
+        dependencies = ArchDependencies(
+            which=lambda command: f"/usr/bin/{command}",
+            platform=lambda: {"id": "arch", "packageManager": "pacman"},
+            run=run,
+            exists=lambda _path: True,
+        )
+
+        report = dependencies.inspect()
+        quickshell = next(
+            item for item in report["packages"] if item["name"] == "quickshell")
+        self.assertFalse(quickshell["available"])
+        self.assertIn("installed but unusable or incompatible", quickshell["error"])
+        self.assertEqual(report["missingPackages"].count("quickshell"), 1)
+
+        commands.clear()
+        with self.assertRaisesRegex(
+                DependencyError,
+                "installed but unusable or incompatible.*rebuild quickshell-git"):
+            dependencies.install(confirmed=True)
+
+        self.assertEqual(commands, [["/usr/bin/qs", "--version"]])
 
 
 class LifecycleTests(unittest.TestCase):
@@ -87,12 +130,17 @@ class LifecycleTests(unittest.TestCase):
             second_id = write_build(ROOT, "1.0.1", second)
             Installer(paths, run=self.runner).install(
                 first, str(first_id["artifactSha256"]))
-            lifecycle = Lifecycle(paths, run=self.runner, report=healthy_report)
+            lifecycle = Lifecycle(paths, run=self.runner, report=healthy_report,
+                                  dependencies=healthy_dependencies)
             lifecycle.update(second, str(second_id["artifactSha256"]))
             self.assertEqual(paths.shell_current.resolve().name,
                              second_id["releaseId"])
             self.assertEqual(paths.manager_current.resolve().name,
                              second_id["releaseId"])
+            self.assertEqual(
+                os.readlink(paths.bin_command),
+                str(paths.manager_current / "odyssey"),
+            )
             lifecycle.rollback()
             record = json.loads(paths.install_manifest.read_text())
             release = json.loads(
@@ -109,6 +157,146 @@ class LifecycleTests(unittest.TestCase):
                              paths.manager_current.resolve() / "odyssey")
             result = lifecycle.bootstrap(first, str(first_id["artifactSha256"]))
             self.assertEqual(result["action"], "repaired")
+
+    def test_launcher_drift_is_detected_and_repair_uses_active_indirection(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="odyssey-repair-test.") as raw:
+            root = Path(raw)
+            paths = fixture_paths(root)
+            first = root / "first.ody"
+            second = root / "second.ody"
+            first_id = write_build(ROOT, "1.1.0", first)
+            second_id = write_build(ROOT, "1.1.1", second)
+            Installer(paths, run=self.runner).install(
+                first, str(first_id["artifactSha256"]))
+            lifecycle = Lifecycle(paths, run=self.runner, report=healthy_report,
+                                  dependencies=healthy_dependencies)
+            lifecycle.update(second, str(second_id["artifactSha256"]))
+            paths.bin_command.unlink()
+            os.symlink(paths.manager_releases / str(first_id["releaseId"]) / "odyssey",
+                       paths.bin_command)
+            preserved = root / "config/hypr/hyprland.lua"
+            preserved.parent.mkdir(parents=True)
+            preserved.write_text("# personal configuration\n")
+
+            evidence = Reconciler(paths)._launcher()
+            self.assertEqual(evidence["status"], "invalid")
+            self.assertIn("pinned", evidence["reason"])
+
+            active = str(second_id["releaseId"])
+
+            def repair_runner(args: list[str]) -> Command:
+                if len(args) > 3 and args[3] == "status":
+                    return Command(0, json.dumps({
+                        "status": "ok", "state": "active",
+                        "receipt": {"status": "valid", "configurationMode": "preserve"},
+                        "release": {"id": active},
+                    }), "")
+                return self.runner(args)
+
+            Lifecycle(paths, run=repair_runner).repair()
+
+            self.assertEqual(os.readlink(paths.bin_command),
+                             str(paths.manager_current / "odyssey"))
+            self.assertEqual(paths.shell_current.resolve().name, active)
+            self.assertEqual(paths.manager_current.resolve().name, active)
+            self.assertEqual(preserved.read_text(), "# personal configuration\n")
+
+    def test_update_rejects_broken_runtime_before_activation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="odyssey-update-runtime-test.") as raw:
+            root = Path(raw)
+            paths = fixture_paths(root)
+            first = root / "first.ody"
+            second = root / "second.ody"
+            first_id = write_build(ROOT, "1.2.0", first)
+            second_id = write_build(ROOT, "1.2.1", second)
+            Installer(paths, run=self.runner).install(
+                first, str(first_id["artifactSha256"]))
+            before = (os.readlink(paths.shell_current),
+                      os.readlink(paths.manager_current),
+                      os.readlink(paths.bin_command))
+            lifecycle = Lifecycle(
+                paths, run=self.runner, report=healthy_report,
+                dependencies=lambda: {
+                    "missingPackages": ["quickshell"],
+                    "errors": ["Quickshell is installed but unusable"],
+                },
+            )
+
+            with self.assertRaisesRegex(ValueError, "installed but unusable"):
+                lifecycle.update(second, str(second_id["artifactSha256"]))
+
+            self.assertEqual(before, (
+                os.readlink(paths.shell_current),
+                os.readlink(paths.manager_current),
+                os.readlink(paths.bin_command),
+            ))
+
+    def test_config_reset_backs_up_before_defaults_and_preserves_activation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="odyssey-config-reset-test.") as raw:
+            root = Path(raw)
+            paths = fixture_paths(root)
+            artifact = root / "release.ody"
+            identity = write_build(ROOT, "1.3.0", artifact)
+            Installer(paths, run=self.runner).install(
+                artifact, str(identity["artifactSha256"]))
+            hypr = root / "config/hypr/hyprland.lua"
+            kitty = root / "config/kitty/kitty.conf"
+            hypr.parent.mkdir(parents=True); kitty.parent.mkdir(parents=True)
+            hypr.write_text("personal hypr\n"); kitty.write_text("personal kitty\n")
+            activation = (os.readlink(paths.shell_current),
+                          os.readlink(paths.manager_current))
+            lifecycle = Lifecycle(paths, run=self.runner)
+
+            def assert_backup_then_reset(_release: str, _mode: str) -> None:
+                backups = list((root / "state/odyssey/backups").iterdir())
+                self.assertEqual(len(backups), 1)
+                contents = [item.read_text() for item in backups[0].glob("*.bak")
+                            if item.is_file()]
+                self.assertIn("personal hypr\n", contents)
+                self.assertIn("personal kitty\n", contents)
+                hypr.write_text((paths.shell_current / "config/hypr/hyprland.lua").read_text())
+
+            def reset_runner(args: list[str]) -> Command:
+                if args and args[0] == "env":
+                    kitty.write_text((paths.shell_current / "config/kitty/kitty.conf").read_text())
+                    return Command(0, "HOST_CONFIG=completed\n", "")
+                return self.runner(args)
+
+            lifecycle.run = reset_runner
+            with patch.dict(os.environ, {"HOME": str(root / "home")}), \
+                    patch.object(lifecycle, "_reapply_startup",
+                                 side_effect=assert_backup_then_reset):
+                result = lifecycle.config_reset()
+
+            self.assertEqual(hypr.read_text(),
+                             (paths.shell_current / "config/hypr/hyprland.lua").read_text())
+            self.assertEqual(kitty.read_text(),
+                             (paths.shell_current / "config/kitty/kitty.conf").read_text())
+            self.assertEqual(activation, (os.readlink(paths.shell_current),
+                                          os.readlink(paths.manager_current)))
+            self.assertTrue(Path(str(result["backupDirectory"])).is_dir())
+
+    def test_config_reset_backup_failure_prevents_writes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="odyssey-config-reset-failure-test.") as raw:
+            root = Path(raw)
+            paths = fixture_paths(root)
+            artifact = root / "release.ody"
+            identity = write_build(ROOT, "1.3.1", artifact)
+            Installer(paths, run=self.runner).install(
+                artifact, str(identity["artifactSha256"]))
+            config = root / "config/kitty/kitty.conf"
+            config.parent.mkdir(parents=True)
+            config.write_text("must survive\n")
+            lifecycle = Lifecycle(paths, run=self.runner)
+
+            with patch.dict(os.environ, {"HOME": str(root / "home")}), \
+                    patch("manager.lifecycle.shutil.copy2", side_effect=OSError("disk full")), \
+                    patch.object(lifecycle, "_reapply_startup") as startup:
+                with self.assertRaisesRegex(OSError, "disk full"):
+                    lifecycle.config_reset()
+
+            startup.assert_not_called()
+            self.assertEqual(config.read_text(), "must survive\n")
 
     def test_interrupted_transition_compensates_both_activation_links(self) -> None:
         with tempfile.TemporaryDirectory(prefix="odyssey-recovery-test.") as raw:
@@ -214,6 +402,48 @@ class LifecycleTests(unittest.TestCase):
                         self.assertFalse(paths.install_manifest.exists())
                         self.assertFalse(paths.bin_command.exists())
                         self.assertFalse(paths.bin_command.is_symlink())
+
+
+class LifecycleConfirmationTests(unittest.TestCase):
+    def test_update_repair_and_config_reset_decline_without_mutation(self) -> None:
+        commands = (
+            (["update", "--json"], "Update Odyssey"),
+            (["repair", "--json"], "Repair Odyssey"),
+            (["config", "reset", "--json"], "Replace Odyssey-managed configuration"),
+        )
+        for argv, prompt in commands:
+            with self.subTest(command=argv[0]):
+                stdout, stderr = io.StringIO(), io.StringIO()
+                with patch("sys.stdin", io.StringIO("\n")), \
+                        redirect_stdout(stdout), redirect_stderr(stderr):
+                    result = cli_main(argv)
+                self.assertEqual(result, 0)
+                self.assertIn(prompt, stderr.getvalue())
+                payload = json.loads(stdout.getvalue())
+                self.assertEqual(payload["status"], "cancelled")
+                self.assertFalse(payload["changed"])
+                self.assertNotIn("read-only Stage 2", stdout.getvalue())
+
+    def test_confirmed_local_update_reaches_existing_lifecycle_update(self) -> None:
+        digest = "a" * 64
+        stdout = io.StringIO()
+        with patch("manager.cli.confirm", return_value=True) as confirmation, \
+                patch("manager.cli.resolve_xdg", return_value=object()), \
+                patch("manager.cli.Lifecycle") as lifecycle, \
+                redirect_stdout(stdout):
+            lifecycle.return_value.update.return_value = {
+                "kind": "update", "status": "completed", "releaseId": "next-release"}
+            result = cli_main([
+                "update", "--artifact", "/tmp/candidate.ody",
+                "--expect-sha256", digest, "--json",
+            ])
+
+        self.assertEqual(result, 0)
+        confirmation.assert_called_once()
+        lifecycle.return_value.update.assert_called_once()
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["status"], "completed")
+        self.assertNotIn("unavailable", stdout.getvalue())
 
 
 class StartupUnitTests(unittest.TestCase):

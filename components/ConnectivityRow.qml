@@ -42,6 +42,7 @@ Rectangle {
                     Layout.fillHeight: true
 
                     Text {
+                        id: connectionIcon
                         anchors.centerIn: parent
                         text: root.busy ? "󰡌" : root.icon
                         color: root.selected ? root.accent : Theme.surfaceVariantText
@@ -54,6 +55,7 @@ Rectangle {
                             from: 0
                             to: 360
                             duration: 900
+                            onStopped: connectionIcon.rotation = 0
                         }
                     }
                 }

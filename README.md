@@ -7,6 +7,16 @@ odyssey is a Quickshell desktop shell for Hyprland built around a contextual top
 > [!NOTE]
 > odyssey is currently a **public alpha**. Core functionality is usable today, but features, appearance, configuration, and installation behavior may continue to evolve.
 
+## Your system, your configuration
+
+odyssey is designed to integrate with your system, not take ownership of it.
+
+You remain free to manage your own Hyprland configuration, shell, applications, packages, and system setup. odyssey provides the configuration and integration required for its desktop experience, while keeping user-owned configuration and system management in your control.
+
+The installer supports preserving existing configuration, and files that odyssey needs to modify or replace are backed up before changes are made.
+
+odyssey should be something you can build your setup around — not something that prevents you from making the setup your own.
+
 ## Highlights
 
 ### A contextual system surface
@@ -164,6 +174,94 @@ Keep these backups while evaluating the alpha, particularly if you install using
 ### Weather
 
 Weather is intentionally unconfigured on a fresh installation. Configure your location from **Settings → Dashboard** after odyssey is running.
+
+## CLI & Lifecycle Management
+
+odyssey includes a lifecycle manager for inspecting, maintaining, repairing, and updating an installation.
+
+### Common commands
+
+| Command | Description |
+| --- | --- |
+| `odyssey status` | Reports installation, activation, launcher, service, and runtime state without making changes. |
+| `odyssey doctor` | Diagnoses lifecycle and service problems and suggests remediation without making changes. |
+| `odyssey repair` | Repairs odyssey-owned operational state without resetting user configuration. |
+| `odyssey config reset` | Backs up odyssey-managed configuration and restores the packaged defaults. |
+| `odyssey update` | Updates odyssey using a verified release artifact or configured release source. |
+| `odyssey rollback` | Reactivates the previous known-good release when one is available. |
+| `odyssey version` | Shows the lifecycle manager version and source identity. |
+| `odyssey dependencies` | Checks required packages and runtime dependencies, including Quickshell health. |
+| `odyssey preflight` | Performs a read-only inspection of the platform, paths, dependencies, and release payload. |
+
+### Diagnose an installation
+
+```bash
+odyssey status
+odyssey doctor
+```
+
+Both commands are read-only and can be used to inspect an installation without changing anything.
+
+### Repair an installation
+
+```bash
+odyssey repair
+```
+
+`repair` restores odyssey-owned operational and lifecycle state for the currently installed release.
+
+This includes activation links, the odyssey launcher, interrupted lifecycle operations, systemd units, services, and startup integration.
+
+**Repair does not reset preserved user configuration.**
+
+Changes require confirmation before they are applied.
+
+### Reset odyssey configuration
+
+```bash
+odyssey config reset
+```
+
+`config reset` is intentionally separate from `repair`.
+
+It backs up existing odyssey-managed configuration and restores the packaged defaults for the currently installed release. The installed release itself is not replaced.
+
+Use this when you intentionally want to return odyssey's configuration to its default state.
+
+Changes require confirmation before configuration is replaced.
+
+### Update odyssey
+
+```bash
+odyssey update
+```
+
+The update lifecycle validates the candidate release and runtime dependencies before activation, activates the shell and lifecycle manager together, reconciles services, and retains the previous known-good release for rollback.
+
+> [!NOTE]
+> Automatic remote release discovery is not currently configured. Updates from supplied verified release artifacts are supported. Automatic updates will become available once a release source is configured.
+
+### Roll back
+
+```bash
+odyssey rollback
+```
+
+When a previous known-good release is available, odyssey can reactivate it using the existing lifecycle and activation infrastructure.
+
+### Advanced lifecycle commands
+
+Additional commands are primarily intended for installation, development, recovery, or advanced management:
+
+| Command | Purpose |
+| --- | --- |
+| `odyssey artifact` | Builds or verifies `.ody` release artifacts. |
+| `odyssey bootstrap` | Performs initial installation or converges an installation to a supplied release artifact. |
+| `odyssey install` | Installs a verified release artifact. Automatic remote installation requires a configured release source. |
+| `odyssey uninstall` | Removes odyssey-owned lifecycle payload and startup integration while preserving user data. |
+| `odyssey cleanup` | Removes completed lifecycle-operation journals while retaining releases and user data. |
+
+The `backup`, `restore`, `startup`, and `component` commands are currently reserved and are not exposed as functional public workflows.
 
 ### Existing Hyprland configurations
 

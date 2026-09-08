@@ -80,6 +80,13 @@ class DependencyError(ValueError):
     pass
 
 
+QUICKSHELL_UNUSABLE = (
+    "Quickshell is installed but unusable or incompatible with the current Qt "
+    "version. Reinstall quickshell, or rebuild quickshell-git against the current "
+    "Qt version."
+)
+
+
 def _run(args: list[str]) -> Command:
     try:
         result = subprocess.run(args, text=True, capture_output=True, check=False)
@@ -99,19 +106,32 @@ class ArchDependencies:
         return (all(self.which(command) for command in item.commands)
                 and all(self.exists(path) for path in item.files))
 
+    def _inspect_package(self, item: Package) -> dict[str, object]:
+        available = self._available(item)
+        package: dict[str, object] = {
+            "name": item.name,
+            "class": item.dependency_class,
+            "available": available,
+        }
+        if item.name == "quickshell" and available:
+            qs = self.which("qs")
+            if qs is None or self.run([qs, "--version"]).code != 0:
+                package["available"] = False
+                package["error"] = QUICKSHELL_UNUSABLE
+        return package
+
     def inspect(self) -> dict[str, object]:
         platform = self.platform()
         supported = platform.get("id") == "arch" and platform.get("packageManager") == "pacman"
-        packages = [{"name": item.name, "class": item.dependency_class,
-                     "available": self._available(item)}
-                    for item in ARCH_PACKAGES]
+        packages = [self._inspect_package(item) for item in ARCH_PACKAGES]
         missing = [item["name"] for item in packages if not item["available"]]
+        errors = [item["error"] for item in packages if "error" in item]
         optional = [{"name": item.name, "class": item.dependency_class,
                      "available": self._available(item)}
                     for item in OPTIONAL_PACKAGES]
         return {"kind": "dependencies", "platform": platform, "supported": supported,
                 "packages": packages, "missingPackages": missing,
-                "optionalPackages": optional,
+                "optionalPackages": optional, "errors": errors,
                 "status": "ready" if supported else "unsupported"}
 
     def install(self, *, confirmed: bool, optional: bool = False,
@@ -121,6 +141,8 @@ class ArchDependencies:
             raise DependencyError("dependency installation is supported only on Arch Linux with pacman")
         if not confirmed:
             raise DependencyError("dependency installation requires explicit --yes confirmation")
+        if report["errors"]:
+            raise DependencyError(str(report["errors"][0]))
         if optional_class is not None and not optional:
             raise DependencyError("an optional dependency class requires optional installation")
         key = "optionalPackages" if optional else "missingPackages"

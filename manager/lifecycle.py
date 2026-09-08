@@ -6,6 +6,7 @@ creating another startup or health subsystem.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import shutil
 import tempfile
@@ -16,27 +17,90 @@ from typing import Callable
 from manager import CONTRACT_SCHEMA_VERSION, MANAGER_VERSION
 from manager.artifact import verify
 from manager.contracts import parse_installation_manifest, parse_release_manifest
-from manager.install import Command, InstallError, Installer, _atomic_json, _atomic_link, _immutable, _remove_tree
+from manager.dependencies import ArchDependencies
+from manager.install import InstallError, Installer, _atomic_json, _atomic_link, _immutable, _remove_tree
 from manager.reconcile import Reconciler
 
 
 class Lifecycle(Installer):
     """The running manager owns an update until its terminal result is durable."""
-    def __init__(self, *args, report: Callable[[], dict[str, object]] | None = None, **kwargs):
+    def __init__(self, *args, report: Callable[[], dict[str, object]] | None = None,
+                 dependencies: Callable[[], dict[str, object]] | None = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.report = report or (lambda: Reconciler(self.paths).report())
+        self.dependencies = dependencies or (lambda: ArchDependencies().inspect())
 
     def update(self, artifact: Path, expected_digest: str, *,
                source: dict[str, object] | None = None,
                configuration_mode: str | None = None) -> dict[str, object]:
         identity = self._verify(artifact, expected_digest)
         install = self._installation()
+        self._require_consistent_activation(install)
+        self._validate_runtime()
         old = str(install["activeReleaseId"])
         if identity["releaseId"] == old: raise InstallError("candidate is already active")
         manifest = self._manifest(artifact); self._compatible(manifest, install)
         return self._transition("update", artifact, expected_digest, identity,
                                 manifest, install, old, source or {"kind": "local"},
                                 configuration_mode=configuration_mode)
+
+    def repair(self, operation_id: str | None = None) -> dict[str, object]:
+        recovered: list[str] = []
+        interrupted = self._interrupted_operation_paths()
+        if operation_id is not None:
+            selected = self.paths.operations / operation_id
+            if selected not in interrupted:
+                raise InstallError("requested interrupted operation is unavailable")
+            interrupted = [selected]
+        for operation in interrupted:
+            result = self.recover(operation.name)
+            recovered.append(str(result["operationId"]))
+        install = self._installation()
+        release_id = str(install["activeReleaseId"])
+        if not self._release_pair_valid(release_id):
+            raise InstallError("active release pair is invalid and cannot be repaired in place")
+        self._repair_activation_links(release_id)
+        adapter = self.paths.manager_releases / release_id / "scripts" / "startupctl.sh"
+        status = self._adapter(adapter, ["status"])
+        receipt = status.get("receipt")
+        active_release = status.get("release")
+        startup_valid = (
+            status.get("state") == "active"
+            and isinstance(receipt, dict) and receipt.get("status") == "valid"
+            and isinstance(active_release, dict) and active_release.get("id") == release_id
+        )
+        if not startup_valid:
+            mode = (str(receipt.get("configurationMode"))
+                    if isinstance(receipt, dict)
+                    and receipt.get("configurationMode") in ("managed", "preserve")
+                    else "preserve")
+            self._reapply_startup(release_id, mode)
+        return {"kind": "repair", "status": "completed", "releaseId": release_id,
+                "recoveredOperations": recovered}
+
+    def config_reset(self) -> dict[str, object]:
+        install = self._installation()
+        self._require_consistent_activation(install)
+        release_id = str(install["activeReleaseId"])
+        root = self.paths.shell_releases / release_id
+        if not self._release_pair_valid(release_id):
+            raise InstallError("active release pair is invalid; run odyssey repair first")
+        backup = self._backup_managed_config()
+        self._reapply_startup(release_id, "managed")
+        receipt = self.paths.install_manifest.parent.parent / "installer" / "host-config.json"
+        zsh_enabled = False
+        try:
+            zsh_enabled = bool(json.loads(receipt.read_text()).get("zshEnabled", False))
+        except (OSError, json.JSONDecodeError):
+            pass
+        helper = root / "scripts" / "host-configctl.sh"
+        result = self.run(["env", f"ODYSSEY_USER_BACKUP_DIR={backup}",
+                           str(helper), "apply", str(zsh_enabled).lower()])
+        if result.code != 0:
+            detail = result.err.strip() or result.out.strip() or "unknown failure"
+            raise InstallError("config reset failed: " + detail)
+        return {"kind": "config-reset", "status": "completed",
+                "releaseId": release_id, "backupDirectory": str(backup)}
 
     def bootstrap(self, artifact: Path, expected_digest: str, *,
                   configuration_mode: str | None = None) -> dict[str, object]:
@@ -164,7 +228,7 @@ class Lifecycle(Installer):
                 staged = operation / "artifact.ody"; shutil.copyfile(artifact, staged)
                 if verify(staged, digest) != identity: raise InstallError("staged artifact identity changed during copy")
                 self._place(staged, digest, candidate, manifest)
-            adapter = self.paths.manager_current / "scripts/startupctl.sh"
+            adapter = self.paths.manager_releases / old / "scripts/startupctl.sh"
             adapter_args = ["plan", "--action", "retarget",
                 "--release-id", candidate, "--release-root",
                 str(self.paths.shell_releases / candidate)]
@@ -174,11 +238,12 @@ class Lifecycle(Installer):
             startup = response.get("plan")
             if response.get("status") != "ready" or not isinstance(startup, dict) or not isinstance(startup.get("planId"), str): raise InstallError("startup adapter refused retarget plan")
             stored = operation / "startup-plan.json"; _atomic_json(stored, startup); self._checkpoint(operation, "activation-pending")
-            response = self._adapter(adapter, ["retarget", "--plan-file", str(stored), "--plan-id", str(startup["planId"])])
-            if response.get("status") not in ("completed", "unchanged"): raise InstallError("startup adapter did not retarget")
             _atomic_link(self.paths.shell_current, f"releases/{candidate}")
             _atomic_link(self.paths.manager_current, f"releases/{candidate}")
+            _atomic_link(self.paths.bin_command, str(self.paths.manager_current / "odyssey"))
             self._checkpoint(operation, "activated")
+            response = self._adapter(adapter, ["retarget", "--plan-file", str(stored), "--plan-id", str(startup["planId"])])
+            if response.get("status") not in ("completed", "unchanged"): raise InstallError("startup adapter did not retarget")
             if not self._healthy(candidate): raise InstallError("candidate did not satisfy exact startup health")
             self._checkpoint(operation, "verified"); self._publish(plan); self._checkpoint(operation, "committed"); self._terminal(operation, "completed", None); self._retain(plan)
             return {"kind": kind, "status": "completed", "operationId": opid, "releaseId": candidate}
@@ -214,6 +279,7 @@ class Lifecycle(Installer):
         record = {"schema": 1, "installationId": plan["operationId"], "installedReleaseIds": [new, old], "activeReleaseId": new, "previousReleaseId": old, "dataSchemaVersion": manifest["dataSchemaVersion"], "operationId": plan["operationId"], "artifact": plan["artifact"], "startup": {"adapter": "odyssey-startup", "adapterVersion": 3}}
         _atomic_json(self.paths.install_manifest, record)
         _atomic_link(self.paths.manager_current, f"releases/{plan['newManagerReleaseId']}")
+        _atomic_link(self.paths.bin_command, str(self.paths.manager_current / "odyssey"))
 
     def _restore_old(self, plan, operation):
         old = plan["oldShellReleaseId"]; oldroot = self.paths.shell_releases / old
@@ -226,6 +292,7 @@ class Lifecycle(Installer):
         if response.get("status") not in ("completed", "unchanged"): raise InstallError("old-release retarget failed")
         _atomic_link(self.paths.shell_current, f"releases/{old}")
         _atomic_link(self.paths.manager_current, f"releases/{plan['oldManagerReleaseId']}")
+        _atomic_link(self.paths.bin_command, str(self.paths.manager_current / "odyssey"))
         if not self._healthy(old): raise InstallError("previous release did not recover health")
 
     def _clean_candidate(self, plan):
@@ -357,12 +424,87 @@ class Lifecycle(Installer):
         _atomic_json(backup / "receipt.json", {"schema": 1, "kind": "bootstrap-partial-backup"})
         return str(backup)
     def _repair_activation_links(self, release_id):
-        shell = self.paths.shell_releases / release_id; manager = self.paths.manager_releases / release_id
-        _atomic_link(self.paths.shell_current, f"releases/{release_id}")
-        _atomic_link(self.paths.manager_current, f"releases/{release_id}")
+        for path, owned_root in ((self.paths.shell_current, self.paths.shell_releases),
+                                 (self.paths.manager_current, self.paths.manager_releases)):
+            if path.exists() and not path.is_symlink():
+                raise InstallError(f"activation path is not Odyssey-owned: {path}")
+            if path.is_symlink() and not path.resolve(strict=False).is_relative_to(
+                    owned_root.resolve(strict=False)):
+                raise InstallError(f"activation link is not Odyssey-owned: {path}")
         if self.paths.bin_command.exists() and not self.paths.bin_command.is_symlink():
             raise InstallError(f"stable command is not Odyssey-owned: {self.paths.bin_command}")
+        if self.paths.bin_command.is_symlink():
+            launcher_target = self.paths.bin_command.resolve(strict=False)
+            manager_root = self.paths.manager_releases.resolve(strict=False)
+            stable = os.readlink(self.paths.bin_command) == str(
+                self.paths.manager_current / "odyssey")
+            if not stable and not launcher_target.is_relative_to(manager_root):
+                raise InstallError(f"stable command link is not Odyssey-owned: {self.paths.bin_command}")
+        _atomic_link(self.paths.shell_current, f"releases/{release_id}")
+        _atomic_link(self.paths.manager_current, f"releases/{release_id}")
         _atomic_link(self.paths.bin_command, str(self.paths.manager_current / "odyssey"))
+    def _require_consistent_activation(self, install):
+        release_id = str(install["activeReleaseId"])
+        expected = (
+            (self.paths.shell_current, self.paths.shell_releases / release_id),
+            (self.paths.manager_current, self.paths.manager_releases / release_id),
+        )
+        for link, target in expected:
+            if (not link.is_symlink()
+                    or link.resolve(strict=False) != target.resolve(strict=False)):
+                raise InstallError("lifecycle activation is inconsistent; run odyssey repair first")
+        launcher = str(self.paths.manager_current / "odyssey")
+        if (not self.paths.bin_command.is_symlink()
+                or os.readlink(self.paths.bin_command) != launcher):
+            raise InstallError("stable launcher drift requires odyssey repair first")
+    def _validate_runtime(self):
+        report = self.dependencies()
+        errors = report.get("errors", [])
+        if errors:
+            raise InstallError(str(errors[0]))
+        missing = report.get("missingPackages", [])
+        if missing:
+            raise InstallError("required runtime dependencies are unavailable: "
+                               + ", ".join(str(item) for item in missing))
+    def _backup_managed_config(self):
+        config = self.paths.policy.parent
+        state = self.paths.install_manifest.parent.parent
+        home = Path(os.environ.get("HOME", str(config.parent)))
+        targets = [
+            config / "hypr/hyprland.lua", config / "hypr/odyssey.lua",
+            *(config / "hypr/config" / name for name in (
+                "animations.lua", "appearance.lua", "environment.lua", "input.lua",
+                "keybinds.lua", "layouts.lua", "monitors.lua", "startup.lua",
+                "window-rules.lua")),
+            config / "kitty/kitty.conf", config / "starship.toml",
+            config / "fastfetch/config.jsonc", config / "hypr/hypridle.conf",
+            config / "systemd/user/odyssey.service",
+            config / "systemd/user/hypridle.service",
+            home / ".bashrc", home / ".zshrc", config / "fish/config.fish",
+            state / "startup/session-startup.json", state / "startup/pending.json",
+            state / "installer/host-config.json", state / "terminal-integrations.json",
+            state / "kitty-theme.json", state / "starship-theme.json",
+            state / "fastfetch-theme.json", state / "theme-exports",
+        ]
+        root = state / "backups"
+        root.mkdir(parents=True, exist_ok=True)
+        backup = root / f"odyssey-config-reset-{uuid.uuid4().hex}"
+        backup.mkdir(mode=0o700)
+        indexed: list[str] = []
+        for index, target in enumerate(targets):
+            if not (target.exists() or target.is_symlink()):
+                continue
+            destination = backup / f"{index:02d}-{target.name}.bak"
+            if target.is_dir() and not target.is_symlink():
+                shutil.copytree(target, destination, symlinks=True)
+            else:
+                shutil.copy2(target, destination, follow_symlinks=False)
+            indexed.append(str(target))
+        index_file = backup / ".odyssey-backup-index"
+        index_file.write_text("".join(f"{target}\n" for target in indexed),
+                              encoding="utf-8")
+        os.chmod(index_file, 0o600)
+        return backup
     def _reapply_startup(self, release_id, configuration_mode=None):
         adapter = self.paths.manager_releases / release_id / "scripts" / "startupctl.sh"
         status = self._adapter(adapter, ["status"])

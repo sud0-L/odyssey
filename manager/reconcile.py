@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import json
 import os
 from pathlib import Path
 import subprocess
@@ -41,6 +40,7 @@ class Reconciler:
         installation = self._json(self.paths.install_manifest, parse_installation_manifest)
         activation = self._activation(self.paths.shell_current, self.paths.shell_releases)
         manager_activation = self._activation(self.paths.manager_current, self.paths.manager_releases)
+        launcher = self._launcher()
         release = self._release(activation)
         operations = self._operations()
         startup = self._startup()
@@ -49,7 +49,7 @@ class Reconciler:
         notifications = self._notifications(instances)
         sddm = self._sddm()
         lifecycle = self._lifecycle(installation, activation, manager_activation, release)
-        evidence = {"installation": installation, "activation": activation, "managerActivation": manager_activation, "release": release, "lifecycle": lifecycle, "operations": operations, "startup": startup, "units": units, "instances": instances, "notifications": notifications, "sddm": sddm}
+        evidence = {"installation": installation, "activation": activation, "managerActivation": manager_activation, "launcher": launcher, "release": release, "lifecycle": lifecycle, "operations": operations, "startup": startup, "units": units, "instances": instances, "notifications": notifications, "sddm": sddm}
         return {"schema": 1, "kind": "status", "readOnly": True, "summary": {"state": self._state(evidence)}, "evidence": evidence}
 
     def _present(self, path: Path) -> str:
@@ -87,6 +87,25 @@ class Reconciler:
             if resolved != expected or not resolved.is_dir():
                 return Evidence("invalid", reason="activation link is dangling").as_dict()
             return Evidence("valid", {"releaseId": parts[1], "path": self._present(resolved)}).as_dict()
+        except OSError as error:
+            return Evidence("unavailable", reason=str(error)[:160]).as_dict()
+
+    def _launcher(self) -> dict[str, object]:
+        expected = str(self.paths.manager_current / "odyssey")
+        try:
+            if not self.paths.bin_command.exists() and not self.paths.bin_command.is_symlink():
+                return Evidence("absent", reason="stable launcher is absent").as_dict()
+            if not self.paths.bin_command.is_symlink():
+                return Evidence("invalid", reason="stable launcher is not a symlink").as_dict()
+            target = os.readlink(self.paths.bin_command)
+            if target != expected:
+                return Evidence(
+                    "invalid",
+                    reason="stable launcher is pinned or does not use active-manager indirection",
+                ).as_dict()
+            if not (self.paths.manager_current / "odyssey").is_file():
+                return Evidence("invalid", reason="stable launcher target is unavailable").as_dict()
+            return Evidence("valid", {"target": expected}).as_dict()
         except OSError as error:
             return Evidence("unavailable", reason=str(error)[:160]).as_dict()
 
@@ -230,12 +249,13 @@ class Reconciler:
         installation = evidence["installation"]
         activation = evidence["activation"]
         manager_activation = evidence["managerActivation"]
+        launcher = evidence["launcher"]
         startup = evidence["startup"]
         if (installation["status"] == "absent" and activation["status"] == "absent"
                 and manager_activation["status"] == "absent"):
             return "not-installed"
         if any(section["status"] == "unsupported" for section in evidence.values()): return "unsupported"
-        if installation["status"] in ("invalid", "unsupported") or activation["status"] == "invalid" or manager_activation["status"] == "invalid" or evidence["lifecycle"]["status"] == "invalid" or (startup["status"] == "valid" and startup["value"]["state"] == "conflict"): return "conflict"
+        if installation["status"] in ("invalid", "unsupported") or activation["status"] == "invalid" or manager_activation["status"] == "invalid" or launcher["status"] == "invalid" or evidence["lifecycle"]["status"] == "invalid" or (startup["status"] == "valid" and startup["value"]["state"] == "conflict"): return "conflict"
         units = evidence["units"]
         if units["status"] == "valid":
             values = units["value"]
@@ -254,6 +274,10 @@ def findings(snapshot: dict[str, object]) -> list[dict[str, str]]:
     if install["status"] == "absent": add("info", "LIFECYCLE_NOT_INSTALLED", "No lifecycle installation record exists.", "Run the installer to create a managed release.")
     for name, item in (("INSTALLATION", install), ("ACTIVATION", activation), ("MANAGER_ACTIVATION", evidence["managerActivation"]), ("RELEASE", evidence["release"]), ("LIFECYCLE", evidence["lifecycle"])):
         if item["status"] in ("invalid", "unsupported"): add("error", f"{name}_{item['status'].upper()}", f"{name.title()} evidence is {item['status']}.", "Inspect the record; do not edit managed state manually.")
+    launcher = evidence["launcher"]
+    if launcher["status"] == "invalid":
+        add("error", "LAUNCHER_INVALID", str(launcher["reason"]),
+            "Run odyssey repair to restore active-manager indirection.")
     if startup["status"] == "valid" and startup["value"]["state"] in ("partial", "conflict"): add("error", f"STARTUP_{startup['value']['state'].upper()}", "Startup ownership is incomplete or conflicting.", "Use startupctl diagnostics before lifecycle mutation.")
     elif startup["status"] == "unavailable": add("warning", "STARTUP_UNAVAILABLE", "Startup ownership could not be probed.", "Ensure the user systemd manager is available.")
     ops = evidence["operations"]

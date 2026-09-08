@@ -23,6 +23,13 @@ RESERVED = ("backup", "restore", "startup", "component")
 UNAVAILABLE_EXIT = 69
 
 
+def confirm(message: str) -> bool:
+    sys.stderr.write(f"{message} [y/N] ")
+    sys.stderr.flush()
+    answer = sys.stdin.readline()
+    return answer.strip().lower() in ("y", "yes") if answer else False
+
+
 def emit(payload: dict[str, object], as_json: bool) -> None:
     if as_json:
         print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
@@ -41,7 +48,7 @@ def emit(payload: dict[str, object], as_json: bool) -> None:
     if payload.get("kind") == "artifact":
         print(f"Artifact {payload['action']}: {payload['releaseId']}")
         return
-    if payload.get("kind") in ("install", "bootstrap", "update", "rollback", "repair", "uninstall", "cleanup"):
+    if payload.get("kind") in ("install", "bootstrap", "update", "rollback", "repair", "config-reset", "uninstall", "cleanup"):
         print(f"Odyssey {payload['kind']}: {payload.get('releaseId', payload.get('status'))}")
         return
     if payload.get("kind") == "dependencies":
@@ -74,7 +81,7 @@ def preflight_payload() -> dict[str, object]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="odyssey", description="Odyssey lifecycle manager")
-    parser.add_argument("command", nargs="?", choices=("version", "preflight", "status", "doctor", "artifact", "dependencies", "bootstrap", "install", "update", "rollback", "repair", "uninstall", "cleanup", *RESERVED), help="read-only report or reserved lifecycle command")
+    parser.add_argument("command", nargs="?", choices=("version", "preflight", "status", "doctor", "artifact", "dependencies", "bootstrap", "install", "update", "rollback", "repair", "config", "uninstall", "cleanup", *RESERVED), help="read-only report or reserved lifecycle command")
     parser.add_argument("--json", action="store_true", dest="as_json", help="emit stable JSON")
     args, tail = parser.parse_known_args(argv)
     if args.command is None:
@@ -139,6 +146,11 @@ def main(argv: list[str] | None = None) -> int:
         install_args = install_parser.parse_args(tail)
         if bool(install_args.artifact) != bool(install_args.expect_sha256):
             install_parser.error("--artifact and --expect-sha256 must be supplied together")
+        if args.command == "update" and not confirm(
+                "Update Odyssey and activate the validated candidate release?"):
+            emit({"kind": "update", "status": "cancelled", "changed": False},
+                 install_args.as_json or args.as_json)
+            return 0
         if install_args.artifact is None:
             try: descriptor = default_url(ROOT)
             except AcquireError as error: descriptor = None; source_error = str(error)
@@ -199,17 +211,38 @@ def main(argv: list[str] | None = None) -> int:
             return 65
         emit(payload, rollback_args.as_json or args.as_json); return 0
     if args.command == "repair":
-        if "--recover" not in tail:
-            emit({"status": "unavailable", "command": "repair", "reason": "explicit --recover OPERATION_ID is required"}, args.as_json); return UNAVAILABLE_EXIT
-        repair_parser = argparse.ArgumentParser(prog="odyssey repair"); repair_parser.add_argument("--recover", required=True); repair_parser.add_argument("--json", action="store_true", dest="as_json")
+        repair_parser = argparse.ArgumentParser(prog="odyssey repair"); repair_parser.add_argument("--recover"); repair_parser.add_argument("--json", action="store_true", dest="as_json")
         repair_args = repair_parser.parse_args(tail)
-        try: payload = Lifecycle(resolve_xdg()).recover(repair_args.recover)
+        if not confirm("Repair Odyssey operational and lifecycle state without resetting user configuration?"):
+            emit({"kind": "repair", "status": "cancelled", "changed": False},
+                 repair_args.as_json or args.as_json)
+            return 0
+        try: payload = Lifecycle(resolve_xdg()).repair(repair_args.recover)
         except (InstallError, OSError, ValueError) as error:
             payload = {"kind": "repair", "status": "failed", "reason": str(error)}
             if repair_args.as_json or args.as_json: print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
             else: print(f"odyssey: repair failed: {error}", file=sys.stderr)
             return 65
         emit(payload, repair_args.as_json or args.as_json); return 0
+    if args.command == "config":
+        config_parser = argparse.ArgumentParser(prog="odyssey config")
+        config_parser.add_argument("action", choices=("reset",))
+        config_parser.add_argument("--json", action="store_true", dest="as_json")
+        config_args = config_parser.parse_args(tail)
+        if not confirm("Replace Odyssey-managed configuration with packaged defaults after creating a backup?"):
+            emit({"kind": "config-reset", "status": "cancelled", "changed": False},
+                 config_args.as_json or args.as_json)
+            return 0
+        try: payload = Lifecycle(resolve_xdg()).config_reset()
+        except (InstallError, OSError, ValueError) as error:
+            payload = {"kind": "config-reset", "status": "failed", "reason": str(error)}
+            if config_args.as_json or args.as_json:
+                print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+            else:
+                print(f"odyssey: config reset failed: {error}", file=sys.stderr)
+            return 65
+        emit(payload, config_args.as_json or args.as_json)
+        return 0
     if args.command == "uninstall":
         uninstall_parser = argparse.ArgumentParser(prog="odyssey uninstall")
         uninstall_parser.add_argument("--yes", action="store_true", help="remove only manager-owned Odyssey payload and startup ownership")
