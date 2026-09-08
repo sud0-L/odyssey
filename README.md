@@ -243,21 +243,6 @@ the installed and available versions, asks for confirmation, and verifies the
 downloaded `.ody` artifact before activation. The previous known-good release
 is retained for rollback.
 
-### Preparing an official release
-
-The maintainer selects the public version in `VERSION`; normal development does
-not increment it automatically. Build the release assets with:
-
-```bash
-scripts/build-release.sh
-```
-
-Create a GitHub Release tagged `v` followed by that version (for example,
-`v0.1.1-alpha`) and attach both generated assets:
-
-- `dist/odyssey.ody`
-- `dist/odyssey-release.json`
-
 ### Roll back
 
 ```bash
@@ -294,6 +279,21 @@ You can then integrate odyssey into your existing environment without replacing 
 - systemd
 
 Supported required dependencies are detected and installed by the odyssey installer. Optional enhancements are handled separately during guided installation when available.
+
+### Upgrading older installations
+
+Installations created before automatic GitHub Release discovery must run the
+installer once from a current checkout:
+
+```bash
+./install.sh --preserve-config
+```
+
+After that one-time manager upgrade, future releases can be installed with:
+
+```bash
+odyssey update
+```
 
 ## Optional SDDM Theme
 
