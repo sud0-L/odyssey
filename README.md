@@ -15,15 +15,21 @@ odyssey's Dynamic Island stays compact at rest and expands contextually as you i
 
 It provides access to notifications, media, workspaces, device status, system controls, and focused OSD feedback for volume, microphone, brightness, and power changes without permanently occupying additional screen space.
 
+<img width="1280" height="720" alt="overview" src="https://github.com/user-attachments/assets/4e345f7e-493a-454d-a7df-b100ffbcaf7d" />
+
 ### Dashboard and insights
 
 The expanded Dashboard brings together time, weather, calendar, recent notifications, media, quick controls, and system information in one view.
 
 Weather is unconfigured by default. Set your location under **Settings → Dashboard** to enable current conditions and forecasts.
 
+<img width="1280" height="720" alt="insight1" src="https://github.com/user-attachments/assets/0e6b67c2-d6c9-476f-97b5-847cc4a05296" />
+
 ### Launcher and command palette
 
 Search and launch applications, switch Hyprland workspaces, or execute odyssey actions from a keyboard-friendly launcher and command palette.
+
+<img width="1280" height="720" alt="launcher" src="https://github.com/user-attachments/assets/471655d0-56fb-40ec-a13d-6db0b48d460d" />
 
 ### Control Center
 
@@ -37,17 +43,23 @@ Manage common desktop controls without leaving the shell, including:
 - power profiles
 - do-not-disturb
 
+<img width="1280" height="720" alt="control" src="https://github.com/user-attachments/assets/6eee267d-a357-4bcb-a387-5c6f3982df56" />
+
 ### Notifications and media
 
 odyssey provides its own notification service with contextual previews and notification history.
 
 Active media is integrated directly into the island and Dashboard, providing playback information and controls without requiring a separate widget or panel.
 
+<img width="1280" height="720" alt="notify" src="https://github.com/user-attachments/assets/5f120182-01d5-4802-85c0-7b34e173f7d2" />
+
 ### Wallpapers and adaptive theming
 
 Browse and apply wallpapers per monitor directly from odyssey.
 
 odyssey uses **Matugen** to generate an adaptive color palette from your wallpaper and propagate it throughout the shell and supported desktop integrations for a cohesive appearance.
+
+<img width="1280" height="720" alt="wallpaper" src="https://github.com/user-attachments/assets/2647efb7-75a2-4f13-9135-6187a74872f9" />
 
 ## Features
 
