@@ -1,0 +1,41 @@
+{
+  "mode": "light",
+  "dark": {
+    "primary": "#b2c8e7",
+    "onPrimary": "#1b324a",
+    "primaryContainer": "#485e78",
+    "onPrimaryContainer": "#ffffff",
+    "secondary": "#bfc7d4",
+    "tertiary": "#e0bbdc",
+    "surface": "#121315",
+    "surfaceContainerLow": "#1b1c1d",
+    "surfaceContainer": "#1f2021",
+    "surfaceContainerHigh": "#292a2c",
+    "onSurface": "#e3e2e4",
+    "onSurfaceVariant": "#c4c6cd",
+    "outline": "#8d9197",
+    "outlineVariant": "#43474d",
+    "error": "#ffb4ab",
+    "warning": "#f4c46b",
+    "success": "#8bd5a5"
+  },
+  "light": {
+    "primary": "#30465f",
+    "onPrimary": "#ffffff",
+    "primaryContainer": "#485e78",
+    "onPrimaryContainer": "#ffffff",
+    "secondary": "#575f6a",
+    "tertiary": "#573c57",
+    "surface": "#faf9fb",
+    "surfaceContainerLow": "#f5f3f5",
+    "surfaceContainer": "#efedf0",
+    "surfaceContainerHigh": "#e9e8ea",
+    "onSurface": "#1b1c1d",
+    "onSurfaceVariant": "#43474d",
+    "outline": "#74777e",
+    "outlineVariant": "#c4c6cd",
+    "error": "#ba1a1a",
+    "warning": "#805600",
+    "success": "#216e45"
+  }
+}

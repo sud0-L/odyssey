@@ -1,0 +1,7 @@
+module Odyssey.Core
+singleton Animations 1.0 Animations.qml
+singleton Config 1.0 Config.qml
+singleton SettingsStore 1.0 SettingsStore.qml
+singleton ShellActions 1.0 ShellActions.qml
+singleton ShellState 1.0 ShellState.qml
+singleton Theme 1.0 Theme.qml

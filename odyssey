@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Stable entry point for Odyssey lifecycle management and active-release IPC.
+set -euo pipefail
+script_path=$(readlink -f -- "${BASH_SOURCE[0]}") \
+    || { printf 'odyssey: executable path cannot be resolved\n' >&2; exit 69; }
+script_dir=$(cd -- "$(dirname -- "$script_path")" && pwd -P)
+data_root=${XDG_DATA_HOME:-"${HOME:?HOME is required}/.local/share"}
+config_root=${XDG_CONFIG_HOME:-"$HOME/.config"}
+state_root=${XDG_STATE_HOME:-"$HOME/.local/state"}
+
+active_release() {
+    local current="$data_root/odyssey/current" resolved
+    resolved=$(readlink -f -- "$current" 2>/dev/null) \
+        && [[ -d $resolved && -f $resolved/shell.qml ]] \
+        || {
+            printf 'odyssey: active release cannot be resolved: %s\n' "$current" >&2
+            return 69
+        }
+    printf '%s\n' "$resolved"
+}
+
+if [[ ${1:-} == ipc ]]; then
+    shift
+    (($# >= 2)) || {
+        printf 'usage: odyssey ipc <service> <method> [args...]\n' >&2
+        exit 64
+    }
+    resolved_release=$(active_release) || exit $?
+    exec qs -p "$resolved_release" ipc call "$@"
+fi
+
+case ${1:-} in
+  session)
+    shift; resolved_release=$(active_release) || exit $?
+    exec "$resolved_release/scripts/odyssey-session.sh" --root "$resolved_release" "$@" ;;
+  hypridle)
+    shift
+    hypridle_config="$state_root/odyssey/hypridle.conf"
+    [[ -f $hypridle_config ]] || hypridle_config="$config_root/hypr/hypridle.conf"
+    exec /usr/bin/hypridle --config "$hypridle_config" "$@" ;;
+  idle-brightness)
+    shift; resolved_release=$(active_release) || exit $?
+    exec "$resolved_release/scripts/idle-brightnessctl.sh" "$@" ;;
+  lock-status)
+    shift; resolved_release=$(active_release) || exit $?
+    exec "$resolved_release/scripts/lock-status.sh" "$@" ;;
+  lock-power)
+    shift; resolved_release=$(active_release) || exit $?
+    exec "$resolved_release/scripts/lock-powerctl.sh" "$@" ;;
+esac
+
+PYTHONDONTWRITEBYTECODE=1 exec python3 "$script_dir/manager/cli.py" "$@"

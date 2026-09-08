@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Keep the X11 pre-greeter cursor invisible. This is intentionally limited to
+# the cursor; do not add a background workaround here.
+/usr/bin/xsetroot \
+  -cursor /usr/share/sddm/scripts/blank-cursor.xbm \
+          /usr/share/sddm/scripts/blank-cursor.xbm

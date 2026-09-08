@@ -1,0 +1,207 @@
+# Managed by Odyssey installer. Local changes are backed up on the next install.
+
+"$schema" = "https://starship.rs/config-schema.json"
+
+palette = "odyssey"
+add_newline = true
+command_timeout = 1000
+
+format = """
+[░▒▓](fg:primary)\
+$os\
+[](fg:primary bg:secondary)\
+$directory\
+[](fg:secondary bg:surface_high)\
+$git_branch\
+$git_status\
+[](fg:surface_high bg:surface)\
+$python\
+$nodejs\
+$bun\
+$rust\
+$golang\
+$php\
+[](fg:surface bg:surface_low)\
+$cmd_duration\
+$status\
+$battery\
+$time\
+[ ](fg:surface_low)\
+$line_break\
+$character
+"""
+
+# ─────────────────────────────────────────────
+# OS
+# ─────────────────────────────────────────────
+
+[os]
+disabled = false
+style = "fg:on_primary bg:primary"
+format = "[ $symbol ]($style)"
+
+[os.symbols]
+Windows = "󰍲"
+Ubuntu = "󰕈"
+SUSE = ""
+Raspbian = "󰐿"
+Mint = "󰣭"
+Macos = "󰀵"
+Manjaro = ""
+Linux = "󰌽"
+Gentoo = "󰣨"
+Fedora = "󰣛"
+Alpine = ""
+Amazon = ""
+Android = ""
+AOSC = ""
+Arch = "󰣇"
+Artix = "󰣇"
+EndeavourOS = ""
+CentOS = ""
+Debian = "󰣚"
+Redhat = "󱄛"
+RedHatEnterprise = "󱄛"
+Pop = ""
+
+# ─────────────────────────────────────────────
+# DIRECTORY
+# ─────────────────────────────────────────────
+
+[directory]
+style = "fg:on_primary bg:secondary"
+format = "[ $path ]($style)"
+truncation_length = 4
+truncate_to_repo = false
+truncation_symbol = "…/"
+read_only = " 󰌾"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = " "
+"Pictures" = " "
+
+# ─────────────────────────────────────────────
+# GIT
+# ─────────────────────────────────────────────
+
+[git_branch]
+symbol = ""
+style = "fg:primary bg:surface_high"
+format = "[ $symbol $branch ]($style)"
+
+[git_status]
+style = "fg:primary bg:surface_high"
+format = "[($all_status$ahead_behind )]($style)"
+conflicted = "=${count}"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?${count}"
+stashed = "*${count}"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
+
+# ─────────────────────────────────────────────
+# LANGUAGE / RUNTIME SEGMENT
+# ─────────────────────────────────────────────
+
+[python]
+symbol = ""
+style = "fg:secondary bg:surface"
+format = "[ $symbol ($version) ]($style)"
+detect_extensions = ["py"]
+detect_files = [
+    "pyproject.toml",
+    "requirements.txt",
+    ".python-version"
+]
+
+[nodejs]
+symbol = ""
+style = "fg:secondary bg:surface"
+format = "[ $symbol ($version) ]($style)"
+
+[bun]
+symbol = ""
+style = "fg:secondary bg:surface"
+format = "[ $symbol ($version) ]($style)"
+
+[rust]
+symbol = ""
+style = "fg:tertiary bg:surface"
+format = "[ $symbol ($version) ]($style)"
+
+[golang]
+symbol = ""
+style = "fg:secondary bg:surface"
+format = "[ $symbol ($version) ]($style)"
+
+[php]
+symbol = ""
+style = "fg:tertiary bg:surface"
+format = "[ $symbol ($version) ]($style)"
+
+# ─────────────────────────────────────────────
+# STATUS / SYSTEM INFO
+# ─────────────────────────────────────────────
+
+[cmd_duration]
+min_time = 2000
+style = "fg:muted bg:surface_low"
+format = "[ 󱎫 $duration ]($style)"
+
+[status]
+disabled = false
+symbol = "✘"
+success_symbol = ""
+style = "fg:error bg:surface_low"
+format = "[ $symbol $status ]($style)"
+
+[battery]
+disabled = false
+format = "[ $symbol$percentage ]($style)"
+
+[[battery.display]]
+threshold = 20
+style = "fg:error bg:surface_low"
+
+[[battery.display]]
+threshold = 50
+style = "fg:tertiary bg:surface_low"
+
+[[battery.display]]
+threshold = 100
+style = "fg:secondary bg:surface_low"
+
+# ─────────────────────────────────────────────
+# TIME
+# ─────────────────────────────────────────────
+
+[time]
+disabled = false
+time_format = "%H:%M"
+style = "fg:muted bg:surface_low"
+format = "[  $time ]($style)"
+
+# ─────────────────────────────────────────────
+# PROMPT
+# ─────────────────────────────────────────────
+
+[character]
+success_symbol = "[❯](bold primary)"
+error_symbol = "[❯](bold error)"
+
+[aws]
+disabled = true
+
+[package]
+disabled = true
+
+[profiles]
+transient = """
+$character
+"""

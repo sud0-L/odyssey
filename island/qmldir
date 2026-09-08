@@ -1,0 +1,12 @@
+module Odyssey.Island
+Island 1.0 Island.qml
+IslandController 1.0 IslandController.qml
+IslandCaptureFeedback 1.0 IslandCaptureFeedback.qml
+IslandDormant 1.0 IslandDormant.qml
+IslandRestItem 1.0 IslandRestItem.qml
+IslandExpanded 1.0 IslandExpanded.qml
+IslandHover 1.0 IslandHover.qml
+IslandHoverItem 1.0 IslandHoverItem.qml
+IslandMedia 1.0 IslandMedia.qml
+IslandNotification 1.0 IslandNotification.qml
+IslandOSD 1.0 IslandOSD.qml

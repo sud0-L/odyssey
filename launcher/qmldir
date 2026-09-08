@@ -1,0 +1,4 @@
+module Odyssey.Launcher
+ApplicationLauncher 1.0 ApplicationLauncher.qml
+singleton CommandPaletteService 1.0 CommandPaletteService.qml
+PaletteResult 1.0 PaletteResult.qml

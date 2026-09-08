@@ -1,0 +1,41 @@
+{
+  "mode": "{{mode}}",
+  "dark": {
+    "primary": "{{colors.primary.dark.hex}}",
+    "onPrimary": "{{colors.on_primary.dark.hex}}",
+    "primaryContainer": "{{colors.primary_container.dark.hex}}",
+    "onPrimaryContainer": "{{colors.on_primary_container.dark.hex}}",
+    "secondary": "{{colors.secondary.dark.hex}}",
+    "tertiary": "{{colors.tertiary.dark.hex}}",
+    "surface": "{{colors.surface.dark.hex}}",
+    "surfaceContainerLow": "{{colors.surface_container_low.dark.hex}}",
+    "surfaceContainer": "{{colors.surface_container.dark.hex}}",
+    "surfaceContainerHigh": "{{colors.surface_container_high.dark.hex}}",
+    "onSurface": "{{colors.on_surface.dark.hex}}",
+    "onSurfaceVariant": "{{colors.on_surface_variant.dark.hex}}",
+    "outline": "{{colors.outline.dark.hex}}",
+    "outlineVariant": "{{colors.outline_variant.dark.hex}}",
+    "error": "{{colors.error.dark.hex}}",
+    "warning": "#f4c46b",
+    "success": "#8bd5a5"
+  },
+  "light": {
+    "primary": "{{colors.primary.light.hex}}",
+    "onPrimary": "{{colors.on_primary.light.hex}}",
+    "primaryContainer": "{{colors.primary_container.light.hex}}",
+    "onPrimaryContainer": "{{colors.on_primary_container.light.hex}}",
+    "secondary": "{{colors.secondary.light.hex}}",
+    "tertiary": "{{colors.tertiary.light.hex}}",
+    "surface": "{{colors.surface.light.hex}}",
+    "surfaceContainerLow": "{{colors.surface_container_low.light.hex}}",
+    "surfaceContainer": "{{colors.surface_container.light.hex}}",
+    "surfaceContainerHigh": "{{colors.surface_container_high.light.hex}}",
+    "onSurface": "{{colors.on_surface.light.hex}}",
+    "onSurfaceVariant": "{{colors.on_surface_variant.light.hex}}",
+    "outline": "{{colors.outline.light.hex}}",
+    "outlineVariant": "{{colors.outline_variant.light.hex}}",
+    "error": "{{colors.error.light.hex}}",
+    "warning": "#805600",
+    "success": "#216e45"
+  }
+}

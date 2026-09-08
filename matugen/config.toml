@@ -1,0 +1,5 @@
+[config]
+
+[templates.odyssey]
+input_path = "./matugen/palette.json"
+output_path = "./generated/palette.json"

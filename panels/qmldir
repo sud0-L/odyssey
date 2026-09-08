@@ -1,0 +1,26 @@
+module Odyssey.Panels
+BatteryPage 1.0 BatteryPage.qml
+CalendarPage 1.0 CalendarPage.qml
+CapturePage 1.0 CapturePage.qml
+ClipboardPage 1.0 ClipboardPage.qml
+ControlCenter 1.0 ControlCenter.qml
+Dashboard 1.0 Dashboard.qml
+DashboardCard 1.0 DashboardCard.qml
+DashboardHeroRow 1.0 DashboardHeroRow.qml
+DashboardMediaCard 1.0 DashboardMediaCard.qml
+DashboardQuickStrip 1.0 DashboardQuickStrip.qml
+DashboardSystemCard 1.0 DashboardSystemCard.qml
+InsightCenter 1.0 InsightCenter.qml
+MediaPage 1.0 MediaPage.qml
+NotificationCard 1.0 NotificationCard.qml
+NotificationCenter 1.0 NotificationCenter.qml
+SessionPage 1.0 SessionPage.qml
+SettingsPage 1.0 SettingsPage.qml
+IslandOrderEditor 1.0 IslandOrderEditor.qml
+SystemPage 1.0 SystemPage.qml
+SystemInfoRow 1.0 SystemInfoRow.qml
+SystemMetricCard 1.0 SystemMetricCard.qml
+WeatherPage 1.0 WeatherPage.qml
+WeatherMetric 1.0 WeatherMetric.qml
+WallpaperCard 1.0 WallpaperCard.qml
+WallpaperPage 1.0 WallpaperPage.qml

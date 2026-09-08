@@ -1,0 +1,2 @@
+module Odyssey.Applications
+singleton ApplicationService 1.0 ApplicationService.qml

@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+QtVersion=6
+Name=Odyssey
+Description=Minimal Odyssey login screen
+Author=Odyssey
+License=MIT
+Type=sddm-theme
+Version=1.0
+Theme-Id=odyssey
+Theme-API=2.0
+MainScript=Main.qml
+ConfigFile=theme.conf
