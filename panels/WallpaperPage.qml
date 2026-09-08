@@ -39,6 +39,10 @@ Item {
             spacing: Theme.space2
 
             ColumnLayout {
+                // Nested layouts are expansive by default. Keep the heading at
+                // its intended width so the search field owns the flexible
+                // space in this row.
+                Layout.fillWidth: false
                 Layout.preferredWidth: root.selectionMode ? 170 : 190
                 spacing: 0
                 Text {
@@ -62,19 +66,22 @@ Item {
                 }
             }
 
+            Item { Layout.fillWidth: true }
+
             Rectangle {
                 visible: root.width > 520
                 // Keep the hidden item out of sizing entirely; the compact
                 // header deliberately has no search control.
-                Layout.fillWidth: visible
+                Layout.fillWidth: false
                 Layout.minimumWidth: 0
                 Layout.maximumWidth: visible ? Number.POSITIVE_INFINITY : 0
+                Layout.preferredWidth: visible ? 228 : 0
                 Layout.preferredHeight: 34
                 radius: Theme.radiusMedium
                 color: Qt.alpha(Theme.surfaceContainerHigh, 0.62)
-                // The header search sits immediately beside Refresh. Its right
-                // focus/outline edge read as a stray vertical bar, so keep the
-                // field visually seamless and let text selection convey focus.
+                // Keep every search child inside the width assigned by the
+                // header layout, including during layout/visibility changes.
+                clip: true
                 border.width: 0
 
                 RowLayout {
