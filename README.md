@@ -1,6 +1,6 @@
 # odyssey
 
-odyssey is a Quickshell desktop shell for Hyprland built around a contextual top-center system surface. It brings everyday controls, information, and workflows into one focused interface.
+odyssey is a Quickshell desktop shell for Hyprland built around a contextual system surface. It brings everyday controls, information, and workflows into one focused interface.
 
 > Minimal when idle. Informational when needed. Powerful when requested. Intelligent when useful.
 
@@ -187,11 +187,14 @@ odyssey includes a lifecycle manager for inspecting, maintaining, repairing, and
 | `odyssey doctor` | Diagnoses lifecycle and service problems and suggests remediation without making changes. |
 | `odyssey repair` | Repairs odyssey-owned operational state without resetting user configuration. |
 | `odyssey config reset` | Backs up odyssey-managed configuration and restores the packaged defaults. |
-| `odyssey update` | Updates odyssey using a verified release artifact or configured release source. |
+| `odyssey update` | Discovers and installs the latest verified odyssey release from GitHub. |
 | `odyssey rollback` | Reactivates the previous known-good release when one is available. |
-| `odyssey version` | Shows the lifecycle manager version and source identity. |
+| `odyssey version` | Shows the installed odyssey version and source identity. |
 | `odyssey dependencies` | Checks required packages and runtime dependencies, including Quickshell health. |
 | `odyssey preflight` | Performs a read-only inspection of the platform, paths, dependencies, and release payload. |
+
+Public releases use human-readable versions such as `0.1.0-alpha`; the source
+identity is reported separately.
 
 ### Diagnose an installation
 
@@ -238,7 +241,7 @@ odyssey update
 
 The update lifecycle validates the candidate release and runtime dependencies before activation, activates the shell and lifecycle manager together, reconciles services, and retains the previous known-good release for rollback.
 
-Updates are discovered from official Odyssey GitHub Releases. Odyssey displays
+Updates are discovered from official odyssey GitHub Releases. odyssey displays
 the installed and available versions, asks for confirmation, and verifies the
 downloaded `.ody` artifact before activation. The previous known-good release
 is retained for rollback.
@@ -278,7 +281,7 @@ You can then integrate odyssey into your existing environment without replacing 
 - Quickshell
 - systemd
 
-Supported required dependencies are detected and installed by the odyssey installer. Optional enhancements are handled separately during guided installation when available.
+Supported required dependencies are detected and installed by the odyssey installer. Quickshell is also checked at runtime so a stale binary that is incompatible with the current Qt version is detected before odyssey is activated. Optional enhancements are handled separately during guided installation when available.
 
 ### Upgrading older installations
 
