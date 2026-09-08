@@ -30,6 +30,18 @@ class Lifecycle(Installer):
         self.report = report or (lambda: Reconciler(self.paths).report())
         self.dependencies = dependencies or (lambda: ArchDependencies().inspect())
 
+    def current_release(self) -> dict[str, str]:
+        """Return the active public version after checking update invariants."""
+        install = self._installation()
+        self._require_consistent_activation(install)
+        release_id = str(install["activeReleaseId"])
+        if not self._release_pair_valid(release_id):
+            raise InstallError("active release pair is invalid; run odyssey repair first")
+        manifest = self._release_manifest(release_id)
+        if manifest["releaseId"] != release_id:
+            raise InstallError("active release identity is inconsistent; run odyssey repair first")
+        return {"version": str(manifest["version"]), "releaseId": release_id}
+
     def update(self, artifact: Path, expected_digest: str, *,
                source: dict[str, object] | None = None,
                configuration_mode: str | None = None) -> dict[str, object]:
@@ -76,6 +88,7 @@ class Lifecycle(Installer):
                     else "preserve")
             self._reapply_startup(release_id, mode)
         return {"kind": "repair", "status": "completed", "releaseId": release_id,
+                "version": str(self._release_manifest(release_id)["version"]),
                 "recoveredOperations": recovered}
 
     def config_reset(self) -> dict[str, object]:
@@ -100,7 +113,8 @@ class Lifecycle(Installer):
             detail = result.err.strip() or result.out.strip() or "unknown failure"
             raise InstallError("config reset failed: " + detail)
         return {"kind": "config-reset", "status": "completed",
-                "releaseId": release_id, "backupDirectory": str(backup)}
+                "releaseId": release_id, "version": str(self._release_manifest(release_id)["version"]),
+                "backupDirectory": str(backup)}
 
     def bootstrap(self, artifact: Path, expected_digest: str, *,
                   configuration_mode: str | None = None) -> dict[str, object]:
@@ -117,7 +131,9 @@ class Lifecycle(Installer):
                 self._repair_activation_links(release_id)
                 self._reapply_startup(release_id, configuration_mode)
                 return {"kind": "bootstrap", "status": "completed", "action": "repaired",
-                        "releaseId": release_id, "recoveredOperations": recovered}
+                        "releaseId": release_id,
+                        "version": str(self._release_manifest(release_id)["version"]),
+                        "recoveredOperations": recovered}
             result = self.update(artifact, expected_digest,
                                  configuration_mode=configuration_mode)
             self._reapply_startup(release_id, configuration_mode)
@@ -246,7 +262,8 @@ class Lifecycle(Installer):
             if response.get("status") not in ("completed", "unchanged"): raise InstallError("startup adapter did not retarget")
             if not self._healthy(candidate): raise InstallError("candidate did not satisfy exact startup health")
             self._checkpoint(operation, "verified"); self._publish(plan); self._checkpoint(operation, "committed"); self._terminal(operation, "completed", None); self._retain(plan)
-            return {"kind": kind, "status": "completed", "operationId": opid, "releaseId": candidate}
+            return {"kind": kind, "status": "completed", "operationId": opid,
+                    "releaseId": candidate, "version": str(manifest["version"])}
         except Exception as error:
             try: self._restore_old(plan, operation); self._clean_candidate(plan); self._terminal(operation, "compensated", str(error))
             except Exception: self._event(operation, "compensation-failed", {"reason": str(error)})

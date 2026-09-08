@@ -9,6 +9,7 @@ from pathlib import PurePosixPath
 from typing import Any, Mapping
 
 from manager import CONTRACT_SCHEMA_VERSION
+from manager.versioning import parse_public_version
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _RELEASE_ID = re.compile(r"^(.+)-([0-9a-f]{64})$")
@@ -68,7 +69,11 @@ def parse_release_manifest(raw: object) -> Evidence:
         return Evidence("invalid", reason="release manifest schema fields are invalid")
     version, release_id, digest, payload = (record.get(key) for key in ("version", "releaseId", "artifactSha256", "payload"))
     match = _RELEASE_ID.fullmatch(release_id) if isinstance(release_id, str) else None
-    if not isinstance(version, str) or not _IDENTIFIER.fullmatch(version) or not match or not isinstance(digest, str) or not _DIGEST.fullmatch(digest):
+    try:
+        parse_public_version(version)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return Evidence("invalid", reason="release manifest public version is invalid")
+    if not isinstance(version, str) or not match or not isinstance(digest, str) or not _DIGEST.fullmatch(digest):
         return Evidence("invalid", reason="release manifest identity is invalid")
     if match.group(1) != version or match.group(2) != digest:
         return Evidence("invalid", reason="release ID does not bind version and artifact digest")

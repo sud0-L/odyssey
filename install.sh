@@ -354,7 +354,8 @@ if [[ $configuration_mode == preserve ]]; then
 fi
 artifact="$build_dir/odyssey.ody"
 line "$accent" '→' 'Building and verifying the local release artifact…'
-"$root_dir/odyssey" artifact build --version 0.1.0-alpha --output "$artifact" >/dev/null
+project_version=$(<"$root_dir/VERSION")
+"$root_dir/odyssey" artifact build --version "$project_version" --output "$artifact" >/dev/null
 digest=$("$root_dir/odyssey" artifact verify "$artifact" --json | jq -r .artifactSha256)
 line "$good" '✓' 'Release artifact verified.'
 line "$accent" '→' 'Converging release, configuration, shortcuts, and user services…'
@@ -376,7 +377,7 @@ fi
 lifecycle=$("$root_dir/odyssey" bootstrap --artifact "$artifact" \
     --expect-sha256 "$digest" --configuration-mode "$configuration_mode" --json)
 release_root="$data_root/odyssey/current"
-expected_release_id="0.1.0-alpha-$digest"
+expected_release_id="$project_version-$digest"
 actual_configuration_mode=$(jq -r '.configurationMode // empty' \
     "$state_root/odyssey/startup/session-startup.json" 2>/dev/null || true)
 [[ $actual_configuration_mode == "$configuration_mode" ]] \

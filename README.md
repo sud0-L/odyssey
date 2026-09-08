@@ -238,8 +238,25 @@ odyssey update
 
 The update lifecycle validates the candidate release and runtime dependencies before activation, activates the shell and lifecycle manager together, reconciles services, and retains the previous known-good release for rollback.
 
-> [!NOTE]
-> Automatic remote release discovery is not currently configured. Updates from supplied verified release artifacts are supported. Automatic updates will become available once a release source is configured.
+Updates are discovered from official Odyssey GitHub Releases. Odyssey displays
+the installed and available versions, asks for confirmation, and verifies the
+downloaded `.ody` artifact before activation. The previous known-good release
+is retained for rollback.
+
+### Preparing an official release
+
+The maintainer selects the public version in `VERSION`; normal development does
+not increment it automatically. Build the release assets with:
+
+```bash
+scripts/build-release.sh
+```
+
+Create a GitHub Release tagged `v` followed by that version (for example,
+`v0.1.1-alpha`) and attach both generated assets:
+
+- `dist/odyssey.ody`
+- `dist/odyssey-release.json`
 
 ### Roll back
 

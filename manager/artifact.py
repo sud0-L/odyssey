@@ -178,7 +178,7 @@ def _inner_members(payload: bytes) -> list[tuple[tarfile.TarInfo, bytes | str]]:
 
 
 def _identity(manifest: Mapping[str, object], artifact: bytes) -> dict[str, object]:
-    return {"releaseId": manifest["releaseId"], "artifactSha256": manifest["artifactSha256"], "containerSha256": hashlib.sha256(artifact).hexdigest()}
+    return {"version": manifest["version"], "releaseId": manifest["releaseId"], "artifactSha256": manifest["artifactSha256"], "containerSha256": hashlib.sha256(artifact).hexdigest()}
 
 
 def verify(path: Path, expected_digest: str | None = None) -> dict[str, object]:

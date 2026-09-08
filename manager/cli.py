@@ -10,14 +10,17 @@ import tempfile
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-from manager import CONTRACT_SCHEMA_VERSION, MANAGER_VERSION
+from manager import CONTRACT_SCHEMA_VERSION, PROJECT_VERSION
 from manager.artifact import verify, write_build
 from manager.inventory import discover_dependencies, discover_platform, resolve_xdg, source_identity, source_inventory
 from manager.install import InstallError, Installer
 from manager.lifecycle import Lifecycle
-from manager.acquire import AcquireError, acquire, default_url
+from manager.acquire import (AcquireError, acquire, acquire_candidate,
+                             default_url, discover_latest,
+                             github_releases_url)
 from manager.dependencies import ArchDependencies, DependencyError
 from manager.reconcile import Reconciler, findings
+from manager.versioning import compare_public_versions
 
 RESERVED = ("backup", "restore", "startup", "component")
 UNAVAILABLE_EXIT = 69
@@ -38,18 +41,24 @@ def emit(payload: dict[str, object], as_json: bool) -> None:
         print(f"odyssey: {payload['command']} is unavailable in this release")
         return
     if payload.get("kind") == "version":
-        print(f"Odyssey manager {payload['managerVersion']} (contract schema {payload['contractSchema']})")
+        print(f"Odyssey {payload['version']} (contract schema {payload['contractSchema']})")
         print(f"Source identity: {payload['source']['sourceId'][:24]}")
         return
     if payload.get("kind") in ("status", "doctor"):
         print(f"Odyssey {payload['kind']}: {payload['summary']['state']}")
+        release = payload.get("evidence", {}).get("release", {})
+        if release.get("status") == "valid":
+            print(f"Version: {release['value']['version']}")
         for finding in payload.get("findings", []): print(f"{finding['severity']}: {finding['code']}: {finding['message']}")
         return
     if payload.get("kind") == "artifact":
-        print(f"Artifact {payload['action']}: {payload['releaseId']}")
+        print(f"Artifact {payload['action']}: {payload.get('version', payload['releaseId'])}")
         return
     if payload.get("kind") in ("install", "bootstrap", "update", "rollback", "repair", "config-reset", "uninstall", "cleanup"):
-        print(f"Odyssey {payload['kind']}: {payload.get('releaseId', payload.get('status'))}")
+        if payload.get("kind") == "update" and payload.get("status") == "current":
+            print(f"Odyssey update: already current ({payload['currentVersion']})")
+        else:
+            print(f"Odyssey {payload['kind']}: {payload.get('version', payload.get('status'))}")
         return
     if payload.get("kind") == "dependencies":
         if not payload["supported"]:
@@ -70,8 +79,16 @@ def emit(payload: dict[str, object], as_json: bool) -> None:
 
 
 def version_payload() -> dict[str, object]:
-    inventory = source_inventory(ROOT)
-    return {"kind": "version", "managerVersion": MANAGER_VERSION, "contractSchema": CONTRACT_SCHEMA_VERSION, "source": source_identity(ROOT, inventory)}
+    if ROOT.parent.name == "releases" and ROOT.parent.parent.name == "manager":
+        source = {"kind": "installed-release", "version": PROJECT_VERSION,
+                  "sourceId": ROOT.name, "releaseId": ROOT.name}
+    else:
+        inventory = source_inventory(ROOT)
+        source = source_identity(ROOT, inventory)
+    return {"kind": "version", "version": PROJECT_VERSION,
+            "managerVersion": PROJECT_VERSION,
+            "contractSchema": CONTRACT_SCHEMA_VERSION,
+            "source": source}
 
 
 def preflight_payload() -> dict[str, object]:
@@ -91,7 +108,9 @@ def main(argv: list[str] | None = None) -> int:
         artifact_parser = argparse.ArgumentParser(prog="odyssey artifact")
         subparsers = artifact_parser.add_subparsers(dest="action", required=True)
         build_parser = subparsers.add_parser("build")
-        build_parser.add_argument("--version", required=True)
+        build_parser.add_argument(
+            "--version", default=PROJECT_VERSION,
+            help="public version (defaults to the canonical VERSION file)")
         build_parser.add_argument("--output", required=True, type=Path)
         build_parser.add_argument("--source-root", type=Path, default=ROOT)
         build_parser.add_argument("--json", action="store_true", dest="as_json")
@@ -146,10 +165,98 @@ def main(argv: list[str] | None = None) -> int:
         install_args = install_parser.parse_args(tail)
         if bool(install_args.artifact) != bool(install_args.expect_sha256):
             install_parser.error("--artifact and --expect-sha256 must be supplied together")
+        output_json = install_args.as_json or args.as_json
+        if args.command == "update" and install_args.artifact is None:
+            try:
+                configured_descriptor = default_url(ROOT)
+            except AcquireError as error:
+                configured_descriptor = None
+                configuration_error = error
+            else:
+                configuration_error = None
+            if configuration_error is not None:
+                payload = {"kind": "update", "status": "failed",
+                           "reason": str(configuration_error), "changed": False}
+                if output_json:
+                    print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+                else:
+                    print(f"odyssey: update failed: {configuration_error}", file=sys.stderr)
+                return 65
+            if configured_descriptor is not None:
+                if not confirm("Update Odyssey and activate the validated candidate release?"):
+                    emit({"kind": "update", "status": "cancelled", "changed": False},
+                         output_json)
+                    return 0
+                try:
+                    with tempfile.TemporaryDirectory(prefix="odyssey-acquire-") as raw:
+                        file, digest, source = acquire(configured_descriptor, Path(raw))
+                        payload = Lifecycle(resolve_xdg()).update(
+                            file, digest, source=source,
+                            configuration_mode=install_args.configuration_mode)
+                except (AcquireError, InstallError, OSError, ValueError) as error:
+                    payload = {"kind": "update", "status": "failed",
+                               "reason": str(error), "changed": False}
+                    if output_json:
+                        print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+                    else:
+                        print(f"odyssey: update failed: {error}", file=sys.stderr)
+                    return 65
+                emit(payload, output_json)
+                return 0
+            paths = resolve_xdg()
+            lifecycle = Lifecycle(paths)
+            try:
+                current = lifecycle.current_release()
+                candidate = discover_latest(github_releases_url(ROOT))
+            except (AcquireError, InstallError, OSError, ValueError) as error:
+                reason = str(error)
+                if isinstance(error, InstallError):
+                    reason = f"installation state requires odyssey repair: {reason}"
+                payload = {"kind": "update", "status": "failed", "reason": reason,
+                           "changed": False}
+                if output_json:
+                    print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+                else:
+                    print(f"odyssey: update failed: {reason}", file=sys.stderr)
+                return 65
+            current_version = current["version"]
+            available_version = candidate["version"]
+            if compare_public_versions(available_version, current_version) <= 0:
+                emit({"kind": "update", "status": "current", "changed": False,
+                      "currentVersion": current_version,
+                      "availableVersion": available_version}, output_json)
+                return 0
+            if not output_json:
+                print(f"Current: {current_version}")
+                print(f"Available: {available_version}")
+            if not confirm("Update Odyssey and activate the validated candidate release?"):
+                emit({"kind": "update", "status": "cancelled", "changed": False,
+                      "currentVersion": current_version,
+                      "availableVersion": available_version}, output_json)
+                return 0
+            try:
+                with tempfile.TemporaryDirectory(prefix="odyssey-acquire-") as raw:
+                    file, digest, source = acquire_candidate(candidate, Path(raw))
+                    payload = lifecycle.update(
+                        file, digest, source=source,
+                        configuration_mode=install_args.configuration_mode)
+            except (AcquireError, InstallError, OSError, ValueError) as error:
+                payload = {"kind": "update", "status": "failed",
+                           "reason": str(error), "changed": False,
+                           "currentVersion": current_version,
+                           "availableVersion": available_version}
+                if output_json:
+                    print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+                else:
+                    print(f"odyssey: update failed: {error}", file=sys.stderr)
+                return 65
+            emit({**payload, "currentVersion": current_version,
+                  "availableVersion": available_version}, output_json)
+            return 0
         if args.command == "update" and not confirm(
                 "Update Odyssey and activate the validated candidate release?"):
             emit({"kind": "update", "status": "cancelled", "changed": False},
-                 install_args.as_json or args.as_json)
+                 output_json)
             return 0
         if install_args.artifact is None:
             try: descriptor = default_url(ROOT)
@@ -157,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
             else: source_error = "no default HTTPS release descriptor is configured"
             if descriptor is None:
                 payload = {"kind": args.command, "status": "unavailable", "reason": source_error}
-                if install_args.as_json or args.as_json: print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+                if output_json: print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
                 else: emit({"status": "unavailable", "command": args.command, "reason": payload["reason"]}, False)
                 return UNAVAILABLE_EXIT
             try:
@@ -173,10 +280,10 @@ def main(argv: list[str] | None = None) -> int:
                                    configuration_mode=install_args.configuration_mode))
             except (AcquireError, InstallError, OSError, ValueError) as error:
                 payload = {"kind": args.command, "status": "failed", "reason": str(error)}
-                if install_args.as_json or args.as_json: print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+                if output_json: print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
                 else: print(f"odyssey: {args.command} failed: {error}", file=sys.stderr)
                 return 65
-            emit(payload, install_args.as_json or args.as_json); return 0
+            emit(payload, output_json); return 0
         try:
             if args.command == "install":
                 # Preserve the bounded first-install primitive.
@@ -193,10 +300,10 @@ def main(argv: list[str] | None = None) -> int:
                     configuration_mode=install_args.configuration_mode)
         except (InstallError, OSError, ValueError) as error:
             payload = {"kind": args.command, "status": "failed", "reason": str(error)}
-            if install_args.as_json or args.as_json: print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+            if output_json: print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
             else: print(f"odyssey: {args.command} failed: {error}", file=sys.stderr)
             return 65
-        emit(payload, install_args.as_json or args.as_json)
+        emit(payload, output_json)
         return 0
     if args.command == "rollback":
         if not resolve_xdg().install_manifest.is_file():

@@ -148,7 +148,7 @@ class Installer:
             install = {"schema": 1, "installationId": operation_id, "installedReleaseIds": [release_id], "activeReleaseId": release_id, "previousReleaseId": None, "dataSchemaVersion": manifest["dataSchemaVersion"], "operationId": operation_id, "artifact": identity, "startup": {"adapter": "odyssey-startup", "adapterVersion": 3, "receipt": response.get("receipt")}}
             _atomic_json(self.paths.install_manifest, install)
             self._event(operation, "committed"); self._checkpoint(operation, "committed")
-            result = {"schema": 1, "operationId": operation_id, "status": "completed", "releaseId": release_id}
+            result = {"schema": 1, "operationId": operation_id, "status": "completed", "releaseId": release_id, "version": manifest["version"]}
             _atomic_json(operation / "result.json", result)
             return {"kind": "install", "status": "completed", "operationId": operation_id, **identity}
         except Exception as error:

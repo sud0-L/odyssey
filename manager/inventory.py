@@ -58,6 +58,7 @@ def source_inventory(root: Path) -> list[dict[str, str]]:
         if not path.is_file():
             raise ValueError(f"required production payload is absent: {relative}")
         entries.append({"path": relative, "category": category})
+    include("VERSION", "release-metadata")
     include("shell.qml", "runtime-qml")
     include("qmldir", "runtime-qml")
     for directory in QML_DIRECTORIES:
@@ -101,6 +102,8 @@ def packaged_inventory(root: Path) -> list[dict[str, str]]:
             raise ValueError(f"required manager payload is absent: {relative}")
         entries.append({"component": "manager", "path": relative, "category": category})
     include("odyssey", "manager-launcher")
+    include("VERSION", "manager-metadata")
+    include("manager/default-release.json", "manager-metadata")
     for path in sorted((root / "manager").rglob("*.py")):
         include(path.relative_to(root).as_posix(), "manager-code")
     for script in MANAGER_ADAPTERS:
