@@ -72,13 +72,15 @@ render() {
                 'hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("odyssey ipc audio increment 3"), { locked = true, repeating = true, description = "Raise volume" })' \
                 'hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("odyssey ipc audio decrement 3"), { locked = true, repeating = true, description = "Lower volume" })' \
                 'hl.bind("XF86AudioMute", hl.dsp.exec_cmd("odyssey ipc audio mute"), { locked = true, description = "Toggle audio mute" })' \
-                'hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("odyssey ipc audio micmute"), { locked = true, description = "Toggle microphone mute" })' >> "$tmp"
+                'hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("odyssey ipc audio micmute"), { locked = true, description = "Toggle microphone mute" })' \
+                'hl.bind("SUPER + B", hl.dsp.exec_cmd("odyssey ipc audio cycleoutput"), { description = "Cycle audio output device" })' >> "$tmp"
         elif [[ $configuration_mode != managed ]]; then
             printf '%s\n' \
                 'bindel = , XF86AudioRaiseVolume, exec, odyssey ipc audio increment 3' \
                 'bindel = , XF86AudioLowerVolume, exec, odyssey ipc audio decrement 3' \
                 'bindl = , XF86AudioMute, exec, odyssey ipc audio mute' \
-                'bindl = , XF86AudioMicMute, exec, odyssey ipc audio micmute' >> "$tmp"
+                'bindl = , XF86AudioMicMute, exec, odyssey ipc audio micmute' \
+                'bind = SUPER, B, exec, odyssey ipc audio cycleoutput' >> "$tmp"
         fi
         printf '%s\n' "$end" >> "$tmp"
     fi
@@ -94,7 +96,7 @@ render() {
 }
 case $command_name in
  status) managed && printf 'MANAGED=true\n' || printf 'MANAGED=false\n' ;;
- apply) shift 2; (($#==10)) || { printf 'Expected ten shortcut toggles\n' >&2; exit 2; }; for value in "$@"; do valid "$value" || { printf 'Invalid shortcut toggle\n' >&2; exit 2; }; done; keys=(A 'CTRL + A' V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R'); index=0; for value in "$@"; do [[ $value != true ]] || ! conflict "${keys[$index]}" || { printf 'Shortcut conflict: SUPER + %s is already in use\n' "${keys[$index]}" >&2; exit 1; }; ((index+=1)); done; render true "$@"; printf 'MANAGED=true\n' ;;
+ apply) shift 2; (($#==10)) || { printf 'Expected ten shortcut toggles\n' >&2; exit 2; }; for value in "$@"; do valid "$value" || { printf 'Invalid shortcut toggle\n' >&2; exit 2; }; done; keys=(A 'CTRL + A' V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R'); index=0; for value in "$@"; do [[ $value != true ]] || ! conflict "${keys[$index]}" || { printf 'Shortcut conflict: SUPER + %s is already in use\n' "${keys[$index]}" >&2; exit 1; }; ((index+=1)); done; [[ $configuration_mode == managed ]] || ! conflict B || { printf 'Shortcut conflict: SUPER + B is already in use\n' >&2; exit 1; }; render true "$@"; printf 'MANAGED=true\n' ;;
  remove) render false; printf 'MANAGED=false\n' ;;
  *) printf 'usage: %s {status|apply|remove} MAIN_CONFIG [TOGGLES...]\n' "$0" >&2; exit 2;;
 esac

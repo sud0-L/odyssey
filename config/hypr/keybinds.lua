@@ -9,7 +9,7 @@ end
 -- Application launchers
 hl.bind(mod .. " + Return", hl.dsp.exec_cmd("kitty"), { description = "Open terminal (Kitty)" })
 hl.bind(mod .. " + C", hl.dsp.exec_cmd("code"), { description = "Open code editor (Visual Studio Code)" })
-hl.bind(mod .. " + B", hl.dsp.exec_cmd("firefox"), { description = "Open web browser (Firefox)" })
+hl.bind(mod .. " + B", odyssey("audio cycleoutput"), { description = "Cycle audio output device" })
 hl.bind(mod .. " + SHIFT + F", odyssey("capture screenshot region both"), { description = "Capture and save a region screenshot" })
 hl.bind(mod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "Open file manager (Thunar)" })
 

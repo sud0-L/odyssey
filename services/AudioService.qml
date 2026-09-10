@@ -56,6 +56,10 @@ QtObject {
             root.toggleMicrophoneMute()
             return "MICROPHONE_MUTE_TOGGLE_SUCCESS"
         }
+
+        function cycleoutput(): string {
+            return root.cycleOutputDevice()
+        }
     }
 
     function displayName(node, fallback): string {
@@ -98,6 +102,19 @@ QtObject {
             return false
         Pipewire.preferredDefaultAudioSink = node
         return true
+    }
+
+    function cycleOutputDevice(): string {
+        const devices = outputDevices.filter(node => !!node?.audio && !node.isStream && !node.audio.muted)
+        if (devices.length === 0)
+            return "AUDIO_OUTPUT_UNAVAILABLE"
+        const currentIndex = devices.findIndex(node => node?.id === sink?.id)
+        const next = devices[(currentIndex + 1) % devices.length]
+        if (!setOutputDevice(next))
+            return "AUDIO_OUTPUT_CYCLE_FAILED"
+        outputLevelChanged(next.audio.volume, next.audio.muted,
+            displayName(next, "Audio device"))
+        return "AUDIO_OUTPUT_CYCLE_SUCCESS"
     }
 
     function setInputDevice(node): bool {

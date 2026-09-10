@@ -154,6 +154,7 @@ odyssey ipc audio increment 3
 odyssey ipc audio decrement 3
 odyssey ipc audio mute
 odyssey ipc audio micmute
+odyssey ipc audio cycleoutput
 ```
 
 These commands can be used from Hyprland keybindings, scripts, or other desktop integrations.
