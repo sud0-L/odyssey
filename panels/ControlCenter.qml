@@ -119,10 +119,20 @@ Item {
     }
 
     function optionDetail(option): string {
-        if (displayedSection === "output")
-            return option?.id === AudioService.sink?.id ? "Current output" : "Select output"
-        if (displayedSection === "input")
-            return option?.id === AudioService.source?.id ? "Current input" : "Select input"
+        if (displayedSection === "output") {
+            const selected = option?.id === AudioService.sink?.id
+            const enabled = AudioService.deviceEnabled(option)
+            if (!enabled)
+                return selected ? "Current output · Disabled" : "Disabled"
+            return selected ? "Current output" : "Select output"
+        }
+        if (displayedSection === "input") {
+            const selected = option?.id === AudioService.source?.id
+            const enabled = AudioService.deviceEnabled(option)
+            if (!enabled)
+                return selected ? "Current input · Disabled" : "Disabled"
+            return selected ? "Current input" : "Select input"
+        }
         if (displayedSection === "wifi") {
             if (option?.connected)
                 return "Connected"
@@ -157,6 +167,11 @@ Item {
         if (displayedSection === "bluetooth")
             return option !== null && option !== undefined && !option.blocked
         return option !== null && option !== undefined
+    }
+
+    function optionToggleAvailable(option): bool {
+        return (displayedSection === "output" || displayedSection === "input")
+            && AudioService.isAudioDevice(option)
     }
 
     function activateOption(option): void {
@@ -723,8 +738,11 @@ Item {
                             ? Theme.tertiary : Theme.primary
                         informationAvailable: (root.displayedSection === "wifi"
                             && modelData?.connected) || root.displayedSection === "bluetooth"
+                        toggleAvailable: root.optionToggleAvailable(modelData)
+                        toggleChecked: AudioService.deviceEnabled(modelData)
                         onActivated: root.activateOption(modelData)
                         onInformationRequested: root.showInformation(modelData)
+                        onToggleRequested: checked => AudioService.setDeviceEnabled(modelData, checked)
                     }
 
                     Text {

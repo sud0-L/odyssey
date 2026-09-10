@@ -12,10 +12,13 @@ Rectangle {
     property bool available: true
     property bool busy: false
     property bool informationAvailable: false
+    property bool toggleAvailable: false
+    property bool toggleChecked: true
     property color accent: Theme.primary
 
     signal activated()
     signal informationRequested()
+    signal toggleRequested(bool checked)
 
     activeFocusOnTab: available
     opacity: available ? 1 : 0.46
@@ -121,6 +124,13 @@ Rectangle {
             }
             HoverHandler { id: infoHover }
             TapHandler { onTapped: root.informationRequested() }
+        }
+
+        SettingsToggle {
+            visible: root.toggleAvailable
+            checked: root.toggleChecked
+            available: root.available && !root.busy
+            onToggled: checked => root.toggleRequested(checked)
         }
 
         Rectangle {

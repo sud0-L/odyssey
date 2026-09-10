@@ -93,6 +93,27 @@ QtObject {
             source.audio.muted = !source.audio.muted
     }
 
+    function isAudioDevice(node): bool {
+        return !!node?.audio && !node.isStream
+    }
+
+    function deviceEnabled(node): bool {
+        return isAudioDevice(node) && !node.audio.muted
+    }
+
+    function setDeviceEnabled(node, enabled): bool {
+        if (!isAudioDevice(node))
+            return false
+        node.audio.muted = !enabled
+        return true
+    }
+
+    function toggleDeviceEnabled(node): bool {
+        if (!isAudioDevice(node))
+            return false
+        return setDeviceEnabled(node, !deviceEnabled(node))
+    }
+
     function setOutputDevice(node): bool {
         if (!node || !outputDevices.includes(node))
             return false
