@@ -136,6 +136,11 @@ If you already have a configured Hyprland environment and want to retain your ex
 
 Preserve mode keeps your existing configuration wherever possible while adding the integration required to run odyssey.
 
+If the installer cannot safely determine the active Hyprland Lua config during
+an interactive install, it asks you for the config path. For non-interactive
+installs, or to select the path explicitly, set `ODYSSEY_HYPRLAND_CONFIG` to
+the absolute path of the Hyprland Lua config before running the installer.
+
 ## IPC and custom keybindings
 
 odyssey exposes a stable IPC interface for shell actions.
@@ -264,7 +269,7 @@ Additional commands are primarily intended for installation, development, recove
 | `odyssey bootstrap` | Performs initial installation or converges an installation to a supplied release artifact. |
 | `odyssey install` | Installs a verified release artifact. Automatic remote installation requires a configured release source. |
 | `odyssey uninstall` | Removes odyssey-owned lifecycle payload and startup integration while preserving user data. |
-| `odyssey cleanup` | Removes completed lifecycle-operation journals while retaining releases and user data. |
+| `odyssey cleanup --yes` | Removes completed lifecycle-operation journals while retaining releases and user data. |
 
 The `backup`, `restore`, `startup`, and `component` commands are currently reserved and are not exposed as functional public workflows.
 

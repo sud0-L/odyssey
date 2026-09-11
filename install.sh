@@ -138,6 +138,13 @@ for source in config/hypr/hyprland.lua config/kitty/kitty.conf \
         || die "Required packaged configuration is missing: $source"
 done
 
+hyprland_selection=interactive
+[[ $unattended == false && -t 0 ]] || hyprland_selection=noninteractive
+hyprland_config_path=$("$root_dir/scripts/select-hyprland-config.sh" \
+    "$configuration_mode" "$hyprland_selection") \
+    || die 'Hyprland configuration selection failed.'
+export ODYSSEY_HYPRLAND_CONFIG="$hyprland_config_path"
+
 create_user_backup_dir() {
     local candidate
     mkdir -p -- "$backup_root/backups"
@@ -424,6 +431,11 @@ section 6 'Verification'
 declare -a labels=() results=() details=()
 check() { labels+=("$1"); check_detail=; shift; if "$@"; then results+=(pass); details+=(""); else results+=(fail); details+=("${check_detail:-failed}"); fi; }
 has_command() { command -v "$1" >/dev/null 2>&1; }
+odyssey_command_ok() {
+    local output expected="${XDG_BIN_HOME:-$HOME/.local/bin}/odyssey"
+    output=$("$root_dir/scripts/verify-launcher-path.sh" "$expected" 2>&1) \
+        || { check_detail=$output; return 1; }
+}
 valid_release() {
     [[ -f $install_manifest && -L $data_root/odyssey/current && -L $data_root/odyssey/manager/current ]] || return 1
     local active; active=$(jq -er .activeReleaseId "$install_manifest") || return 1
@@ -503,6 +515,7 @@ font_ok() {
 }
 
 for cmd in qs hypridle hyprpicker matugen starship fastfetch nmcli bluetoothctl playerctl sensors notify-send; do check "Command · $cmd" has_command "$cmd"; done
+check 'Command · odyssey' odyssey_command_ok
 check 'Font · Adwaita Sans' font_ok 'Adwaita Sans' /usr/share/fonts/Adwaita/AdwaitaSans-Regular.ttf
 check 'Font · JetBrainsMono Nerd Font' font_ok 'JetBrainsMono Nerd Font' /usr/share/fonts/TTF/JetBrainsMonoNerdFont-Regular.ttf
 if [[ $zsh_enabled == true ]]; then check 'Command · zsh' has_command zsh; fi

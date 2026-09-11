@@ -108,7 +108,6 @@ class Installer:
         stage = self.paths.shell_releases.parent / f".stage-{operation_id}"
         adapter_plan: Path | None = None
         adapter_id: str | None = None
-        adapter_started = False
         try:
             # Never extract from a path that an external writer can swap after the
             # initial identity check.  The operation-local copy is reverified.
@@ -132,6 +131,9 @@ class Installer:
             _atomic_link(self.paths.manager_current, f"releases/{release_id}")
             if self.paths.bin_command.exists() or self.paths.bin_command.is_symlink(): raise InstallError("stable odyssey command already exists")
             _atomic_link(self.paths.bin_command, str(self.paths.manager_current / "odyssey"))
+            # The generated service resolves this link in ExecStart. Publish it
+            # before the startup adapter can start or restart the service.
+            _atomic_link(self.paths.shell_current, f"releases/{release_id}")
             adapter = self.paths.manager_current / "scripts/startupctl.sh"
             response = self._adapter(adapter, ["plan", "--action", "apply",
                 "--release-id", release_id, "--release-root", str(shell_release),
@@ -141,10 +143,9 @@ class Installer:
             adapter_plan = operation / "startup-plan.json"; _atomic_json(adapter_plan, plan_value); adapter_id = str(plan_value["planId"])
             self._event(operation, "startup-plan-durable", {"planId": adapter_id}); self._checkpoint(operation, "adapter-apply")
             response = self._adapter(adapter, ["apply", "--plan-file", str(adapter_plan), "--plan-id", adapter_id])
-            adapter_started = response.get("status") in ("completed", "unchanged")
-            if not adapter_started: raise InstallError("startup adapter did not activate the selected release")
+            if response.get("status") not in ("completed", "unchanged"):
+                raise InstallError("startup adapter did not activate the selected release")
             self._event(operation, "startup-applied", {"receipt": response.get("receipt")}); self._checkpoint(operation, "activate")
-            _atomic_link(self.paths.shell_current, f"releases/{release_id}")
             install = {"schema": 1, "installationId": operation_id, "installedReleaseIds": [release_id], "activeReleaseId": release_id, "previousReleaseId": None, "dataSchemaVersion": manifest["dataSchemaVersion"], "operationId": operation_id, "artifact": identity, "startup": {"adapter": "odyssey-startup", "adapterVersion": 3, "receipt": response.get("receipt")}}
             _atomic_json(self.paths.install_manifest, install)
             self._event(operation, "committed"); self._checkpoint(operation, "committed")
@@ -153,15 +154,25 @@ class Installer:
             return {"kind": "install", "status": "completed", "operationId": operation_id, **identity}
         except Exception as error:
             try:
-                compensated = self._compensate(adapter_plan, adapter_id) if adapter_started and adapter_plan and adapter_id else True
+                # apply writes its durable pending capsule before it mutates the
+                # host.  A failed apply therefore needs compensation just as
+                # much as a successful one does.  Compensating an apply that
+                # did not reach mutation is intentionally idempotent.
+                compensated = self._compensate(adapter_plan, adapter_id) if adapter_plan and adapter_id else True
             except InstallError:
                 compensated = False
-            self._cleanup_new(release_id, stage)
-            status = "compensated" if compensated else "failed"
-            self._event(operation, "compensated" if compensated else "compensation-failed", {"reason": str(error)})
-            self._checkpoint(operation, status)
-            _atomic_json(operation / "result.json", {"schema": 1, "operationId": operation_id, "status": status, "reason": str(error)})
-            raise InstallError(f"install {status}: {error}") from error
+            if compensated:
+                self._cleanup_new(release_id, stage)
+                self._event(operation, "compensated", {"reason": str(error)})
+                self._checkpoint(operation, "compensated")
+                _atomic_json(operation / "result.json", {"schema": 1, "operationId": operation_id, "status": "compensated", "reason": str(error)})
+                raise InstallError(f"install compensated: {error}") from error
+            # Keep the release, links, plan, and non-terminal journal together.
+            # Lifecycle.bootstrap() can then retry exact compensation on the
+            # next installer run instead of leaving an unrecoverable pending
+            # adapter capsule behind.
+            self._event(operation, "compensation-failed", {"reason": str(error)})
+            raise InstallError(f"install recovery required: {error}") from error
 
     def _preflight(self, release_id: str) -> None:
         for path in (self.paths.install_manifest, self.paths.shell_current, self.paths.manager_current, self.paths.bin_command):
@@ -200,7 +211,7 @@ class Installer:
 
     def _compensate(self, plan: Path, plan_id: str) -> bool:
         response = self._adapter(self.paths.manager_current / "scripts/startupctl.sh", ["compensate", "--plan-file", str(plan), "--plan-id", plan_id])
-        return response.get("status") == "compensated"
+        return response.get("status") in ("compensated", "unchanged")
 
     def _cleanup_new(self, release_id: str, stage: Path) -> None:
         if self.paths.install_manifest.exists(): self.paths.install_manifest.unlink()

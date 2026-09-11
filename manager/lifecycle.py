@@ -146,6 +146,15 @@ class Lifecycle(Installer):
         result = Installer(self.paths, run=self.run).install(
             artifact, expected_digest,
             configuration_mode=configuration_mode or "managed")
+        if not self._healthy(release_id):
+            try:
+                self.uninstall()
+            except InstallError as cleanup_error:
+                raise InstallError(
+                    "fresh installation runtime health failed and cleanup failed: "
+                    + str(cleanup_error)) from cleanup_error
+            raise InstallError(
+                "fresh installation runtime did not satisfy exact startup health")
         return {**result, "kind": "bootstrap", "action": "installed",
                 "recoveredOperations": recovered, "quarantineBackup": backup}
 

@@ -86,8 +86,56 @@ restore_split_receipt() {
     rmdir --ignore-fail-on-non-empty "$destination" 2>/dev/null || true
 }
 
+active_hyprland_config() {
+    local signature=${HYPRLAND_INSTANCE_SIGNATURE:-} instances pid info selected='' cwd index
+    local -a arguments=()
+    [[ -n $signature ]] || return 1
+    command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || return 1
+    instances=$(hyprctl instances -j 2>/dev/null) || return 1
+    pid=$(jq -er --arg signature "$signature" \
+        '[.[] | select(.instance==$signature) | .pid] | if length==1 then .[0] else empty end' \
+        <<<"$instances") || return 1
+    [[ $pid =~ ^[0-9]+$ && -r /proc/$pid/cmdline &&
+       $(stat -c '%u' "/proc/$pid") == "$EUID" ]] || return 1
+    mapfile -d '' -t arguments < "/proc/$pid/cmdline" || true
+    for ((index=0; index<${#arguments[@]}; index++)); do
+        case ${arguments[$index]} in
+          --config|-c)
+            ((index+1 < ${#arguments[@]})) || return 1
+            selected=${arguments[$((index+1))]}
+            break
+            ;;
+          --config=*) selected=${arguments[$index]#--config=}; break ;;
+        esac
+    done
+    if [[ -n $selected ]]; then
+        if [[ $selected != /* ]]; then
+            cwd=$(readlink -f -- "/proc/$pid/cwd") || return 1
+            selected="$cwd/$selected"
+        fi
+        readlink -m -- "$selected"
+        return
+    fi
+    info=$(hyprctl systeminfo 2>/dev/null) || return 1
+    grep -Eq '^[[:space:]]*configProvider:[[:space:]]*lua[[:space:]]*$' \
+        <<<"$info" || return 1
+    printf '%s\n' "$config_root/hypr/hyprland.lua"
+}
 host() {
-    local selected=${ODYSSEY_HYPRLAND_CONFIG:-"$config_root/hypr/hyprland.lua"}
+    local configuration_mode=${1:-managed} selected
+    if [[ -n ${ODYSSEY_HYPRLAND_CONFIG:-} ]]; then
+        selected=$ODYSSEY_HYPRLAND_CONFIG
+    elif [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
+        selected=$(active_hyprland_config) || return 1
+    elif [[ -f $receipt_file ]] && jq -e \
+            '.schema==3 and .adapter=="odyssey-startup" and (.main.path|type=="string")' \
+            "$receipt_file" >/dev/null 2>&1; then
+        selected=$(jq -r .main.path "$receipt_file")
+    elif [[ $configuration_mode == managed ]]; then
+        selected="$config_root/hypr/hyprland.lua"
+    else
+        return 1
+    fi
     [[ $selected == /* && $selected == *.lua && ! -L $selected ]] || return 1
     [[ ! -e $selected || -f $selected ]] || return 1
     printf 'lua\t%s\t%s\n' "$selected" "$(dirname -- "$selected")/odyssey.lua"
@@ -202,12 +250,12 @@ plan() {
     local action=$1 id=${2:-} root=${3:-} requested_mode=${4:-} configuration_mode canonical release_json=null config format main integration line base pid
     systemd_ok || { error plan UNSUPPORTED 'user systemd is unavailable' unsupported; return 69; }
     case $action in apply|retarget) canonical=$(release "$id" "$root") || { error plan INVALID_RELEASE 'release is not a canonical installed root' refused; return 64; }; release_json=$(jq -cn --arg id "$id" --arg root "$canonical" '{id:$id,root:$root}');; remove) ;; *) error plan INVALID_REQUEST 'unsupported plan action' refused; return 64;; esac
-    [[ ! -f $pending_file ]] || { error plan PENDING_OPERATION 'explicit compensation is required' refused; return 73; }; config=$(host) || { error plan UNSUPPORTED_HOST 'exactly one supported regular Hyprland configuration is required' refused; return 73; }; IFS=$'\t' read -r format main integration <<<"$config"; line=$(include "$format" "$integration")
     if [[ -n $requested_mode ]]; then configuration_mode=$requested_mode
     elif jq -e '.schema==3 and .adapter=="odyssey-startup"' "$receipt_file" >/dev/null 2>&1; then
         configuration_mode=$(jq -r '.configurationMode // "managed"' "$receipt_file")
     else configuration_mode=managed; fi
     valid_configuration_mode "$configuration_mode" || { error plan INVALID_REQUEST 'configuration mode must be managed or preserve' refused; return 64; }
+    [[ ! -f $pending_file ]] || { error plan PENDING_OPERATION 'explicit compensation is required' refused; return 73; }; config=$(host "$configuration_mode") || { error plan UNSUPPORTED_HOST 'active Hyprland Lua configuration could not be resolved safely; set ODYSSEY_HYPRLAND_CONFIG explicitly' refused; return 73; }; IFS=$'\t' read -r format main integration <<<"$config"; line=$(include "$format" "$integration")
     case $action in
       apply) [[ $(jq -r '.status // ""' <<<"$(receipt_summary)") != legacy-or-invalid ]] || { [[ $configuration_mode == preserve ]] && legacy_receipt "$main" || { error plan CONFLICT 'invalid startup receipt requires manual review' refused; return 73; }; };;
       retarget) [[ $(jq -r '.status // ""' <<<"$(receipt_summary)") == valid ]] || { error plan CONFLICT 'retarget requires a valid public receipt' refused; return 73; };;
@@ -289,6 +337,13 @@ mutate() {
 }
 main() { shift 2; local cmd=${1:-} action='' id='' root='' mode='' plan_file=''; shift || true; while (($#)); do case $1 in --action) action=$2;shift 2;;--release-id) id=$2;shift 2;;--release-root) root=$2;shift 2;;--configuration-mode) mode=$2;shift 2;;--plan-file) plan_file=$2;shift 2;;--plan-id) id=$2;shift 2;;*) error "$cmd" INVALID_REQUEST 'invalid arguments' refused;return 64;;esac; done; case $cmd in status) status_json;;plan) plan "$action" "$id" "$root" "$mode";;apply|retarget|remove) mutate "$cmd" "$plan_file" "$id";;compensate) compensate "$plan_file" "$id";;*) error unknown INVALID_REQUEST 'invalid command' refused;return 64;;esac; }
 
+if [[ ${1:-} == resolve-host ]]; then
+    valid_configuration_mode "${2:-}" || { printf 'configuration mode must be managed or preserve\n' >&2; exit 64; }
+    config=$(host "$2") || exit 73
+    IFS=$'\t' read -r _ main_config _ <<<"$config"
+    printf '%s\n' "$main_config"
+    exit
+fi
 if [[ ${1:-} == --contract ]]; then [[ ${2:-} == odyssey-startup/v2 ]] || { error unknown UNSUPPORTED 'unsupported contract' unsupported; exit 69; }; main "$@"; exit $?; fi
 [[ ${1:-} == status ]] && { systemd_ok && printf 'STATE=%s\n' "$(state)" || printf 'STATE=unsupported\n'; exit; }
 printf 'usage: %s status\n' "$0" >&2; exit 64
