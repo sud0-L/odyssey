@@ -55,6 +55,12 @@ QtObject {
         return cursor === needle.length ? 700 - gap : -1
     }
 
+    function displayCommand(command: string, maximum: int): string {
+        const compact = command.replace(/\s+/g, " ").trim()
+        return compact.length > maximum
+            ? compact.slice(0, Math.max(0, maximum - 3)) + "..." : compact
+    }
+
     function result(command: string, index: int, score: real): var {
         return {
             key: "command-history:" + index,
@@ -62,7 +68,7 @@ QtObject {
             group: "Command history",
             kind: "command",
             actionId: "run-command",
-            title: command,
+            title: displayCommand(command, 82),
             subtitle: "Run in a new terminal",
             icon: "󰆍",
             iconKind: "glyph",
@@ -90,7 +96,8 @@ QtObject {
             bounded.push({
                 key: "command-typed", provider: "command-history",
                 group: "Command", kind: "command-run", actionId: "run-command",
-                title: `Run “${queryText}”`, subtitle: "Execute exact text in a new terminal",
+                title: `Run “${displayCommand(queryText, 68)}”`,
+                subtitle: "Execute exact text in a new terminal",
                 icon: "", iconKind: "glyph", badge: "RUN", score: 2000,
                 command: queryText, enabled: true
             })

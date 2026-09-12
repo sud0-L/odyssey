@@ -113,11 +113,13 @@ def selected_terminal(requested: str) -> str:
 
 def terminal_command(terminal: str, shell: str, command: str) -> list[str]:
     if terminal == "kitty":
-        return [terminal, "--", shell, "-lc", command]
+        return [terminal, "--hold", "--", shell, "-lc", command]
     if terminal == "foot":
-        return [terminal, shell, "-lc", command]
-    if terminal in ("alacritty", "ghostty"):
-        return [terminal, "-e", shell, "-lc", command]
+        return [terminal, "--hold", shell, "-lc", command]
+    if terminal == "alacritty":
+        return [terminal, "--hold", "-e", shell, "-lc", command]
+    if terminal == "ghostty":
+        return [terminal, "--wait-after-command=true", "-e", shell, "-lc", command]
     raise ValueError("unsupported terminal")
 
 
