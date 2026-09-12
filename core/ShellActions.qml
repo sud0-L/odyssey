@@ -8,6 +8,9 @@ QtObject {
     signal launcherToggleRequested()
     signal launcherOpenRequested()
     signal launcherCloseRequested()
+    signal commandLauncherToggleRequested()
+    signal commandLauncherOpenRequested()
+    signal commandLauncherCloseRequested()
     signal controlCenterToggleRequested()
     signal controlCenterOpenRequested()
     signal controlCenterCloseRequested()
@@ -41,6 +44,25 @@ QtObject {
         function close(): string {
             root.launcherCloseRequested()
             return "LAUNCHER_CLOSE_SUCCESS"
+        }
+    }
+
+    property IpcHandler commandLauncherIpc: IpcHandler {
+        target: "command-launcher"
+
+        function toggle(): string {
+            root.commandLauncherToggleRequested()
+            return "COMMAND_LAUNCHER_TOGGLE_SUCCESS"
+        }
+
+        function open(): string {
+            root.commandLauncherOpenRequested()
+            return "COMMAND_LAUNCHER_OPEN_SUCCESS"
+        }
+
+        function close(): string {
+            root.commandLauncherCloseRequested()
+            return "COMMAND_LAUNCHER_CLOSE_SUCCESS"
         }
     }
 

@@ -414,6 +414,17 @@ PanelWindow {
         function onLauncherCloseRequested(): void {
             islandController.closePage("launcher")
         }
+        function onCommandLauncherToggleRequested(): void {
+            if (window.presentationTarget)
+                islandController.togglePage("command-launcher")
+        }
+        function onCommandLauncherOpenRequested(): void {
+            if (window.presentationTarget)
+                islandController.openPage("command-launcher")
+        }
+        function onCommandLauncherCloseRequested(): void {
+            islandController.closePage("command-launcher")
+        }
         function onControlCenterToggleRequested(): void {
             if (window.presentationTarget)
                 islandController.togglePage("control-center")

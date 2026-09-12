@@ -253,6 +253,23 @@ QtObject {
         readonly property int resultLimit: 24
     }
 
+    readonly property QtObject commandLauncher: QtObject {
+        readonly property string historySource: {
+            const candidate = SettingsStore.value("commandLauncher",
+                "historySource", "auto")
+            return SettingsStore.validCommandHistorySources.indexOf(candidate) >= 0
+                ? candidate : "auto"
+        }
+        readonly property string terminal: {
+            const candidate = SettingsStore.value("commandLauncher",
+                "terminal", "auto")
+            return SettingsStore.validCommandTerminals.indexOf(candidate) >= 0
+                ? candidate : "auto"
+        }
+        readonly property bool historySuggestions: SettingsStore.boolValue(
+            "commandLauncher", "historySuggestions", true)
+    }
+
     readonly property QtObject hyprland: QtObject {
         // Matches the numeric workspace bindings discovered on this machine.
         readonly property int workspaceCount: 10
@@ -326,6 +343,8 @@ QtObject {
             "shortcuts", "managed", false)
         readonly property bool launcher: SettingsStore.boolValue(
             "shortcuts", "launcher", true)
+        readonly property bool commandLauncher: SettingsStore.boolValue(
+            "shortcuts", "commandLauncher", true)
         readonly property bool clipboard: SettingsStore.boolValue(
             "shortcuts", "clipboard", true)
         readonly property bool settings: SettingsStore.boolValue(

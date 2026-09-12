@@ -3,6 +3,7 @@ import QtQuick
 import "providers"
 
 QtObject {
+    readonly property int revision: 0
     readonly property var providers: [
         OdysseyActionsProvider,
         WorkspacesProvider,

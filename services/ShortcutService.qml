@@ -25,6 +25,7 @@ QtObject {
         : "Hyprland retains manual control"
     readonly property var entries: [
         { id: "launcher", label: "Application launcher", keys: "Super + A" },
+        { id: "commandLauncher", label: "Command launcher", keys: "Super + Ctrl + A" },
         { id: "clipboard", label: "Clipboard history", keys: "Super + V" },
         { id: "settings", label: "Odyssey settings", keys: "Super + ," },
         { id: "notifications", label: "Notifications", keys: "Super + N" },
@@ -98,7 +99,7 @@ QtObject {
         pendingAction = "reset"
         pendingValue = true
         process.command = [helperPath, "apply", configPath,
-            "true", "true", "true", "true", "true", "true", "true",
+            "true", "true", "true", "true", "true", "true", "true", "true",
             "true", "true"]
         process.running = true
     }

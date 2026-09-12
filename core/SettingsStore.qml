@@ -26,6 +26,10 @@ QtObject {
         "spotlight", "random"
     ]
     readonly property var validIslandPolicies: ["all", "primary"]
+    readonly property var validCommandHistorySources: ["auto", "zsh", "bash", "fish"]
+    readonly property var validCommandTerminals: [
+        "auto", "kitty", "foot", "alacritty", "ghostty"
+    ]
     readonly property var validRestIslandItems: [
         "Weather", "Dnd", "KeepAwake", "PowerProfile"
     ]
@@ -437,6 +441,20 @@ QtObject {
         resetSection("dashboard")
     }
 
+    function setCommandHistorySource(source: string): bool {
+        return setValidatedValue("commandLauncher", "historySource", source,
+            validCommandHistorySources)
+    }
+
+    function setCommandTerminal(terminal: string): bool {
+        return setValidatedValue("commandLauncher", "terminal", terminal,
+            validCommandTerminals)
+    }
+
+    function setCommandHistorySuggestions(enabled: bool): void {
+        setValue("commandLauncher", "historySuggestions", enabled)
+    }
+
     function setWeatherLocation(locationName: string, latitude,
             longitude): bool {
         const name = typeof locationName === "string"
@@ -469,7 +487,7 @@ QtObject {
     }
 
     function setShortcutEnabled(action: string, enabled: bool): bool {
-        if (["launcher", "clipboard", "settings", "notifications",
+        if (["launcher", "commandLauncher", "clipboard", "settings", "notifications",
                 "wallpaper", "controlCenter", "lock", "regionScreenshot",
                 "regionRecording"].indexOf(action) < 0)
             return false

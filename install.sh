@@ -416,7 +416,7 @@ else
 CHANGED=0
 BACKUP=none'
 fi
-"$release_root/scripts/shortcutctl.sh" apply "$config_root/hypr/hyprland.lua" true true true true true true true true true >/dev/null
+"$release_root/scripts/shortcutctl.sh" apply "$config_root/hypr/hyprland.lua" true true true true true true true true true true >/dev/null
 systemctl --user daemon-reload
 if [[ $configuration_mode == managed ]]; then
     systemctl --user enable odyssey.service hypridle.service >/dev/null
@@ -459,8 +459,8 @@ valid_hyprland_files() {
     fi
 }
 valid_shortcuts() {
-    local expected=13
-    [[ $configuration_mode == managed ]] && expected=9
+    local expected=14
+    [[ $configuration_mode == managed ]] && expected=10
     [[ $(grep -Fc 'ODYSSEY MANAGED SHORTCUTS' "$config_root/hypr/odyssey.lua") == 2 ]] || return 1
     [[ $(grep -Fc 'odyssey ipc ' "$config_root/hypr/odyssey.lua") == "$expected" ]] \
         && ! grep -Eq 'qs -p|/home/|\.config/odyssey|odyssey/releases/' \

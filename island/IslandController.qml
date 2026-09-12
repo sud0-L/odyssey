@@ -68,7 +68,8 @@ QtObject {
             : sessionPage ? Config.session.width
             : settingsPage ? Config.settings.width
             : insightPage ? Config.insights.width
-            : expandedPage === "launcher" ? Config.launcher.width
+            : (expandedPage === "launcher" || expandedPage === "command-launcher")
+                ? Config.launcher.width
             : Config.island.expandedWidth)
         : visualState === media ? Config.island.mediaWidth
         : visualState === notification ? Config.island.mediaWidth
@@ -89,7 +90,8 @@ QtObject {
             : sessionPage ? Config.session.height
             : settingsPage ? Config.settings.height
             : insightPage ? Config.insights.height
-            : expandedPage === "launcher" ? Config.launcher.height
+            : (expandedPage === "launcher" || expandedPage === "command-launcher")
+                ? Config.launcher.height
             : expandedPage === "control-center"
                 ? Math.round(Config.island.expandedHeight
                     + (Config.controlCenter.detailExpandedHeight

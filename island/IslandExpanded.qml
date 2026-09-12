@@ -14,6 +14,7 @@ Item {
     property alias settingsSection: settingsPage.section
     readonly property bool overviewOpen: page === "overview"
     readonly property bool launcherOpen: page === "launcher"
+    readonly property bool commandLauncherOpen: page === "command-launcher"
     readonly property bool notificationsOpen: page === "notifications"
     readonly property bool clipboardOpen: page === "clipboard"
     readonly property bool captureOpen: page === "capture"
@@ -114,6 +115,32 @@ Item {
                 HoverHandler { id: profileNavHover }
                 TapHandler {
                     onTapped: root.pageSelected("control-center")
+                }
+
+                Behavior on color { ColorAnimation { duration: Animations.fast } }
+            }
+
+            Rectangle {
+                Layout.preferredWidth: 34
+                Layout.preferredHeight: 30
+                radius: Theme.radiusSmall
+                color: root.commandLauncherOpen ? Theme.primaryContainer
+                    : commandLauncherNavHover.hovered
+                        ? Theme.surfaceContainerHigh : "transparent"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: ""
+                    color: root.commandLauncherOpen
+                        ? Theme.primaryContainerText : Theme.surfaceVariantText
+                    font.family: Config.appearance.monoFontFamily
+                    font.pixelSize: Theme.iconSmall
+                }
+
+                HoverHandler { id: commandLauncherNavHover }
+                TapHandler {
+                    onTapped: root.pageSelected(root.commandLauncherOpen
+                        ? "overview" : "command-launcher")
                 }
 
                 Behavior on color { ColorAnimation { duration: Animations.fast } }
@@ -493,6 +520,13 @@ Item {
             Layout.fillHeight: true
             onDismissRequested: root.dismissRequested(false)
             onPageRequested: page => root.pageSelected(page)
+        }
+
+        CommandLauncher {
+            visible: root.commandLauncherOpen
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            onDismissRequested: root.dismissRequested(false)
         }
 
         InsightCenter {

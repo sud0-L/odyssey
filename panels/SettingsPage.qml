@@ -71,6 +71,7 @@ Item {
         { id: "media", icon: "󰝚", label: "Media" },
         { id: "wallpaper", icon: "󰸉", label: "Wallpaper" },
         { id: "dashboard", icon: "󰕮", label: "Dashboard" },
+        { id: "command-launcher", icon: "", label: "Command Launcher" },
         { id: "shortcuts", icon: "󰌌", label: "Shortcuts" },
         { id: "integrations", icon: "󰕮", label: "System Integrations" }
     ]
@@ -241,6 +242,8 @@ Item {
                                     ? "Library, color, and transitions"
                                 : root.section === "dashboard"
                                     ? "Overview appearance"
+                                : root.section === "command-launcher"
+                                    ? "Local history and terminal preferences"
                                 : root.section === "shortcuts"
                                     ? "Keybinds managed by Odyssey"
                                     : "Explicit external theme ownership"
@@ -1029,6 +1032,101 @@ Item {
                                     text: "Reset"
                                     onClicked: SettingsStore.resetDashboard()
                                 }
+                            }
+                        }
+
+                        ColumnLayout {
+                            visible: root.section === "command-launcher"
+                            Layout.fillWidth: true
+                            spacing: Theme.space2
+
+                            SettingsCard {
+                                Layout.fillWidth: true
+                                title: "Shell history source"
+                                detail: "Read on demand from the current user's existing history"
+                                contentHeight: 34
+                                RowLayout {
+                                    anchors.fill: parent
+                                    spacing: Theme.space1
+                                    Item { Layout.fillWidth: true }
+                                    Repeater {
+                                        model: [
+                                            { id: "auto", label: "Auto" },
+                                            { id: "zsh", label: "Zsh" },
+                                            { id: "bash", label: "Bash" },
+                                            { id: "fish", label: "Fish" }
+                                        ]
+                                        delegate: SettingsChoice {
+                                            required property var modelData
+                                            compact: true
+                                            label: modelData.label
+                                            selected: Config.commandLauncher.historySource
+                                                === modelData.id
+                                            onActivated: SettingsStore
+                                                .setCommandHistorySource(modelData.id)
+                                        }
+                                    }
+                                }
+                            }
+
+                            SettingsCard {
+                                Layout.fillWidth: true
+                                title: "Terminal"
+                                detail: "A new terminal opens on the current workspace"
+                                contentHeight: 34
+                                RowLayout {
+                                    anchors.fill: parent
+                                    spacing: Theme.space1
+                                    Item { Layout.fillWidth: true }
+                                    Repeater {
+                                        model: [
+                                            { id: "auto", label: "Auto" },
+                                            { id: "kitty", label: "Kitty" },
+                                            { id: "foot", label: "Foot" },
+                                            { id: "alacritty", label: "Alacritty" },
+                                            { id: "ghostty", label: "Ghostty" }
+                                        ]
+                                        delegate: SettingsChoice {
+                                            required property var modelData
+                                            compact: true
+                                            label: modelData.label
+                                            selected: Config.commandLauncher.terminal
+                                                === modelData.id
+                                            onActivated: SettingsStore
+                                                .setCommandTerminal(modelData.id)
+                                        }
+                                    }
+                                }
+                            }
+
+                            SettingsCard {
+                                Layout.fillWidth: true
+                                title: "History suggestions"
+                                detail: Config.commandLauncher.historySuggestions
+                                    ? "Recent local commands appear when the query is empty"
+                                    : "Only exact commands typed into the launcher are shown"
+                                contentHeight: 36
+                                RowLayout {
+                                    anchors.fill: parent
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: "Show local shell history"
+                                        color: Theme.surfaceText
+                                        font.family: Config.appearance.fontFamily
+                                        font.pixelSize: Theme.textSmall
+                                    }
+                                    SettingsToggle {
+                                        checked: Config.commandLauncher.historySuggestions
+                                        onToggled: enabled => SettingsStore
+                                            .setCommandHistorySuggestions(enabled)
+                                    }
+                                }
+                            }
+
+                            InfoStrip {
+                                Layout.fillWidth: true
+                                glyph: "󰆍"
+                                message: "History stays local and is never copied into an Odyssey database. Enter runs; Ctrl+C or Ctrl+Enter copies without execution."
                             }
                         }
 

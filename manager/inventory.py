@@ -10,7 +10,7 @@ from typing import Callable, Iterable
 
 QML_DIRECTORIES = ("applications", "components", "core", "island", "launcher", "panels", "services")
 RUNTIME_SCRIPTS = (
-    "capturectl.sh", "clipboardctl.sh", "export-theme.sh", "generate-hyprlock-config.sh",
+    "capturectl.sh", "clipboardctl.sh", "command-launcherctl.py", "export-theme.sh", "generate-hyprlock-config.sh",
     "generate-palette.sh", "idle-brightnessctl.sh", "idlectl.sh", "install-hyprlock.sh",
     "lock-status.sh", "lock-powerctl.sh", "manage-theme-integration.sh", "notification-provenance.py",
     "odyssey-session.sh", "power-sound.sh", "sessionctl.sh", "settingsctl.sh",
