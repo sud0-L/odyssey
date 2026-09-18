@@ -6,6 +6,7 @@ import "../services"
 Item {
     id: root
 
+    property bool active: false
     property var results: CommandPaletteService.search(searchField.text,
         Config.launcher.resultLimit)
     property int currentIndex: firstEnabledIndex()
@@ -50,8 +51,8 @@ Item {
         if (visible)
             resultRefresh.restart()
     }
-    onVisibleChanged: {
-        if (visible) {
+    onActiveChanged: {
+        if (active) {
             ClipboardService.refresh()
             KeybindService.refresh()
             searchField.text = ""

@@ -488,6 +488,7 @@ Item {
         }
 
         ApplicationLauncher {
+            active: root.active && root.launcherOpen
             visible: root.launcherOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
