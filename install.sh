@@ -443,7 +443,8 @@ valid_release() {
 }
 hyprland_paths_portable() {
     local launcher
-    launcher=$(readlink -m -- "${XDG_BIN_HOME:-$HOME/.local/bin}/odyssey") || return 1
+    launcher="${XDG_BIN_HOME:-$HOME/.local/bin}/odyssey"
+    [[ $launcher == /* && $launcher != *$'\n'* ]] || return 1
     awk -v launcher="$launcher" '
         {
             line=$0
@@ -474,7 +475,8 @@ valid_hyprland_files() {
 valid_shortcuts() {
     local expected=14 launcher command
     [[ $configuration_mode == managed ]] && expected=10
-    launcher=$(readlink -m -- "${XDG_BIN_HOME:-$HOME/.local/bin}/odyssey") || return 1
+    launcher="${XDG_BIN_HOME:-$HOME/.local/bin}/odyssey"
+    [[ $launcher == /* && $launcher != *$'\n'* ]] || return 1
     command=$(jq -rn --arg path "$launcher" '$path|@sh')' ipc '
     [[ $(grep -Fc 'ODYSSEY MANAGED SHORTCUTS' "$config_root/hypr/odyssey.lua") == 2 ]] || return 1
     [[ $(grep -Fc -- "$command" "$config_root/hypr/odyssey.lua") == "$expected" ]] \

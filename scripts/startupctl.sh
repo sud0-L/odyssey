@@ -20,7 +20,7 @@ error() { local cmd=$1 code=$2 message=$3 status=${4:-error}; emit --arg command
 launcher_path() {
     local path="${XDG_BIN_HOME:-${HOME:?HOME is required}/.local/bin}/odyssey"
     [[ $path == /* && $path != *$'\n'* ]] || return 1
-    readlink -m -- "$path"
+    printf '%s\n' "$path"
 }
 launcher_shell() { jq -rn --arg path "$(launcher_path)" '$path|@sh'; }
 launcher_lua() {
@@ -215,9 +215,14 @@ render_integration() {
         command=$(launcher_shell) || return 1
         [[ $format != lua ]] || command=${command//\\/\\\\}
         while IFS= read -r line || [[ -n $line ]]; do
-            if [[ $line == *'odyssey ipc'* ]]; then
-                prefix=${line%%odyssey ipc*}; suffix=${line#*odyssey ipc}
-                line="${prefix}${command} ipc${suffix}"
+            if [[ $line == *' ipc '* && $format == lua && $line == *'hl.dsp.exec_cmd("'* ]]; then
+                prefix=${line%%'hl.dsp.exec_cmd("'*}'hl.dsp.exec_cmd("'
+                suffix=${line#*' ipc '}
+                line="${prefix}${command} ipc ${suffix}"
+            elif [[ $line == *' ipc '* && $format == conf && $line == *', exec, '* ]]; then
+                prefix=${line%%', exec, '*}', exec, '
+                suffix=${line#*' ipc '}
+                line="${prefix}${command} ipc ${suffix}"
             fi
             printf '%s\n' "$line"
         done <<< "$block" >> "$tmp"

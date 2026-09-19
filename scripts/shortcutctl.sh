@@ -61,7 +61,6 @@ render() {
     shift
     launcher="${XDG_BIN_HOME:-${HOME:?HOME is required}/.local/bin}/odyssey"
     [[ $launcher == /* && $launcher != *$'\n'* ]] || { printf 'Odyssey launcher path is invalid\n' >&2; return 1; }
-    launcher=$(readlink -m -- "$launcher")
     command=$(jq -rn --arg path "$launcher" '$path|@sh')' ipc'
     tmp=$(mktemp "${target_file}.odyssey.XXXXXX"); awk -v b="$begin" -v e="$end" '$0==b{inside=1;next}$0==e{inside=0;next}!inside{print}' "$target_file" > "$tmp"
     if [[ $target == true ]]; then
