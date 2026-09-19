@@ -15,6 +15,7 @@ Item {
     property real detailContentOpacity: 0
     property var wifiCredentialNetwork: null
     property string wifiPassword: ""
+    property bool wifiPasswordRejected: false
     property var informationOption: null
     property bool wifiAutomatic: true
     property bool wifiModeStaged: false
@@ -26,7 +27,7 @@ Item {
     readonly property bool wifiCredentialsActive: displayedSection === "wifi"
         && wifiCredentialNetwork !== null
     readonly property bool informationViewActive: informationOption !== null
-    readonly property bool detailSubviewActive: wifiCredentialsActive || informationViewActive
+    readonly property bool detailSubviewActive: informationViewActive
     readonly property var detailModel: {
         if (displayedSection === "output")
             return AudioService.outputDevices.slice(0, Config.controlCenter.detailResultLimit)
@@ -154,6 +155,7 @@ Item {
     function optionAvailable(option): bool {
         if (displayedSection === "wifi")
             return NetworkService.canSelectNetwork(option)
+                || (NetworkService.supportsPassword(option) && !option.connected)
         if (displayedSection === "bluetooth")
             return option !== null && option !== undefined && !option.blocked
         return option !== null && option !== undefined
@@ -165,10 +167,15 @@ Item {
         else if (displayedSection === "input")
             AudioService.setInputDevice(option)
         else if (displayedSection === "wifi") {
-            if (NetworkService.requiresPassword(option)) {
+            if (NetworkService.supportsPassword(option) && !option.connected) {
+                if (wifiCredentialNetwork === option) {
+                    clearWifiCredentials()
+                    return
+                }
+                clearWifiCredentials()
                 wifiCredentialNetwork = option
                 wifiPassword = ""
-                Qt.callLater(() => wifiPasswordInput.forceActiveFocus())
+                wifiPasswordRejected = false
             } else {
                 NetworkService.selectWifiNetwork(option)
             }
@@ -180,6 +187,8 @@ Item {
     function clearWifiCredentials(): void {
         wifiCredentialNetwork = null
         wifiPassword = ""
+        wifiPasswordRejected = false
+        wifiPasswordFlash.stop()
     }
 
     function clearInformationView(): void {
@@ -203,6 +212,11 @@ Item {
             wifiModeStaged = false
             syncWifiDnsProfile()
         }
+    }
+
+    function forgetInformationWifi(): void {
+        if (NetworkService.forgetWifiNetwork(informationOption))
+            clearInformationView()
     }
 
     function informationTitle(): string {
@@ -233,10 +247,17 @@ Item {
     }
 
     function submitWifiPassword(): void {
-        if (!wifiCredentialNetwork || wifiPassword.length < 8)
+        if (!wifiCredentialNetwork || NetworkService.passwordAttemptPending
+                || wifiPassword.length < 8)
             return
-        if (NetworkService.selectWifiNetwork(wifiCredentialNetwork, wifiPassword))
-            clearWifiCredentials()
+        wifiPasswordRejected = false
+        wifiPasswordFlash.stop()
+        NetworkService.connectWithPassword(wifiCredentialNetwork, wifiPassword)
+    }
+
+    function rejectWifiPassword(): void {
+        wifiPasswordRejected = true
+        wifiPasswordFlash.restart()
     }
 
     function syncWifiDnsProfile(): void {
@@ -310,6 +331,24 @@ Item {
     }
 
     onExpandedSectionChanged: setDiscoveryForSection(expandedSection)
+
+    Timer {
+        id: wifiPasswordFlash
+        interval: 900
+        onTriggered: root.wifiPasswordRejected = false
+    }
+
+    Connections {
+        target: NetworkService
+        function onPasswordConnectionSucceeded(network) {
+            if (root.wifiCredentialNetwork?.name === network?.name)
+                root.clearWifiCredentials()
+        }
+        function onPasswordConnectionFailed(network) {
+            if (root.wifiCredentialNetwork?.name === network?.name)
+                root.rejectWifiPassword()
+        }
+    }
 
     Timer {
         id: manualAddressSave
@@ -588,9 +627,7 @@ Item {
                     }
                     Text {
                         text: root.informationViewActive ? root.informationTitle()
-                            : root.wifiCredentialsActive
-                                ? (root.wifiCredentialNetwork?.name || "Wi-Fi password")
-                                : root.detailTitle()
+                            : root.detailTitle()
                         color: Theme.surfaceText
                         font.family: Config.appearance.fontFamily
                         font.pixelSize: 10
@@ -653,6 +690,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.space1
                             Text {
+                                id: scanIcon
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.displayedSection === "wifi"
                                     ? (NetworkService.scanning ? "󰑓" : "󰖩")
@@ -669,6 +707,7 @@ Item {
                                     from: 0
                                     to: 360
                                     duration: 1100
+                                    onStopped: scanIcon.rotation = 0
                                 }
                             }
                             Text {
@@ -704,27 +743,115 @@ Item {
                     boundsBehavior: Flickable.StopAtBounds
                     model: root.detailModel
 
-                    delegate: ConnectivityRow {
+                    delegate: Item {
                         required property var modelData
+                        readonly property bool passwordExpanded: root.wifiCredentialsActive
+                            && root.wifiCredentialNetwork?.name === modelData?.name
                         width: detailList.width
-                        height: 46
-                        title: root.optionTitle(modelData)
-                        detail: root.optionDetail(modelData)
-                        icon: root.displayedSection === "wifi" ? "󰖩"
-                            : root.displayedSection === "bluetooth"
-                                ? BluetoothService.deviceIcon(modelData)
-                            : root.displayedSection === "input" ? "󰍬" : "󰕾"
-                        selected: root.optionSelected(modelData)
-                        available: root.optionAvailable(modelData)
-                        busy: modelData?.stateChanging || modelData?.pairing || false
-                            || (root.displayedSection === "bluetooth"
-                                && BluetoothService.deviceBusy(modelData))
-                        accent: root.displayedSection === "bluetooth"
-                            ? Theme.tertiary : Theme.primary
-                        informationAvailable: (root.displayedSection === "wifi"
-                            && modelData?.connected) || root.displayedSection === "bluetooth"
-                        onActivated: root.activateOption(modelData)
-                        onInformationRequested: root.showInformation(modelData)
+                        height: 46 + (passwordExpanded ? 42 : 0)
+                        clip: true
+                        onPasswordExpandedChanged: {
+                            if (passwordExpanded)
+                                Qt.callLater(() => wifiPasswordInput.forceActiveFocus())
+                        }
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: Config.appearance.reducedMotion ? 0 : Animations.normal
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        ConnectivityRow {
+                            width: parent.width
+                            height: 46
+                            title: root.optionTitle(modelData)
+                            detail: root.optionDetail(modelData)
+                            icon: root.displayedSection === "wifi" ? "󰖩"
+                                : root.displayedSection === "bluetooth"
+                                    ? BluetoothService.deviceIcon(modelData)
+                                : root.displayedSection === "input" ? "󰍬" : "󰕾"
+                            selected: root.optionSelected(modelData)
+                            available: root.optionAvailable(modelData)
+                            busy: modelData?.stateChanging || modelData?.pairing || false
+                                || (root.displayedSection === "bluetooth"
+                                    && BluetoothService.deviceBusy(modelData))
+                            accent: root.displayedSection === "bluetooth"
+                                ? Theme.tertiary : Theme.primary
+                            informationAvailable: (root.displayedSection === "wifi"
+                                && modelData?.connected) || root.displayedSection === "bluetooth"
+                            onActivated: root.activateOption(modelData)
+                            onInformationRequested: root.showInformation(modelData)
+                        }
+
+                        RowLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.topMargin: 51
+                            anchors.leftMargin: 46
+                            anchors.rightMargin: Theme.space4
+                            height: 32
+                            spacing: Theme.space1
+                            visible: passwordExpanded
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                radius: Theme.radiusSmall
+                                color: root.wifiPasswordRejected
+                                    ? Qt.alpha(Theme.error, 0.20)
+                                    : Theme.surfaceContainerHigh
+                                border.width: root.wifiPasswordRejected
+                                    || wifiPasswordInput.activeFocus ? 1 : 0
+                                border.color: root.wifiPasswordRejected
+                                    ? Theme.error : Qt.alpha(Theme.primary, 0.72)
+
+                                TextInput {
+                                    id: wifiPasswordInput
+                                    anchors.fill: parent
+                                    anchors.margins: Theme.space2
+                                    text: root.wifiPassword
+                                    onTextChanged: {
+                                        root.wifiPassword = text
+                                        root.wifiPasswordRejected = false
+                                    }
+                                    color: Theme.surfaceText
+                                    selectionColor: Theme.primary
+                                    selectedTextColor: Theme.primaryText
+                                    echoMode: TextInput.Password
+                                    passwordCharacter: "•"
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    font.family: Config.appearance.fontFamily
+                                    font.pixelSize: 10
+                                    Keys.onReturnPressed: root.submitWifiPassword()
+                                    Keys.onEnterPressed: root.submitWifiPassword()
+                                    Keys.onEscapePressed: root.clearWifiCredentials()
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.preferredWidth: 78
+                                Layout.fillHeight: true
+                                radius: Theme.radiusSmall
+                                opacity: root.wifiPassword.length >= 8
+                                    && !NetworkService.passwordAttemptPending ? 1 : 0.42
+                                color: Theme.primary
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: NetworkService.passwordAttemptPending
+                                        ? "Connecting" : "Connect"
+                                    color: Theme.primaryText
+                                    font.family: Config.appearance.fontFamily
+                                    font.pixelSize: 9
+                                    font.weight: Font.DemiBold
+                                }
+                                TapHandler {
+                                    enabled: root.wifiPassword.length >= 8
+                                        && !NetworkService.passwordAttemptPending
+                                    onTapped: root.submitWifiPassword()
+                                }
+                            }
+                        }
                     }
 
                     Text {
@@ -738,83 +865,6 @@ Item {
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.fontFamily
                         font.pixelSize: 10
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        visible: root.wifiCredentialsActive
-                        z: 3
-                        radius: Theme.radiusSmall
-                        color: Theme.surfaceContainer
-
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            width: Math.min(470, parent.width - Theme.space5 * 2)
-                            spacing: Theme.space2
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: "Enter the password for this network. It is passed directly to NetworkManager and is not stored by Odyssey."
-                                color: Theme.surfaceVariantText
-                                wrapMode: Text.WordWrap
-                                font.family: Config.appearance.fontFamily
-                                font.pixelSize: 9
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 42
-                                spacing: Theme.space2
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    radius: Theme.radiusSmall
-                                    color: Theme.surfaceContainerHigh
-                                    border.width: wifiPasswordInput.activeFocus ? 1 : 0
-                                    border.color: Qt.alpha(Theme.primary, 0.72)
-
-                                    TextInput {
-                                        id: wifiPasswordInput
-                                        anchors.fill: parent
-                                        anchors.margins: Theme.space2
-                                        text: root.wifiPassword
-                                        onTextChanged: root.wifiPassword = text
-                                        color: Theme.surfaceText
-                                        selectionColor: Theme.primary
-                                        selectedTextColor: Theme.primaryText
-                                        echoMode: TextInput.Password
-                                        passwordCharacter: "•"
-                                        verticalAlignment: TextInput.AlignVCenter
-                                        font.family: Config.appearance.fontFamily
-                                        font.pixelSize: 10
-                                        Keys.onReturnPressed: root.submitWifiPassword()
-                                        Keys.onEnterPressed: root.submitWifiPassword()
-                                        Keys.onEscapePressed: root.clearWifiCredentials()
-                                    }
-                                }
-
-                                Rectangle {
-                                    Layout.preferredWidth: 88
-                                    Layout.fillHeight: true
-                                    radius: Theme.radiusSmall
-                                    opacity: root.wifiPassword.length >= 8 ? 1 : 0.42
-                                    color: Theme.primary
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "Connect"
-                                        color: Theme.primaryText
-                                        font.family: Config.appearance.fontFamily
-                                        font.pixelSize: 9
-                                        font.weight: Font.DemiBold
-                                    }
-                                    TapHandler {
-                                        enabled: root.wifiPassword.length >= 8
-                                        onTapped: root.submitWifiPassword()
-                                    }
-                                }
-                            }
-                        }
                     }
 
                     Rectangle {
@@ -1045,6 +1095,37 @@ Item {
                                 font.pixelSize: 8
                                 wrapMode: Text.WordWrap
                             }
+                        }
+
+                        Rectangle {
+                            visible: root.displayedSection === "wifi"
+                                && !!root.informationOption?.known
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: Theme.space2
+                            width: 112
+                            height: 27
+                            radius: Theme.radiusSmall
+                            color: forgetWifiHover.hovered
+                                ? Qt.alpha(Theme.error, 0.20)
+                                : Qt.alpha(Theme.error, 0.10)
+                            border.width: 1
+                            border.color: Qt.alpha(Theme.error, 0.38)
+                            activeFocusOnTab: true
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "Forget network"
+                                color: Theme.error
+                                font.family: Config.appearance.fontFamily
+                                font.pixelSize: 9
+                                font.weight: Font.DemiBold
+                            }
+                            HoverHandler { id: forgetWifiHover }
+                            TapHandler { onTapped: root.forgetInformationWifi() }
+                            Keys.onReturnPressed: root.forgetInformationWifi()
+                            Keys.onEnterPressed: root.forgetInformationWifi()
+                            Behavior on color { ColorAnimation { duration: Animations.fast } }
                         }
 
                         GridLayout {

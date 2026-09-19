@@ -23,6 +23,15 @@ QtObject {
     property string wifiProfileStatus: ""
     property bool wifiProfileSaving: false
     property bool runtimeQueryQueued: false
+    property var passwordAttemptNetwork: null
+    property var passwordAttemptProfile: null
+    property var passwordProfilesDisabled: ({})
+    property bool passwordAttemptPending: false
+    property bool passwordAttemptStarted: false
+    property bool passwordAttemptAwaitingProfile: false
+    property string passwordAttemptSecret: ""
+    signal passwordConnectionFailed(var network)
+    signal passwordConnectionSucceeded(var network)
 
     readonly property bool wifiAvailable: wifiDevice !== null
     readonly property bool wifiEnabled: available && Networking.wifiEnabled
@@ -132,21 +141,142 @@ QtObject {
             || supportsPassword(network))
     }
 
+    function forgetWifiNetwork(network): bool {
+        if (!network || !network.known)
+            return false
+        if (passwordAttemptNetwork === network)
+            cancelPasswordConnection()
+        network.forget()
+        closeActiveWifiProfile()
+        return true
+    }
+
     function selectWifiNetwork(network, password = ""): bool {
         if (!wifiEnabled || !network || network.stateChanging)
             return false
         if (network.connected)
             return true
-        if (requiresPassword(network)) {
-            if (!password)
-                return false
+        if (password && supportsPassword(network)) {
             network.connectWithPsk(password)
             return true
         }
+        if (requiresPassword(network))
+            return false
         if (!network.known && network.security !== WifiSecurityType.Open)
             return false
         network.connect()
         return true
+    }
+
+    function connectWithPassword(network, password: string): bool {
+        if (!wifiEnabled || !network || network.connected
+                || !supportsPassword(network) || password.length < 8)
+            return false
+        if (passwordAttemptPending)
+            cancelPasswordConnection()
+        passwordAttemptNetwork = network
+        passwordAttemptProfile = profileForNetwork(network)
+        passwordAttemptSecret = password
+        passwordAttemptPending = true
+        passwordAttemptStarted = false
+        passwordAttemptAwaitingProfile = false
+        if (passwordAttemptProfile
+                && passwordAttemptProfile.read()?.connection?.autoconnect !== false) {
+            passwordProfilesDisabled[passwordAttemptProfile.uuid] = true
+            passwordAttemptAwaitingProfile = true
+            passwordAttemptProfile.write({ connection: { autoconnect: false } })
+        }
+        passwordAttemptTimeout.restart()
+        startPasswordAttemptIfReady()
+        return true
+    }
+
+    function startPasswordAttemptIfReady(): void {
+        if (!passwordAttemptPending || passwordAttemptStarted
+                || passwordAttemptAwaitingProfile
+                || passwordAttemptNetwork?.stateChanging)
+            return
+        passwordAttemptStarted = true
+        passwordAttemptNetwork.connectWithPsk(passwordAttemptSecret)
+    }
+
+    function clearPasswordAttempt(): void {
+        passwordAttemptTimeout.stop()
+        passwordAttemptPending = false
+        passwordAttemptStarted = false
+        passwordAttemptAwaitingProfile = false
+        passwordAttemptSecret = ""
+        passwordAttemptNetwork = null
+        passwordAttemptProfile = null
+    }
+
+    function discardPasswordAttempt(): void {
+        const network = passwordAttemptNetwork
+        if (!network || network.connected)
+            return
+        if (passwordAttemptProfile) {
+            const profile = passwordAttemptProfile
+            if (profile.read()?.connection?.autoconnect !== false) {
+                passwordProfilesDisabled[profile.uuid] = true
+                profile.write({ connection: { autoconnect: false } })
+            }
+            passwordAttemptProfile.clearSecrets()
+        } else {
+            network.forget()
+        }
+    }
+
+    function cancelPasswordConnection(): void {
+        if (!passwordAttemptPending)
+            return
+        discardPasswordAttempt()
+        clearPasswordAttempt()
+    }
+
+    function failPasswordConnection(): void {
+        if (!passwordAttemptPending)
+            return
+        const network = passwordAttemptNetwork
+        discardPasswordAttempt()
+        clearPasswordAttempt()
+        passwordConnectionFailed(network)
+    }
+
+    property Timer passwordAttemptTimeout: Timer {
+        interval: 25000
+        onTriggered: root.failPasswordConnection()
+    }
+
+    property Connections passwordAttemptConnections: Connections {
+        target: root.passwordAttemptNetwork
+        function onConnectedChanged() {
+            if (root.passwordAttemptPending && root.passwordAttemptNetwork?.connected) {
+                const network = root.passwordAttemptNetwork
+                const profile = root.passwordAttemptProfile
+                if (profile && root.passwordProfilesDisabled[profile.uuid]) {
+                    profile.write({ connection: { autoconnect: true } })
+                    delete root.passwordProfilesDisabled[profile.uuid]
+                }
+                root.clearPasswordAttempt()
+                root.passwordConnectionSucceeded(network)
+            }
+        }
+        function onConnectionFailed(reason) {
+            if (root.passwordAttemptStarted)
+                root.failPasswordConnection()
+        }
+        function onStateChangingChanged() { root.startPasswordAttemptIfReady() }
+    }
+
+    property Connections passwordAttemptProfileConnections: Connections {
+        target: root.passwordAttemptProfile
+        function onSettingsChanged(settings) {
+            if (root.passwordAttemptAwaitingProfile
+                    && root.passwordAttemptProfile?.read()?.connection?.autoconnect === false) {
+                root.passwordAttemptAwaitingProfile = false
+                root.startPasswordAttemptIfReady()
+            }
+        }
     }
 
     function ipv4Number(value: string): real {
@@ -351,6 +481,50 @@ QtObject {
     }
 
     property string runtimeQueryOutput: ""
+
+    // Quickshell 0.3.1 binds its NetworkManager backend only once. A daemon
+    // restart replaces its D-Bus owner, leaving the old device objects stale.
+    property string networkManagerOwner: ""
+    property bool networkManagerChecked: false
+    property string queriedNetworkManagerOwner: ""
+    property Timer networkManagerCheck: Timer {
+        interval: 3000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            if (!networkManagerQuery.running)
+                networkManagerQuery.running = true
+        }
+    }
+    property Process networkManagerQuery: Process {
+        command: ["busctl", "--system", "call", "org.freedesktop.DBus",
+            "/org/freedesktop/DBus", "org.freedesktop.DBus", "GetNameOwner",
+            "s", "org.freedesktop.NetworkManager"]
+        stdout: StdioCollector {
+            onStreamFinished: root.queriedNetworkManagerOwner = text.trim()
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                root.networkManagerChecked = true
+                return
+            }
+            const match = /^s "([^"]+)"$/.exec(root.queriedNetworkManagerOwner)
+            if (!match)
+                return
+            const owner = match[1]
+            if (root.networkManagerChecked && owner !== root.networkManagerOwner) {
+                networkManagerCheck.stop()
+                restartManagedShell.running = true
+            }
+            root.networkManagerOwner = owner
+            root.networkManagerChecked = true
+        }
+    }
+    property Process restartManagedShell: Process {
+        command: ["systemctl", "--user", "restart", "odyssey.service"]
+    }
+
     property Process runtimeQuery: Process {
         running: false
         stdout: StdioCollector {
