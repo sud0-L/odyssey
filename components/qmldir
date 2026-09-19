@@ -4,6 +4,7 @@ ControlTile 1.0 ControlTile.qml
 ConnectivityRow 1.0 ConnectivityRow.qml
 DeviceOption 1.0 DeviceOption.qml
 InfoTile 1.0 InfoTile.qml
+IslandSurface 1.0 IslandSurface.qml
 LevelControl 1.0 LevelControl.qml
 LevelTrack 1.0 LevelTrack.qml
 OdysseyMark 1.0 OdysseyMark.qml

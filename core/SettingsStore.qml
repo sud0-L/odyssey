@@ -19,6 +19,7 @@ QtObject {
     readonly property var validMotionSpeeds: ["quick", "balanced", "calm"]
     readonly property var validDensities: ["compact", "balanced", "airy"]
     readonly property var validCornerStyles: ["subtle", "balanced", "round"]
+    readonly property var validIslandStyles: ["floating", "attached"]
     readonly property var validMediaHoverModes: ["hidden", "playing", "available"]
     readonly property var validWallpaperTargets: ["current", "all"]
     readonly property var validWallpaperTransitions: [
@@ -141,6 +142,11 @@ QtObject {
             validCornerStyles)
     }
 
+    function setIslandStyle(style: string): bool {
+        return setValidatedValue("appearance", "islandStyle", style,
+            validIslandStyles)
+    }
+
     function setClock24Hour(enabled: bool): void {
         setValue("appearance", "use24HourClock", enabled)
     }
@@ -148,9 +154,10 @@ QtObject {
     function setIslandMetric(metric: string, nextValue: real): bool {
         const bounds = ({
             topMargin: [0, 16], reservedSpace: [26, 52],
-            dormantWidth: [214, 320], hoverWidth: [470, 760],
+            dormantWidth: [150, 320], hoverWidth: [470, 760],
             expandedWidth: [620, 900], restItemSpacing: [2, 18],
-            hoverItemSpacing: [2, 20], autoHideDelay: [500, 10000]
+            hoverItemSpacing: [2, 20], autoHideDelay: [500, 10000],
+            borderThickness: [1, 4]
         })
         const range = bounds[metric]
         const numeric = Number(nextValue)
@@ -202,6 +209,10 @@ QtObject {
         setValue("island", "showRevealLip", enabled)
     }
 
+    function setIslandBorderEnabled(enabled: bool): void {
+        setValue("island", "borderEnabled", enabled)
+    }
+
     function setIslandContentSync(context: string, enabled: bool): bool {
         if (["rest", "hover"].indexOf(context) < 0)
             return false
@@ -250,6 +261,7 @@ QtObject {
             delete updated.appearance.motionSpeed
             delete updated.appearance.density
             delete updated.appearance.cornerStyle
+            delete updated.appearance.islandStyle
             delete updated.appearance.reducedMotion
             if (Object.keys(updated.appearance).length === 0)
                 delete updated.appearance

@@ -63,9 +63,20 @@ QtObject {
             statusMessage = "Corner style updated"
     }
 
+    function setIslandStyle(style: string): void {
+        if (SettingsStore.setIslandStyle(style))
+            statusMessage = "Island style updated"
+    }
+
     function setIslandMetric(metric: string, value: real): void {
         if (SettingsStore.setIslandMetric(metric, value))
             statusMessage = "Island geometry updated"
+    }
+
+    function setIslandBorderEnabled(enabled: bool): void {
+        SettingsStore.setIslandBorderEnabled(enabled)
+        statusMessage = enabled ? "Island border enabled"
+            : "Island border disabled"
     }
 
     function resetIslandAndMotion(): void {

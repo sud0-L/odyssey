@@ -58,6 +58,13 @@ QtObject {
         }
         readonly property real cornerScale: cornerStyle === "subtle" ? 0.72
             : cornerStyle === "round" ? 1.22 : 1
+        readonly property string islandStyle: {
+            const candidate = SettingsStore.value("appearance", "islandStyle",
+                "floating")
+            return SettingsStore.validIslandStyles.indexOf(candidate) >= 0
+                ? candidate : "floating"
+        }
+        readonly property bool islandAttached: islandStyle === "attached"
         readonly property bool wallpaperPaletteEnabled: SettingsStore.boolValue(
             "appearance", "wallpaperPaletteEnabled", true)
         readonly property bool use24HourClock: SettingsStore.boolValue(
@@ -71,7 +78,7 @@ QtObject {
         readonly property int reservedSpace: SettingsStore.numberValue(
             "island", "reservedSpace", 30, 26, 52)
         readonly property int dormantWidth: SettingsStore.numberValue(
-            "island", "dormantWidth", 214, 214, 320)
+            "island", "dormantWidth", 214, 150, 320)
         readonly property int dormantHeight: 28
         readonly property bool restScaleSynced: SettingsStore.boolValue(
             "island", "restScaleSynced", true)
@@ -79,8 +86,6 @@ QtObject {
             "island", "restTextScale", 100, 80, 130) / 100
         readonly property real restIconScale: SettingsStore.numberValue(
             "island", "restIconScale", 100, 80, 130) / 100
-        readonly property real restContentScale: Math.max(
-            restTextScale, restIconScale)
         readonly property int restItemSpacing: SettingsStore.numberValue(
             "island", "restItemSpacing", 8, 2, 18)
         readonly property var restItemOrder: SettingsStore.stringListValue(
@@ -92,8 +97,7 @@ QtObject {
             restItemOrder.indexOf("KeepAwake") >= 0
         readonly property bool restShowPowerProfile:
             restItemOrder.indexOf("PowerProfile") >= 0
-        readonly property int restMinimumWidth: Math.round(
-            214 * restContentScale)
+        readonly property int restMinimumWidth: 150
         readonly property bool hoverScaleSynced: SettingsStore.boolValue(
             "island", "hoverScaleSynced", true)
         readonly property real hoverTextScale: SettingsStore.numberValue(
@@ -141,6 +145,10 @@ QtObject {
             "island", "autoHideDelay", 1800, 500, 10000)
         readonly property bool showRevealLip: SettingsStore.boolValue(
             "island", "showRevealLip", true)
+        readonly property bool borderEnabled: SettingsStore.boolValue(
+            "island", "borderEnabled", true)
+        readonly property int borderThickness: SettingsStore.numberValue(
+            "island", "borderThickness", 1, 1, 4)
         readonly property int revealHeight: 4
         readonly property int osdTimeout: 1800
         readonly property bool hideInFullscreen: true

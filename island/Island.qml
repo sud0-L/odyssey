@@ -44,7 +44,8 @@ PanelWindow {
     // A hidden surface must be hosted at the physical edge. A negative child
     // coordinate cannot reveal pixels above a PanelWindow that itself starts
     // below the configured top margin.
-    margins.top: islandController.revealOnly ? 0 : Config.island.topMargin
+    margins.top: islandController.revealOnly || Config.appearance.islandAttached
+        ? 0 : Config.island.topMargin
     readonly property bool liveEditActive:
         expandedContent.settingsLivePreviewActive
     readonly property string liveEditMode: expandedContent.settingsPreviewMode
@@ -55,6 +56,7 @@ PanelWindow {
     implicitWidth: Math.max(Config.island.expandedWidth, Config.launcher.width,
         Config.island.restMinimumWidth, Config.island.hoverMinimumWidth,
         Config.island.hoverMediaMinimumWidth)
+        + (Config.appearance.islandAttached ? 44 : 0)
     implicitHeight: Math.max(Config.island.expandedHeight, Config.launcher.height,
         Config.controlCenter.detailExpandedHeight, Config.insights.height,
         Config.dashboard.height, Config.session.height, Config.settings.height)
@@ -80,7 +82,7 @@ PanelWindow {
             islandController.deactivateForMonitorPolicy()
     }
 
-    Surface {
+    IslandSurface {
         id: surface
         property real powerPulse: 0
         property color powerPulseColor: Theme.success
@@ -94,19 +96,21 @@ PanelWindow {
                 // margin is restored only after pointer reveal.
                 ? -height
                 : 0
-        width: islandController.targetWidth
+        bodyWidth: islandController.targetWidth
         height: islandController.targetHeight
-        clip: true
+        attached: Config.appearance.islandAttached
         radius: Theme.radiusLarge
-        color: Qt.tint(Qt.alpha(Theme.surfaceContainer, dormantPresentation
+        outlineWidth: Config.island.borderEnabled
+            ? Config.island.borderThickness : 0
+        fillColor: Qt.tint(Qt.alpha(Theme.surfaceContainer, dormantPresentation
                 ? 0.88 : Config.appearance.surfaceOpacity),
             Qt.alpha(powerPulseColor, powerPulse * 0.46))
-        border.color: Qt.tint(Qt.alpha(Theme.outlineVariant, dormantPresentation
+        outlineColor: Qt.tint(Qt.alpha(Theme.outlineVariant, dormantPresentation
                 ? (Theme.dark ? 0.38 : 0.32)
                 : (Theme.dark ? 0.62 : 0.48)),
             Qt.alpha(powerPulseColor, powerPulse * 0.82))
 
-        Behavior on width {
+        Behavior on bodyWidth {
             NumberAnimation {
                 duration: Config.animations.surfaceMorph
                 easing.type: Animations.emphasizedEase
@@ -128,13 +132,12 @@ PanelWindow {
             }
         }
 
-        Behavior on radius {
-            NumberAnimation { duration: Animations.normal; easing.type: Animations.standardEase }
-        }
-
         FocusScope {
             id: contentFocus
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: surface.bodyWidth
             focus: islandController.expandedActive
             Keys.onEscapePressed: {
                 if (!expandedContent.closeTransientUi())
@@ -338,13 +341,13 @@ PanelWindow {
         }
     }
 
-    Surface {
+    IslandSurface {
         id: liveEditPreview
         visible: window.liveEditActive
         enabled: false
         x: Math.round((parent.width - width) / 2)
         y: 0
-        width: window.liveEditMode === "hover"
+        bodyWidth: window.liveEditMode === "hover"
             ? (MediaService.hoverVisible && Config.island.hoverShowMedia
                 ? Math.max(Config.island.hoverWidth,
                     Config.island.hoverMediaMinimumWidth)
@@ -353,24 +356,33 @@ PanelWindow {
             : Math.max(Config.island.dormantWidth,
                 Config.island.restMinimumWidth)
         height: window.liveEditPreviewHeight
+        attached: Config.appearance.islandAttached
         radius: Theme.radiusLarge
-        color: Qt.alpha(Theme.surfaceContainer,
+        outlineWidth: Config.island.borderEnabled
+            ? Config.island.borderThickness : 0
+        fillColor: Qt.alpha(Theme.surfaceContainer,
             Config.appearance.surfaceOpacity)
-        border.color: Qt.alpha(Theme.outlineVariant,
+        outlineColor: Qt.alpha(Theme.outlineVariant,
             Theme.dark ? 0.62 : 0.48)
         opacity: visible ? 1 : 0
 
         IslandDormant {
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: liveEditPreview.bodyWidth
             visible: window.liveEditMode === "rest"
         }
         IslandHover {
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: liveEditPreview.bodyWidth
             visible: window.liveEditMode === "hover"
             monitor: window.monitor
         }
 
-        Behavior on width {
+        Behavior on bodyWidth {
             NumberAnimation {
                 duration: Config.animations.surfaceMorph
                 easing.type: Animations.emphasizedEase

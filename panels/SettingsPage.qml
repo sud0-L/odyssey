@@ -1269,6 +1269,65 @@ Item {
 
                             SettingsCard {
                                 Layout.fillWidth: true
+                                title: "Island style"
+                                detail: Config.appearance.islandAttached
+                                    ? "Connects the Island directly to the top edge"
+                                    : "Keeps the Island detached using the configured top gap"
+                                inlineLayout: true
+                                contentHeight: 36
+                                RowLayout {
+                                    anchors.fill: parent
+                                    spacing: Theme.space1
+                                    Item { Layout.fillWidth: true }
+                                    Repeater {
+                                        model: [
+                                            { id: "floating", label: "Floating" },
+                                            { id: "attached", label: "Attached" }
+                                        ]
+                                        delegate: SettingsChoice {
+                                            required property var modelData
+                                            compact: true
+                                            label: modelData.label
+                                            selected: Config.appearance.islandStyle
+                                                === modelData.id
+                                            onActivated: AppearanceService
+                                                .setIslandStyle(modelData.id)
+                                        }
+                                    }
+                                }
+                            }
+
+                            SettingsCard {
+                                Layout.fillWidth: true
+                                title: "Island border"
+                                detail: Config.island.borderEnabled
+                                    ? Config.island.borderThickness + " px · Uses the active theme outline"
+                                    : "Hidden · Thickness is preserved"
+                                contentHeight: 72
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    spacing: Theme.space2
+                                    PreferenceToggleRow {
+                                        Layout.fillWidth: true
+                                        label: "Enabled"
+                                        checked: Config.island.borderEnabled
+                                        onToggled: enabled => AppearanceService
+                                            .setIslandBorderEnabled(enabled)
+                                    }
+                                    MetricRow {
+                                        Layout.fillWidth: true
+                                        label: "Thickness"
+                                        value: Config.island.borderThickness
+                                        from: 1; to: 4
+                                        available: Config.island.borderEnabled
+                                        onAdjusted: value => AppearanceService
+                                            .setIslandMetric("borderThickness", value)
+                                    }
+                                }
+                            }
+
+                            SettingsCard {
+                                Layout.fillWidth: true
                                 title: "Clock format"
                                 detail: "Applies to the resting pill, hover view, and shell clock"
                                 inlineLayout: true
@@ -1616,6 +1675,7 @@ Item {
                                         label: "Top gap"
                                         value: Config.island.topMargin
                                         from: 0; to: 16
+                                        available: !Config.appearance.islandAttached
                                         onAdjusted: value => AppearanceService
                                             .setIslandMetric("topMargin", value)
                                     }
@@ -1642,7 +1702,7 @@ Item {
                                         Layout.fillWidth: true
                                         label: "Resting width"
                                         value: Config.island.dormantWidth
-                                        from: 214; to: 320
+                                        from: 150; to: 320
                                         onAdjusted: value => AppearanceService
                                             .setIslandMetric("dormantWidth", value)
                                     }
