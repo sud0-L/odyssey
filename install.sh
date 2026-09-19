@@ -441,6 +441,20 @@ valid_release() {
     local active; active=$(jq -er .activeReleaseId "$install_manifest") || return 1
     [[ $(basename -- "$(readlink -f "$data_root/odyssey/current")") == "$active" ]]
 }
+hyprland_paths_portable() {
+    local launcher
+    launcher=$(readlink -m -- "${XDG_BIN_HOME:-$HOME/.local/bin}/odyssey") || return 1
+    awk -v launcher="$launcher" '
+        {
+            line=$0
+            while ((position=index(line, launcher)) > 0)
+                line=substr(line, 1, position-1) substr(line, position+length(launcher))
+            if (line ~ /\/home\/[^/]+|\.config\/odyssey|odyssey\/releases\//)
+                invalid=1
+        }
+        END { exit invalid ? 1 : 0 }
+    ' "$@"
+}
 valid_hyprland_files() {
     local split file
     [[ -f $config_root/hypr/hyprland.lua && -f $config_root/hypr/odyssey.lua ]]
@@ -450,21 +464,25 @@ valid_hyprland_files() {
         for file in animations.lua appearance.lua environment.lua input.lua keybinds.lua layouts.lua monitors.lua startup.lua window-rules.lua; do
             [[ -f $split/$file && ! -L $split/$file ]] || return 1
         done
-        ! grep -En '/home/[^/]+|\.config/odyssey|odyssey/releases/' \
+        hyprland_paths_portable \
             "$config_root/hypr/hyprland.lua" "$config_root/hypr/odyssey.lua" \
-            "$config_root/hypr/config/"*.lua >/dev/null
+            "$config_root/hypr/config/"*.lua
     else
-        ! grep -En '/home/[^/]+|\.config/odyssey|odyssey/releases/' \
-            "$config_root/hypr/odyssey.lua" >/dev/null
+        hyprland_paths_portable "$config_root/hypr/odyssey.lua"
     fi
 }
 valid_shortcuts() {
-    local expected=14
+    local expected=14 launcher command
     [[ $configuration_mode == managed ]] && expected=10
+    launcher=$(readlink -m -- "${XDG_BIN_HOME:-$HOME/.local/bin}/odyssey") || return 1
+    command=$(jq -rn --arg path "$launcher" '$path|@sh')' ipc '
     [[ $(grep -Fc 'ODYSSEY MANAGED SHORTCUTS' "$config_root/hypr/odyssey.lua") == 2 ]] || return 1
-    [[ $(grep -Fc 'odyssey ipc ' "$config_root/hypr/odyssey.lua") == "$expected" ]] \
-        && ! grep -Eq 'qs -p|/home/|\.config/odyssey|odyssey/releases/' \
-            "$config_root/hypr/odyssey.lua"
+    [[ $(grep -Fc -- "$command" "$config_root/hypr/odyssey.lua") == "$expected" ]] \
+        && ! grep -Eq 'qs -p|(^|[^/[:alnum:]_.-])odyssey ipc |odyssey/releases/' \
+            "$config_root/hypr/odyssey.lua" \
+        && { [[ $configuration_mode != managed ]] \
+            || grep -Fqx -- "local odysseyLauncher = $(jq -Rn --arg command "${command% ipc }" '$command')" \
+                "$config_root/hypr/config/keybinds.lua"; }
 }
 unit_ok() { [[ -f $config_root/systemd/user/$1.service ]] && systemctl --user is-enabled "$1.service" >/dev/null 2>&1 && systemctl --user is-active "$1.service" >/dev/null 2>&1; }
 system_unit_ok() { systemctl is-enabled "$1.service" >/dev/null 2>&1 && systemctl is-active "$1.service" >/dev/null 2>&1; }

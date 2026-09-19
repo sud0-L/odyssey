@@ -17,6 +17,16 @@ mode() { stat -c '%a' -- "$1"; }
 compact() { jq -cS .; }
 emit() { jq -cn "$@" | compact; }
 error() { local cmd=$1 code=$2 message=$3 status=${4:-error}; emit --arg command "$cmd" --arg status "$status" --arg code "$code" --arg message "$message" '{adapter:"odyssey-startup",adapterVersion:3,command:$command,error:{code:$code,message:$message},schema:3,status:$status}'; }
+launcher_path() {
+    local path="${XDG_BIN_HOME:-${HOME:?HOME is required}/.local/bin}/odyssey"
+    [[ $path == /* && $path != *$'\n'* ]] || return 1
+    readlink -m -- "$path"
+}
+launcher_shell() { jq -rn --arg path "$(launcher_path)" '$path|@sh'; }
+launcher_lua() {
+    local command; command=$(launcher_shell) || return 1
+    jq -Rn --arg command "$command" '$command'
+}
 systemd_ok() { command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; }
 enabled() { systemctl --user is-enabled odyssey.service >/dev/null 2>&1; }
 active() { systemctl --user is-active odyssey.service >/dev/null 2>&1; }
@@ -24,12 +34,25 @@ managed_unit() { [[ -f $unit_file && ! -L $unit_file ]] && grep -Fqx -- "$unit_m
 split_directory() { printf '%s/config' "$(dirname -- "$1")"; }
 split_sources_valid() { local root=$1 file; for file in "${split_files[@]}"; do [[ -f $root/config/hypr/$file && ! -L $root/config/hypr/$file ]] || return 1; done; }
 copy_split_files() {
-    local root=$1 main=$2 destination file source tmp
+    local root=$1 main=$2 destination file source tmp line literal
     destination=$(split_directory "$main"); split_sources_valid "$root" || return 1
     mkdir -p -- "$destination"
     for file in "${split_files[@]}"; do
         source="$root/config/hypr/$file"; tmp=$(mktemp "$destination/.${file}.XXXXXX")
-        cat -- "$source" > "$tmp"; chmod 600 "$tmp"; mv -f -- "$tmp" "$destination/$file"
+        if [[ $file == keybinds.lua ]]; then
+            literal=$(launcher_lua) || return 1
+            while IFS= read -r line || [[ -n $line ]]; do
+                if [[ $line == 'local odysseyLauncher = "__ODYSSEY_LAUNCHER__"' ]]; then
+                    printf 'local odysseyLauncher = %s\n' "$literal"
+                else
+                    printf '%s\n' "$line"
+                fi
+            done < "$source" > "$tmp"
+            grep -Fq "local odysseyLauncher = $literal" "$tmp" || return 1
+        else
+            cat -- "$source" > "$tmp"
+        fi
+        chmod 600 "$tmp"; mv -f -- "$tmp" "$destination/$file"
     done
 }
 backup_split_files() {
@@ -172,8 +195,13 @@ render_unit() {
     chmod 600 "$tmp"; printf '%s\n' "$tmp"
 }
 render_integration() {
-    local format=$1 file=$2 tmp
+    local format=$1 file=$2 tmp begin end block='' command line prefix suffix
     tmp=$(mktemp "${file}.odyssey.XXXXXX")
+    begin=$([[ $format == lua ]] && printf '%s' '-- BEGIN ODYSSEY MANAGED SHORTCUTS' || printf '%s' '# BEGIN ODYSSEY MANAGED SHORTCUTS')
+    end=$([[ $format == lua ]] && printf '%s' '-- END ODYSSEY MANAGED SHORTCUTS' || printf '%s' '# END ODYSSEY MANAGED SHORTCUTS')
+    if [[ -f $file ]] && [[ $(grep -Fxc -- "$begin" "$file" || true) == 1 ]] && [[ $(grep -Fxc -- "$end" "$file" || true) == 1 ]]; then
+        block=$(awk -v b="$begin" -v e="$end" '$0==b{inside=1} inside{print} $0==e{inside=0}' "$file")
+    fi
     if [[ $format == lua ]]; then
         printf '%s\n' "$(marker lua)" \
             'hl.on("hyprland.start", function()' \
@@ -182,6 +210,17 @@ render_integration() {
             'end)' > "$tmp"
     else
         printf '%s\n' "$(marker conf)" 'exec-once = systemctl --user start odyssey.service' > "$tmp"
+    fi
+    if [[ -n $block ]]; then
+        command=$(launcher_shell) || return 1
+        [[ $format != lua ]] || command=${command//\\/\\\\}
+        while IFS= read -r line || [[ -n $line ]]; do
+            if [[ $line == *'odyssey ipc'* ]]; then
+                prefix=${line%%odyssey ipc*}; suffix=${line#*odyssey ipc}
+                line="${prefix}${command} ipc${suffix}"
+            fi
+            printf '%s\n' "$line"
+        done <<< "$block" >> "$tmp"
     fi
     chmod 600 "$tmp"; mv -f -- "$tmp" "$file"
 }

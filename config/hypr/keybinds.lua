@@ -1,9 +1,10 @@
 -- Keybindings
 
 local mod = "SUPER"
+local odysseyLauncher = "__ODYSSEY_LAUNCHER__"
 
 local function odyssey(command)
-	return hl.dsp.exec_cmd("odyssey ipc " .. command)
+	return hl.dsp.exec_cmd(odysseyLauncher .. " ipc " .. command)
 end
 
 -- Application launchers

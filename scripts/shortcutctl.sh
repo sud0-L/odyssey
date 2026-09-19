@@ -57,28 +57,30 @@ conflict() {
     grep -Eq "^[[:space:]]*bind[[:space:]]*=[[:space:]]*${modifiers// /[[:space:]]+}[[:space:]]*,[[:space:]]*${key_name}[[:space:]]*," "$main_file"
 }
 render() {
-    local target=$1 tmp command="odyssey ipc"
+    local target=$1 tmp launcher command action_literal
     shift
+    launcher="${XDG_BIN_HOME:-${HOME:?HOME is required}/.local/bin}/odyssey"
+    [[ $launcher == /* && $launcher != *$'\n'* ]] || { printf 'Odyssey launcher path is invalid\n' >&2; return 1; }
+    launcher=$(readlink -m -- "$launcher")
+    command=$(jq -rn --arg path "$launcher" '$path|@sh')' ipc'
     tmp=$(mktemp "${target_file}.odyssey.XXXXXX"); awk -v b="$begin" -v e="$end" '$0==b{inside=1;next}$0==e{inside=0;next}!inside{print}' "$target_file" > "$tmp"
     if [[ $target == true ]]; then
         printf '%s\n' "$begin" >> "$tmp"; local keys=(A 'CTRL + A' V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R') actions=('launcher toggle' 'command-launcher toggle' 'clipboard toggle' 'settings open' 'notifications toggle' 'insights wallpaper' 'control-center toggle' 'session lock' 'capture screenshot region both' 'capture record region') labels=('Open application launcher' 'Open command launcher' 'Open clipboard history' 'Open Odyssey settings' 'Open notifications' 'Open wallpaper library' 'Open Control Center' 'Lock session' 'Capture and save a region screenshot' 'Record a screen region') index=0 enabled
         for enabled in "$@"; do if [[ $enabled == true ]]; then
-            if [[ $format == lua ]]; then printf 'hl.bind("SUPER + %s", hl.dsp.exec_cmd("%s %s"), { description = "%s" })\n' "${keys[$index]}" "$command" "${actions[$index]}" "${labels[$index]}" >> "$tmp"
+            if [[ $format == lua ]]; then action_literal=$(jq -Rn --arg command "$command ${actions[$index]}" '$command'); printf 'hl.bind("SUPER + %s", hl.dsp.exec_cmd(%s), { description = "%s" })\n' "${keys[$index]}" "$action_literal" "${labels[$index]}" >> "$tmp"
             elif [[ ${keys[$index]} == *' + '* ]]; then printf 'bind = SUPER %s, %s, exec, %s %s\n' "${keys[$index]% + *}" "${keys[$index]##* + }" "$command" "${actions[$index]}" >> "$tmp"
             else printf 'bind = SUPER, %s, exec, %s %s\n' "${keys[$index]}" "$command" "${actions[$index]}" >> "$tmp"; fi
         fi; ((index+=1)); done
         if [[ $configuration_mode != managed && $format == lua ]]; then
-            printf '%s\n' \
-                'hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("odyssey ipc audio increment 3"), { locked = true, repeating = true, description = "Raise volume" })' \
-                'hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("odyssey ipc audio decrement 3"), { locked = true, repeating = true, description = "Lower volume" })' \
-                'hl.bind("XF86AudioMute", hl.dsp.exec_cmd("odyssey ipc audio mute"), { locked = true, description = "Toggle audio mute" })' \
-                'hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("odyssey ipc audio micmute"), { locked = true, description = "Toggle microphone mute" })' >> "$tmp"
+            printf 'hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(%s), { locked = true, repeating = true, description = "Raise volume" })\n' "$(jq -Rn --arg command "$command audio increment 3" '$command')" >> "$tmp"
+            printf 'hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(%s), { locked = true, repeating = true, description = "Lower volume" })\n' "$(jq -Rn --arg command "$command audio decrement 3" '$command')" >> "$tmp"
+            printf 'hl.bind("XF86AudioMute", hl.dsp.exec_cmd(%s), { locked = true, description = "Toggle audio mute" })\n' "$(jq -Rn --arg command "$command audio mute" '$command')" >> "$tmp"
+            printf 'hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(%s), { locked = true, description = "Toggle microphone mute" })\n' "$(jq -Rn --arg command "$command audio micmute" '$command')" >> "$tmp"
         elif [[ $configuration_mode != managed ]]; then
-            printf '%s\n' \
-                'bindel = , XF86AudioRaiseVolume, exec, odyssey ipc audio increment 3' \
-                'bindel = , XF86AudioLowerVolume, exec, odyssey ipc audio decrement 3' \
-                'bindl = , XF86AudioMute, exec, odyssey ipc audio mute' \
-                'bindl = , XF86AudioMicMute, exec, odyssey ipc audio micmute' >> "$tmp"
+            printf 'bindel = , XF86AudioRaiseVolume, exec, %s audio increment 3\n' "$command" >> "$tmp"
+            printf 'bindel = , XF86AudioLowerVolume, exec, %s audio decrement 3\n' "$command" >> "$tmp"
+            printf 'bindl = , XF86AudioMute, exec, %s audio mute\n' "$command" >> "$tmp"
+            printf 'bindl = , XF86AudioMicMute, exec, %s audio micmute\n' "$command" >> "$tmp"
         fi
         printf '%s\n' "$end" >> "$tmp"
     fi
