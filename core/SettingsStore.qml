@@ -16,6 +16,9 @@ QtObject {
         "scheme-monochrome", "scheme-expressive", "scheme-fidelity",
         "scheme-fruit-salad", "scheme-neutral", "scheme-rainbow"
     ]
+    readonly property var themePresetColors: [
+        "#7c3aed", "#0284c7", "#059669", "#d97706", "#e11d48"
+    ]
     readonly property var validMotionSpeeds: ["quick", "balanced", "calm"]
     readonly property var validDensities: ["compact", "balanced", "airy"]
     readonly property var validCornerStyles: ["subtle", "balanced", "round"]
@@ -111,16 +114,47 @@ QtObject {
             Math.round(Math.max(0.72, Math.min(1, opacity)) * 100) / 100)
     }
 
-    function setAccentOverride(color: string): bool {
+    function normalizedThemeColor(color): string {
         if (typeof color !== "string"
                 || !/^#[0-9a-fA-F]{6}$/.test(color))
+            return ""
+        return color.toLowerCase()
+    }
+
+    function setThemeSourceWallpaper(): void {
+        setValue("appearance", "themeSourceMode", "wallpaper")
+    }
+
+    function setThemeSourceColor(color: string, rememberCustom: bool): bool {
+        const normalized = normalizedThemeColor(color)
+        if (!normalized)
             return false
-        setValue("appearance", "accentOverride", color.toLowerCase())
+        const updated = JSON.parse(JSON.stringify(values || {}))
+        if (!updated.appearance || typeof updated.appearance !== "object")
+            updated.appearance = {}
+        updated.appearance.themeSourceMode = "color"
+        updated.appearance.themeSourceColor = normalized
+        if (rememberCustom && themePresetColors.indexOf(normalized) < 0) {
+            const stored = Array.isArray(updated.appearance.customThemeColors)
+                ? updated.appearance.customThemeColors : []
+            const recent = stored.map(normalizedThemeColor).filter(candidate =>
+                candidate && candidate !== normalized)
+            recent.push(normalized)
+            updated.appearance.customThemeColors = recent.slice(-5)
+        }
+        values = updated
+        save()
         return true
     }
 
+    // Compatibility for callers from older packaged UI code. The old accent
+    // override is now a Matugen theme source rather than a primary-only patch.
+    function setAccentOverride(color: string): bool {
+        return setThemeSourceColor(color, false)
+    }
+
     function clearAccentOverride(): void {
-        removeValue("appearance", "accentOverride")
+        setThemeSourceWallpaper()
     }
 
     function setReducedMotion(enabled: bool): void {

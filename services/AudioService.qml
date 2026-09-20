@@ -28,9 +28,17 @@ QtObject {
     property bool eventsEnabled: false
     property bool outputEventScheduled: false
     property bool microphoneEventScheduled: false
+    property string pendingBluetoothAddress: ""
+    property string pendingBluetoothName: ""
+    property bool pendingBluetoothAutoSelect: false
+
+    readonly property bool awaitingBluetoothOutput:
+        pendingBluetoothAddress.length > 0
 
     signal outputLevelChanged(real level, bool muted, string deviceName)
     signal microphoneLevelChanged(real level, bool muted, string deviceName)
+    signal bluetoothOutputReady(string address, var node, bool selected)
+    signal bluetoothOutputUnavailable(string address)
 
     property IpcHandler audioIpc: IpcHandler {
         target: "audio"
@@ -107,6 +115,75 @@ QtObject {
         return true
     }
 
+    function normalizedIdentity(value): string {
+        return String(value || "").toLowerCase().replace(/[^0-9a-z]/g, "")
+    }
+
+    function isBluetoothOutput(node): bool {
+        if (!node || !node.isSink || node.isStream)
+            return false
+        const identity = (node.name || "") + " " + (node.description || "")
+            + " " + (node.nickname || "") + " "
+            + JSON.stringify(node.properties || {})
+        return identity.toLowerCase().includes("bluez")
+    }
+
+    function matchesBluetoothOutput(node, address: string,
+            deviceName: string): bool {
+        if (!isBluetoothOutput(node) || node.ready === false)
+            return false
+        const addressKey = normalizedIdentity(address)
+        const nameKey = normalizedIdentity(deviceName)
+        const identity = normalizedIdentity((node.name || "") + " "
+            + (node.description || "") + " " + (node.nickname || "")
+            + " " + JSON.stringify(node.properties || {}))
+        return (addressKey && identity.includes(addressKey))
+            || (nameKey && identity.includes(nameKey))
+    }
+
+    function bluetoothOutput(address: string, deviceName: string): var {
+        for (const node of outputDevices) {
+            if (matchesBluetoothOutput(node, address, deviceName))
+                return node
+        }
+        return null
+    }
+
+    function requestBluetoothOutput(address: string, deviceName: string,
+            autoSelect: bool): void {
+        const normalized = String(address || "").toLowerCase()
+        if (!normalized)
+            return
+        pendingBluetoothAddress = normalized
+        pendingBluetoothName = deviceName || "Bluetooth audio"
+        pendingBluetoothAutoSelect = autoSelect
+        bluetoothOutputTimeout.restart()
+        Qt.callLater(() => root.reconcileBluetoothOutput())
+    }
+
+    function cancelBluetoothOutputRequest(address: string): void {
+        if (normalizedIdentity(address)
+                !== normalizedIdentity(pendingBluetoothAddress))
+            return
+        bluetoothOutputTimeout.stop()
+        pendingBluetoothAddress = ""
+        pendingBluetoothName = ""
+        pendingBluetoothAutoSelect = false
+    }
+
+    function reconcileBluetoothOutput(): void {
+        if (!awaitingBluetoothOutput)
+            return
+        const address = pendingBluetoothAddress
+        const node = bluetoothOutput(address, pendingBluetoothName)
+        if (!node)
+            return
+        const shouldSelect = pendingBluetoothAutoSelect
+        const selected = shouldSelect ? setOutputDevice(node) : false
+        cancelBluetoothOutputRequest(address)
+        bluetoothOutputReady(address, node, selected)
+    }
+
     function scheduleOutputEvent(): void {
         if (!eventsEnabled || outputEventScheduled)
             return
@@ -129,6 +206,23 @@ QtObject {
 
     property PwObjectTracker nodeTracker: PwObjectTracker {
         objects: Pipewire.nodes.values.filter(node => node?.audio && !node.isStream)
+    }
+
+    onOutputDevicesChanged: Qt.callLater(() => root.reconcileBluetoothOutput())
+
+    property Timer bluetoothOutputTimeout: Timer {
+        // BlueZ profile connection and WirePlumber node publication are
+        // separate asynchronous steps; slower adapters can need several
+        // seconds after ServicesResolved before the sink becomes ready.
+        interval: 30000
+        onTriggered: {
+            const address = root.pendingBluetoothAddress
+            root.pendingBluetoothAddress = ""
+            root.pendingBluetoothName = ""
+            root.pendingBluetoothAutoSelect = false
+            if (address)
+                root.bluetoothOutputUnavailable(address)
+        }
     }
 
     property Connections sinkEvents: Connections {

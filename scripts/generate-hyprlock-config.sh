@@ -155,7 +155,7 @@ label {
 input-field {
     monitor =
     size = 460, 56
-    outline_thickness = 1
+    outline_thickness = 0
     dots_size = 0.15
     dots_spacing = 0.28
     outer_color = rgba(${outline}cc)

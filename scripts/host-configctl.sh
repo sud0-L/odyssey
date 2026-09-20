@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Canonical public-alpha user configuration deployment and repair.
+# Canonical public-beta user configuration deployment and repair.
 set -euo pipefail
 
 action=${1:-}

@@ -34,25 +34,17 @@ QtObject {
         ? (Config.appearance.wallpaperPaletteEnabled ? generatedMode : "dark")
         : Config.appearance.mode
     readonly property bool dark: effectiveMode !== "light"
-    readonly property bool accentOverridden:
-        Config.appearance.accentOverride.length > 0
     readonly property var colors: generatedAvailable
             && Config.appearance.wallpaperPaletteEnabled
         ? (generated[effectiveMode] || generated.dark || generated.light)
         : (dark ? fallbackDark : fallbackLight)
 
-    readonly property color primary: accentOverridden
-        ? Config.appearance.accentOverride : colorValue("primary")
+    readonly property color primary: colorValue("primary")
     // `onPrimary`/`onSurface` collide with QML's handler-style property lookup
     // when the corresponding base token exists. Expose explicit foreground names.
-    readonly property color primaryText: accentOverridden
-        ? foregroundFor(primary) : colorValue("onPrimary")
-    readonly property color primaryContainer: accentOverridden
-        ? Qt.tint(colorValue("surfaceContainer"),
-            Qt.alpha(primary, dark ? 0.34 : 0.20))
-        : colorValue("primaryContainer")
-    readonly property color primaryContainerText: accentOverridden
-        ? primary : colorValue("onPrimaryContainer")
+    readonly property color primaryText: colorValue("onPrimary")
+    readonly property color primaryContainer: colorValue("primaryContainer")
+    readonly property color primaryContainerText: colorValue("onPrimaryContainer")
     readonly property color secondary: colorValue("secondary")
     readonly property color tertiary: colorValue("tertiary")
     readonly property color surface: colorValue("surface")

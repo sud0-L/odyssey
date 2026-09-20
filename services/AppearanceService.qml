@@ -8,6 +8,7 @@ QtObject {
     id: root
 
     property bool changingScheme: false
+    property bool changingThemeSource: false
     property bool changingIntegration: false
     property bool terminalThemesEnabled: false
     property bool terminalThemesReady: false
@@ -34,13 +35,39 @@ QtObject {
     }
 
     function setAccentOverride(color: string): void {
-        if (SettingsStore.setAccentOverride(color))
-            statusMessage = "Accent override updated"
+        setThemeSourceColor(color, false)
     }
 
     function clearAccentOverride(): void {
-        SettingsStore.clearAccentOverride()
-        statusMessage = "Wallpaper accent restored"
+        setThemeSourceWallpaper()
+    }
+
+    function setThemeSourceWallpaper(): void {
+        if (changingThemeSource)
+            return
+        errorMessage = ""
+        statusMessage = "Generating wallpaper theme…"
+        changingThemeSource = WallpaperService.changeThemeSource(
+            "wallpaper", "", false)
+        if (!changingThemeSource)
+            statusMessage = Config.appearance.themeSourceMode === "wallpaper"
+                ? "Wallpaper theme active" : ""
+    }
+
+    function setThemeSourceColor(color: string, rememberCustom: bool): void {
+        if (changingThemeSource)
+            return
+        const normalized = SettingsStore.normalizedThemeColor(color)
+        if (!normalized)
+            return
+        errorMessage = ""
+        statusMessage = "Generating color theme…"
+        changingThemeSource = WallpaperService.changeThemeSource(
+            "color", normalized, rememberCustom)
+        if (!changingThemeSource
+                && Config.appearance.themeSourceMode === "color"
+                && Config.appearance.themeSourceColor === normalized)
+            statusMessage = "Theme source updated"
     }
 
     function setReducedMotion(enabled: bool): void {
@@ -95,7 +122,8 @@ QtObject {
         if (changingScheme || SettingsStore.validSchemes.indexOf(scheme) < 0
                 || scheme === Config.wallpaper.scheme)
             return
-        if (!WallpaperService.currentWallpaper) {
+        if (Config.appearance.themeSourceMode === "wallpaper"
+                && !WallpaperService.currentWallpaper) {
             errorMessage = "Choose a wallpaper before changing its palette style"
             return
         }
@@ -159,6 +187,23 @@ QtObject {
                 root.errorMessage = WallpaperService.errorMessage || "Palette generation failed"
             }
             root.pendingScheme = ""
+        }
+    }
+
+    property Connections themeSourceCompletion: Connections {
+        target: WallpaperService
+        function onOperationStateChanged() {
+            if (!root.changingThemeSource
+                    || WallpaperService.operationState === "changingThemeSource")
+                return
+            root.changingThemeSource = false
+            if (WallpaperService.errorMessage.length === 0) {
+                root.statusMessage = "Theme source updated"
+                root.errorMessage = ""
+            } else {
+                root.statusMessage = ""
+                root.errorMessage = WallpaperService.errorMessage
+            }
         }
     }
 

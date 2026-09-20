@@ -5,7 +5,7 @@ odyssey is a Quickshell desktop shell for Hyprland built around a contextual sys
 > Minimal when idle. Informational when needed. Powerful when requested. Intelligent when useful.
 
 > [!NOTE]
-> odyssey is currently a **public alpha**. Core functionality is usable today, but features, appearance, configuration, and installation behavior may continue to evolve.
+> odyssey is currently a **public beta**. Core functionality is usable today, but features, appearance, configuration, and installation behavior may continue to evolve.
 
 ## Your system, your configuration
 
@@ -174,7 +174,7 @@ Before modifying existing user-owned configuration, odyssey creates backups unde
 ~/.local/state/odyssey/backups/
 ```
 
-Keep these backups while evaluating the alpha, particularly if you install using managed configuration.
+Keep these backups while evaluating the beta, particularly if you install using managed configuration.
 
 ### Weather
 
@@ -198,7 +198,7 @@ odyssey includes a lifecycle manager for inspecting, maintaining, repairing, and
 | `odyssey dependencies` | Checks required packages and runtime dependencies, including Quickshell health. |
 | `odyssey preflight` | Performs a read-only inspection of the platform, paths, dependencies, and release payload. |
 
-Public releases use human-readable versions such as `0.1.0-alpha`; the source
+Public releases use human-readable versions such as `1.0.0-beta`; the source
 identity is reported separately.
 
 ### Diagnose an installation
@@ -311,7 +311,7 @@ The SDDM theme is intentionally not installed automatically. Review and install 
 
 ## Issues and feedback
 
-odyssey is under active development and feedback during the public alpha is welcome.
+odyssey is under active development and feedback during the public beta is welcome.
 
 When reporting an issue, please include:
 
@@ -324,7 +324,7 @@ When reporting an issue, please include:
 
 ## Status
 
-odyssey is a **public alpha**.
+odyssey is a **public beta**.
 
 The core desktop experience is functional, but some areas remain under active development and features or configuration may change between releases.
 

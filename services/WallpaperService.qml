@@ -12,6 +12,9 @@ QtObject {
     property string currentWallpaper: ""
     property string pendingWallpaper: ""
     property string pendingScheme: ""
+    property string pendingThemeSourceMode: ""
+    property string pendingThemeSourceColor: ""
+    property bool pendingRememberCustomColor: false
     property string candidateWallpaper: ""
     property string candidateToken: ""
     property string candidateStatus: ""
@@ -133,7 +136,9 @@ QtObject {
         errorMessage = ""
         operationState = "previewing"
         return beginOperation("candidate", [helperPath, "candidate", path,
-            Config.wallpaper.scheme, candidateToken])
+            Config.wallpaper.scheme, candidateToken,
+            Config.appearance.themeSourceMode,
+            Config.appearance.themeSourceColor])
     }
 
     // A gallery choice is a commit request, not a UI preview. The helper still
@@ -157,7 +162,9 @@ QtObject {
         errorMessage = ""
         operationState = "preparing"
         return beginOperation("directCandidate", [helperPath, "candidate", path,
-            Config.wallpaper.scheme, candidateToken])
+            Config.wallpaper.scheme, candidateToken,
+            Config.appearance.themeSourceMode,
+            Config.appearance.themeSourceColor])
     }
 
     function clearCandidateState(): void {
@@ -203,14 +210,25 @@ QtObject {
             Config.wallpaper.target, names, Config.wallpaper.transition,
             String(Config.wallpaper.transitionDuration),
             Config.appearance.reducedMotion ? "true" : "false",
-            candidateToken])
+            candidateToken, Config.appearance.themeSourceMode,
+            Config.appearance.themeSourceColor])
     }
 
     function changeScheme(scheme: string): void {
         if (scheme === Config.wallpaper.scheme || busy || applying
-                || !currentWallpaper)
+                || (Config.appearance.themeSourceMode === "wallpaper"
+                    && !currentWallpaper))
             return
         pendingScheme = scheme
+        if (Config.appearance.themeSourceMode === "color") {
+            candidateToken = String(Date.now()) + "-color-scheme"
+            errorMessage = ""
+            operationState = "changingScheme"
+            beginOperation("colorScheme", [helperPath, "theme-source", "color",
+                Config.appearance.themeSourceColor, currentWallpaper,
+                scheme, candidateToken])
+            return
+        }
         candidateWallpaper = currentWallpaper
         candidateToken = String(Date.now()) + "-scheme"
         candidateReady = false
@@ -218,7 +236,35 @@ QtObject {
         errorMessage = ""
         operationState = "changingScheme"
         beginOperation("schemeCandidate", [helperPath, "candidate",
-            currentWallpaper, scheme, candidateToken])
+            currentWallpaper, scheme, candidateToken,
+            Config.appearance.themeSourceMode,
+            Config.appearance.themeSourceColor])
+    }
+
+    function changeThemeSource(mode: string, color: string,
+            rememberCustom: bool): bool {
+        const normalized = SettingsStore.normalizedThemeColor(color)
+        if (busy || applying
+                || (mode === "wallpaper" && !currentWallpaper)
+                || (mode !== "wallpaper" && mode !== "color")
+                || (mode === "color" && !normalized))
+            return false
+        if (mode === Config.appearance.themeSourceMode
+                && (mode === "wallpaper"
+                    || normalized === Config.appearance.themeSourceColor)) {
+            if (mode === "color" && rememberCustom)
+                SettingsStore.setThemeSourceColor(normalized, true)
+            return false
+        }
+        pendingThemeSourceMode = mode
+        pendingThemeSourceColor = mode === "color" ? normalized : ""
+        pendingRememberCustomColor = rememberCustom
+        candidateToken = String(Date.now()) + "-theme-source"
+        errorMessage = ""
+        operationState = "changingThemeSource"
+        return beginOperation("themeSource", [helperPath, "theme-source",
+            pendingThemeSourceMode, pendingThemeSourceColor,
+            currentWallpaper, Config.wallpaper.scheme, candidateToken])
     }
 
     function parseStatus(text: string): void {
@@ -313,7 +359,8 @@ QtObject {
                 candidateStatus = "Verifying renderer before palette publication…"
                 Qt.callLater(() => beginOperation("scheme", [helperPath,
                     "scheme", candidateWallpaper, pendingScheme,
-                    candidateToken]))
+                    candidateToken, Config.appearance.themeSourceMode,
+                    Config.appearance.themeSourceColor]))
             } else if (kind === "directCandidate") {
                 candidateStatus = "Applying wallpaper…"
                 Qt.callLater(() => root.applyCandidate(root.pendingMonitorName))
@@ -351,6 +398,40 @@ QtObject {
                 operationState = "idle"
                 recoveryTimer.restart()
             }
+            return
+        }
+
+        if (kind === "themeSource") {
+            const committed = exitCode === 0 && output.includes("COMMITTED=true")
+            if (committed) {
+                if (pendingThemeSourceMode === "wallpaper")
+                    SettingsStore.setThemeSourceWallpaper()
+                else
+                    SettingsStore.setThemeSourceColor(
+                        pendingThemeSourceColor, pendingRememberCustomColor)
+                paletteAvailable = true
+                errorMessage = ""
+            } else {
+                errorMessage = detail || "Theme source generation failed"
+            }
+            pendingThemeSourceMode = ""
+            pendingThemeSourceColor = ""
+            pendingRememberCustomColor = false
+            operationState = "idle"
+            return
+        }
+
+        if (kind === "colorScheme") {
+            const committed = exitCode === 0 && output.includes("COMMITTED=true")
+            if (committed) {
+                SettingsStore.setScheme(pendingScheme)
+                paletteAvailable = true
+                errorMessage = ""
+            } else {
+                errorMessage = detail || "Palette generation failed"
+            }
+            pendingScheme = ""
+            operationState = "idle"
             return
         }
 

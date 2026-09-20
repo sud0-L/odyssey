@@ -93,7 +93,7 @@ done
 
 printf '%s\n' \
     "${accent}╭──────────────────────────────────────────────╮${reset}" \
-    "${accent}│${reset}  ${bold}Odyssey Installer${reset}  ${dim}· public alpha${reset}           ${accent}│${reset}" \
+    "${accent}│${reset}  ${bold}Odyssey Installer${reset}  ${dim}· public beta${reset}            ${accent}│${reset}" \
     "${accent}╰──────────────────────────────────────────────╯${reset}" \
     "${dim}A complete, deterministic Hyprland desktop environment.${reset}"
 

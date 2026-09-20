@@ -124,32 +124,6 @@ Item {
                 Layout.preferredWidth: 34
                 Layout.preferredHeight: 30
                 radius: Theme.radiusSmall
-                color: root.commandLauncherOpen ? Theme.primaryContainer
-                    : commandLauncherNavHover.hovered
-                        ? Theme.surfaceContainerHigh : "transparent"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: ""
-                    color: root.commandLauncherOpen
-                        ? Theme.primaryContainerText : Theme.surfaceVariantText
-                    font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
-                }
-
-                HoverHandler { id: commandLauncherNavHover }
-                TapHandler {
-                    onTapped: root.pageSelected(root.commandLauncherOpen
-                        ? "overview" : "command-launcher")
-                }
-
-                Behavior on color { ColorAnimation { duration: Animations.fast } }
-            }
-
-            Rectangle {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 30
-                radius: Theme.radiusSmall
                 color: root.sessionOpen ? Theme.primaryContainer
                     : sessionNavHover.hovered
                         ? Theme.surfaceContainerHigh : "transparent"
@@ -167,6 +141,32 @@ Item {
                 TapHandler {
                     onTapped: root.pageSelected(root.sessionOpen
                         ? "overview" : "session")
+                }
+
+                Behavior on color { ColorAnimation { duration: Animations.fast } }
+            }
+
+            Rectangle {
+                Layout.preferredWidth: 34
+                Layout.preferredHeight: 30
+                radius: Theme.radiusSmall
+                color: root.commandLauncherOpen ? Theme.primaryContainer
+                    : commandLauncherNavHover.hovered
+                        ? Theme.surfaceContainerHigh : "transparent"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: ""
+                    color: root.commandLauncherOpen
+                        ? Theme.primaryContainerText : Theme.surfaceVariantText
+                    font.family: Config.appearance.monoFontFamily
+                    font.pixelSize: Theme.iconSmall
+                }
+
+                HoverHandler { id: commandLauncherNavHover }
+                TapHandler {
+                    onTapped: root.pageSelected(root.commandLauncherOpen
+                        ? "overview" : "command-launcher")
                 }
 
                 Behavior on color { ColorAnimation { duration: Animations.fast } }

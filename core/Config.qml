@@ -25,12 +25,32 @@ QtObject {
         readonly property string fallbackPalettePath: Qt.resolvedUrl("../generated/palette.json")
         readonly property real surfaceOpacity: SettingsStore.numberValue(
             "appearance", "surfaceOpacity", 0.96, 0.72, 1)
-        readonly property string accentOverride: {
+        readonly property string themeSourceMode: {
             const candidate = SettingsStore.value("appearance",
-                "accentOverride", "")
+                "themeSourceMode", "wallpaper")
+            return candidate === "color" ? "color" : "wallpaper"
+        }
+        readonly property string themeSourceColor: {
+            const candidate = SettingsStore.value("appearance",
+                "themeSourceColor", "")
             return typeof candidate === "string"
                     && /^#[0-9a-fA-F]{6}$/.test(candidate)
                 ? candidate.toLowerCase() : ""
+        }
+        readonly property var customThemeColors: {
+            const stored = SettingsStore.value("appearance",
+                "customThemeColors", [])
+            if (!Array.isArray(stored))
+                return []
+            const result = []
+            for (const candidate of stored) {
+                const normalized = SettingsStore.normalizedThemeColor(candidate)
+                if (normalized
+                        && SettingsStore.themePresetColors.indexOf(normalized) < 0
+                        && result.indexOf(normalized) < 0)
+                    result.push(normalized)
+            }
+            return result.slice(-5)
         }
         readonly property bool reducedMotion: SettingsStore.boolValue(
             "appearance", "reducedMotion", false)

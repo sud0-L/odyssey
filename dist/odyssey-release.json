@@ -1,8 +1,8 @@
 {
-  "artifactSha256": "353f4a03f42b02324a756b564bc1a63c97173285c61d4475a43224f7a740e55b",
-  "artifactUrl": "https://github.com/sud0-L/odyssey/releases/download/v0.1.9-alpha/odyssey.ody",
+  "artifactSha256": "a1d784ed1d2eee4381471fd1808ed6646f7c8c66c4d677f4538985fcff08a763",
+  "artifactUrl": "https://github.com/sud0-L/odyssey/releases/download/v1.0.0-beta/odyssey.ody",
   "product": "odyssey",
-  "releaseId": "0.1.9-alpha-353f4a03f42b02324a756b564bc1a63c97173285c61d4475a43224f7a740e55b",
+  "releaseId": "1.0.0-beta-a1d784ed1d2eee4381471fd1808ed6646f7c8c66c4d677f4538985fcff08a763",
   "schema": 2,
-  "version": "0.1.9-alpha"
+  "version": "1.0.0-beta"
 }

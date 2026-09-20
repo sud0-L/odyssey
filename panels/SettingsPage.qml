@@ -13,7 +13,7 @@ Item {
     property string pillPreviewMode: "rest"
     property string islandEditor: "overview"
     property bool accentPaletteOpen: false
-    property string stagedAccent: Config.appearance.accentOverride
+    property string stagedAccent: Config.appearance.themeSourceColor
     property string pickedAccent: ""
     property string weatherNameDraft: Config.weather.locationName
     property string weatherLatitudeDraft: Number.isFinite(Config.weather.latitude)
@@ -53,7 +53,8 @@ Item {
         stdout: StdioCollector { onStreamFinished: root.pickedAccent = text.trim() }
         onExited: code => {
             if (code === 0 && /^#[0-9a-fA-F]{6}$/.test(root.pickedAccent))
-                AppearanceService.setAccentOverride(root.pickedAccent.toLowerCase())
+                AppearanceService.setThemeSourceColor(
+                    root.pickedAccent.toLowerCase(), true)
         }
     }
     onSectionChanged: {
@@ -325,7 +326,7 @@ Item {
                                 title: "Color style"
                                 detail: AppearanceService.changingScheme
                                     ? "Generating a new palette…"
-                                    : "Choose how Matugen interprets the current wallpaper"
+                                    : "Choose how Matugen interprets the theme source"
                                 contentHeight: 100
                                 GridLayout {
                                     anchors.fill: parent
@@ -359,19 +360,20 @@ Item {
 
                             SettingsCard {
                                 Layout.fillWidth: true
-                                title: "Accent color override"
-                                detail: accentPaletteOpen ? "Pick a color, then Use color to commit it" : "Optional primary-accent override"
+                                title: "Theme source"
+                                detail: accentPaletteOpen ? "Pick a color, then select it" : "Choose wallpaper or a custom theme color"
                                 contentHeight: accentPaletteOpen ? 222 : 34
                                 ColumnLayout { anchors.fill: parent; spacing: Theme.space2
                                     RowLayout { Layout.fillWidth: true; spacing: Theme.space2
-                                        AccentSwatch { swatchColor: Theme.primary; glyph: "󰏘"; selected: !Theme.accentOverridden; onActivated: AppearanceService.clearAccentOverride() }
-                                        Repeater { model: ["#7c3aed", "#0284c7", "#059669", "#d97706", "#e11d48"]; delegate: AccentSwatch { required property string modelData; swatchColor: modelData; selected: Config.appearance.accentOverride === modelData; onActivated: AppearanceService.setAccentOverride(modelData) } }
-                                        AccentSwatch { swatchColor: Theme.primary; glyph: "󰐕"; selected: accentPaletteOpen; onActivated: { root.stagedAccent = Config.appearance.accentOverride; root.accentPaletteOpen = !root.accentPaletteOpen } }
+                                        AccentSwatch { swatchColor: Theme.primary; glyph: "󰏘"; selected: Config.appearance.themeSourceMode === "wallpaper"; onActivated: AppearanceService.setThemeSourceWallpaper() }
+                                        Repeater { model: SettingsStore.themePresetColors; delegate: AccentSwatch { required property string modelData; swatchColor: modelData; selected: Config.appearance.themeSourceMode === "color" && Config.appearance.themeSourceColor === modelData; onActivated: AppearanceService.setThemeSourceColor(modelData, false) } }
+                                        Repeater { model: Config.appearance.customThemeColors; delegate: AccentSwatch { required property string modelData; swatchColor: modelData; selected: Config.appearance.themeSourceMode === "color" && Config.appearance.themeSourceColor === modelData; onActivated: AppearanceService.setThemeSourceColor(modelData, true) } }
+                                        AccentSwatch { swatchColor: Theme.primary; glyph: "󰐕"; selected: accentPaletteOpen; onActivated: { root.stagedAccent = Config.appearance.themeSourceColor; root.accentPaletteOpen = !root.accentPaletteOpen } }
                                         Item { Layout.fillWidth: true }
                                     }
                                     GridLayout { visible: root.accentPaletteOpen; Layout.alignment: Qt.AlignHCenter; columns: 9; columnSpacing: 4; rowSpacing: 4
                                         Repeater { model: ["#1d4ed8","#2563eb","#3b82f6","#60a5fa","#93c5fd", "#047857","#059669","#10b981","#34d399","#6ee7b7", "#ca8a04","#eab308","#facc15","#fde047","#fef08a", "#c2410c","#ea580c","#f97316","#fb923c","#fdba74", "#be123c","#e11d48","#f43f5e","#fb7185","#fda4af", "#6d28d9","#7c3aed","#8b5cf6","#a78bfa","#c4b5fd", "#713f12","#854d0e","#a16207","#b45309","#d6a96c", "#111827","#374151","#6b7280","#9ca3af","#d1d5db", "#f9fafb","#e5e7eb","#cbd5e1","#94a3b8","#475569"]
-                                            delegate: AccentPaletteSwatch { required property string modelData; swatchColor: modelData; selected: Config.appearance.accentOverride === modelData; onActivated: AppearanceService.setAccentOverride(modelData) }
+                                            delegate: AccentPaletteSwatch { required property string modelData; swatchColor: modelData; selected: Config.appearance.themeSourceMode === "color" && Config.appearance.themeSourceColor === modelData; onActivated: AppearanceService.setThemeSourceColor(modelData, true) }
                                         }
                                     }
                                     RowLayout { visible: root.accentPaletteOpen; Layout.fillWidth: true
@@ -391,8 +393,8 @@ Item {
                                             onTextEdited: if (/^#[0-9a-fA-F]{6}$/.test(text)) root.stagedAccent = text.toLowerCase()
                                         }
                                         TextButton { compact: true; text: "Pick"; onClicked: root.pickAccentFromScreen() }
-                                        TextButton { compact: true; text: "Cancel"; onClicked: { root.stagedAccent=Config.appearance.accentOverride; root.accentPaletteOpen=false } }
-                                        TextButton { compact: true; text: "Select"; enabled: /^#[0-9a-fA-F]{6}$/.test(accentHex.text); onClicked: { AppearanceService.setAccentOverride(root.stagedAccent); root.accentPaletteOpen=false } }
+                                        TextButton { compact: true; text: "Cancel"; onClicked: { root.stagedAccent=Config.appearance.themeSourceColor; root.accentPaletteOpen=false } }
+                                        TextButton { compact: true; text: "Select"; enabled: /^#[0-9a-fA-F]{6}$/.test(accentHex.text); onClicked: { AppearanceService.setThemeSourceColor(root.stagedAccent, true); root.accentPaletteOpen=false } }
                                     }
                                 }
                             }

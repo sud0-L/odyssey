@@ -220,12 +220,45 @@ reconcile_manifest() {
 }
 
 candidate_matches() {
-    local image=$1 scheme=$2 token=$3
+    local image=$1 scheme=$2 token=$3 source_mode=${4:-wallpaper}
+    local source_color=${5:-}
     [[ -f $candidate_dir/manifest.json && -f $candidate_dir/palette.json ]] \
         || return 1
-    jq -e --arg image "$image" --arg scheme "$scheme" --arg token "$token" '
+    jq -e --arg image "$image" --arg scheme "$scheme" --arg token "$token" \
+        --arg sourceMode "$source_mode" --arg sourceColor "$source_color" '
         .image == $image and .scheme == $scheme and .token == $token
+        and (.sourceMode // "wallpaper") == $sourceMode
+        and (.sourceColor // "") == $sourceColor
     ' "$candidate_dir/manifest.json" >/dev/null
+}
+
+valid_source() {
+    [[ $1 == wallpaper ]] || [[ $1 == color && $2 =~ ^#[0-9a-fA-F]{6}$ ]]
+}
+
+prepare_candidate() {
+    local image=$1 scheme=$2 token=$3 source_mode=${4:-wallpaper}
+    local source_color=${5:-} palette_mode=
+    valid_source "$source_mode" "$source_color" || die 'invalid theme source'
+    rm -rf "$candidate_dir"
+    mkdir -p "$candidate_dir"
+    chmod 700 "$candidate_dir"
+    if [[ $source_mode == color ]]; then
+        if [[ -f $active_palette ]]; then
+            palette_mode=$(jq -r 'if .mode == "light" then "light" else "dark" end' \
+                "$active_palette")
+        fi
+        "$palette_generator" color "$source_color" "$scheme" \
+            "$candidate_dir/palette.json" "$palette_mode" >/dev/null
+    else
+        "$palette_generator" image "$image" "$scheme" \
+            "$candidate_dir/palette.json" >/dev/null
+    fi
+    jq -n --arg image "$image" --arg scheme "$scheme" --arg token "$token" \
+        --arg sourceMode "$source_mode" --arg sourceColor "$source_color" \
+        '{image:$image,scheme:$scheme,token:$token,sourceMode:$sourceMode,
+          sourceColor:$sourceColor}' >"$candidate_dir/manifest.json"
+    chmod 600 "$candidate_dir"/*.json
 }
 
 restore_file() {
@@ -268,7 +301,8 @@ restore_sddm_wallpaper() {
 }
 
 publish_commit() {
-    local image=$1 assignments=$2 scheme=$3 transaction
+    local image=$1 assignments=$2 scheme=$3 source_mode=${4:-wallpaper}
+    local source_color=${5:-} transaction
     local palette_existed=false manifest_existed=false current_existed=false sddm_existed=false
     transaction=$(mktemp -d "$runtime_root/.wallpaper-publish.XXXXXX")
     trap 'rm -rf "$transaction"' RETURN
@@ -291,8 +325,10 @@ publish_commit() {
     fi
     install -m 600 "$candidate_dir/palette.json" "$transaction/palette.next"
     jq -n --arg wallpaper "$image" --arg scheme "$scheme" \
+        --arg sourceMode "$source_mode" --arg sourceColor "$source_color" \
         --argjson assignments "$assignments" \
-        '{version:2,wallpaper:$wallpaper,scheme:$scheme,assignments:$assignments}' \
+        '{version:2,wallpaper:$wallpaper,scheme:$scheme,assignments:$assignments,
+          sourceMode:$sourceMode,sourceColor:$sourceColor}' \
         >"$transaction/manifest.next"
     printf '%s\n' "$image" >"$transaction/current.next"
     chmod 600 "$transaction/manifest.next" "$transaction/current.next"
@@ -310,6 +346,25 @@ publish_commit() {
         return 1
     fi
     rm -rf "$transaction"
+    trap - RETURN
+}
+
+publish_palette_only() {
+    local transaction palette_existed=false
+    transaction=$(mktemp -d "$runtime_root/.theme-source-publish.XXXXXX")
+    trap 'rm -rf "$transaction"' RETURN
+    if [[ -f $active_palette ]]; then
+        cp -f -- "$active_palette" "$transaction/palette.before"
+        palette_existed=true
+    fi
+    install -m 600 "$candidate_dir/palette.json" "$transaction/palette.next"
+    if [[ ${ODYSSEY_FAIL_PUBLICATION:-false} == true ]] \
+            || ! install -m 600 "$transaction/palette.next" "$active_palette"; then
+        restore_file "$transaction/palette.before" "$active_palette" \
+            "$palette_existed" || true
+        return 1
+    fi
+    rm -rf "$candidate_dir" "$transaction"
     trap - RETURN
 }
 
@@ -347,16 +402,28 @@ case ${1:-} in
         valid_image "$image" || die 'unsupported wallpaper format'
         scheme=$3
         token=$4
-        rm -rf "$candidate_dir"
-        mkdir -p "$candidate_dir"
-        chmod 700 "$candidate_dir"
-        "$palette_generator" "$image" "$scheme" \
-            "$candidate_dir/palette.json" >/dev/null
-        jq -n --arg image "$image" --arg scheme "$scheme" --arg token "$token" \
-            '{image:$image,scheme:$scheme,token:$token}' \
-            >"$candidate_dir/manifest.json"
-        chmod 600 "$candidate_dir"/*.json
+        source_mode=${5:-wallpaper}
+        source_color=${6:-}
+        prepare_candidate "$image" "$scheme" "$token" "$source_mode" \
+            "$source_color"
         say "CANDIDATE=$candidate_dir"
+        ;;
+    theme-source)
+        source_mode=$2
+        source_color=$3
+        if [[ $source_mode == wallpaper ]]; then
+            image=$(canonical "$4") || die 'wallpaper does not exist'
+            valid_image "$image" || die 'unsupported wallpaper format'
+        else
+            image=
+        fi
+        scheme=$5
+        token=$6
+        prepare_candidate "$image" "$scheme" "$token" "$source_mode" \
+            "$source_color"
+        publish_palette_only || die 'palette publication failed'
+        say PALETTE=updated
+        say COMMITTED=true
         ;;
     cancel-candidate)
         rm -rf "$candidate_dir"
@@ -372,8 +439,11 @@ case ${1:-} in
         seconds=$(clamp_duration "$7")
         reduced=${8:-false}
         token=${9:-}
+        source_mode=${10:-wallpaper}
+        source_color=${11:-}
         [[ $target == current || $target == all ]] || die 'invalid output target'
-        candidate_matches "$image" "$scheme" "$token" || die 'stale candidate'
+        candidate_matches "$image" "$scheme" "$token" "$source_mode" \
+            "$source_color" || die 'stale candidate'
         start_renderer auto >/dev/null || die 'renderer unavailable'
         [[ -n $names ]] || die 'no live outputs'
         before=$(images) || die 'renderer query failed'
@@ -399,7 +469,8 @@ case ${1:-} in
             restore_snapshot "$before" "$names" || true
             die 'renderer query failed; previous assignments restored'
         }
-        if ! publish_commit "$image" "$after" "$scheme"; then
+        if ! publish_commit "$image" "$after" "$scheme" "$source_mode" \
+                "$source_color"; then
             restore_snapshot "$before" "$names" || true
             die 'palette publication failed; previous assignments restored'
         fi
@@ -412,11 +483,15 @@ case ${1:-} in
         image=$(canonical "$2") || die 'wallpaper does not exist'
         scheme=$3
         token=$4
-        candidate_matches "$image" "$scheme" "$token" || die 'stale candidate'
+        source_mode=${5:-wallpaper}
+        source_color=${6:-}
+        candidate_matches "$image" "$scheme" "$token" "$source_mode" \
+            "$source_color" || die 'stale candidate'
         start_renderer auto >/dev/null || die 'renderer unavailable'
         reconcile_manifest || die 'renderer reconciliation failed'
         assignments=$(images) || die 'renderer query failed'
-        publish_commit "$image" "$assignments" "$scheme" \
+        publish_commit "$image" "$assignments" "$scheme" "$source_mode" \
+            "$source_color" \
             || die 'palette publication failed'
         rm -rf "$candidate_dir"
         say "CURRENT=$image"
@@ -429,7 +504,7 @@ case ${1:-} in
         say RECONCILED=true
         ;;
     *)
-        printf 'usage: %s {list|probe|bootstrap|candidate|cancel-candidate|apply|scheme|reconcile}\n' \
+        printf 'usage: %s {list|probe|bootstrap|candidate|theme-source|cancel-candidate|apply|scheme|reconcile}\n' \
             "$0" >&2
         exit 2
         ;;

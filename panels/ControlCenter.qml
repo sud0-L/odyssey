@@ -134,14 +134,11 @@ Item {
                 return "Saved · " + strength
             return NetworkService.securityLabel(option) + " · " + strength
         }
-        if (option?.connected) {
-            const battery = option.batteryAvailable
-                ? " · " + Math.round(option.battery * 100) + "%" : ""
-            return "Connected" + battery
-        }
-        if (option?.pairing)
-            return "Pairing…"
-        return option?.paired || option?.bonded ? "Connect" : "Pair"
+        const bluetoothStatus = BluetoothService.deviceStatusLabel(option)
+        if (option?.connected && option.batteryAvailable)
+            return bluetoothStatus + " · "
+                + Math.round(option.battery * 100) + "%"
+        return bluetoothStatus
     }
 
     function optionSelected(option): bool {
@@ -149,6 +146,8 @@ Item {
             return option?.id === AudioService.sink?.id
         if (displayedSection === "input")
             return option?.id === AudioService.source?.id
+        if (displayedSection === "bluetooth")
+            return BluetoothService.deviceReady(option)
         return option?.connected ?? false
     }
 
@@ -157,7 +156,7 @@ Item {
             return NetworkService.canSelectNetwork(option)
                 || (NetworkService.supportsPassword(option) && !option.connected)
         if (displayedSection === "bluetooth")
-            return option !== null && option !== undefined && !option.blocked
+            return BluetoothService.canActivateDevice(option)
         return option !== null && option !== undefined
     }
 
@@ -219,6 +218,11 @@ Item {
             clearInformationView()
     }
 
+    function forgetInformationBluetooth(): void {
+        if (BluetoothService.forgetDevice(informationOption))
+            clearInformationView()
+    }
+
     function informationTitle(): string {
         return informationOption ? optionTitle(informationOption) : detailTitle()
     }
@@ -238,11 +242,15 @@ Item {
         }
         return [
             { label: "Status", value: option.connected ? "Connected"
-                : option.paired || option.bonded ? "Paired" : "Nearby" },
-            { label: "Address", value: option.address || "Unavailable" },
-            { label: "Trusted", value: option.trusted ? "Yes" : "No" },
+                : option.paired || option.bonded ? "Paired" : "Nearby",
+                accent: option.connected ? Theme.success : Theme.primary },
+            { label: "Address", value: option.address || "Unavailable",
+                accent: Theme.primary },
+            { label: "Trusted", value: option.trusted ? "Yes" : "No",
+                accent: Theme.tertiary },
             { label: "Battery", value: option.batteryAvailable
-                ? Math.round(option.battery * 100) + "%" : "Unavailable" }
+                ? Math.round(option.battery * 100) + "%" : "Unavailable",
+                accent: Theme.tertiary }
         ]
     }
 
@@ -1128,52 +1136,104 @@ Item {
                             Behavior on color { ColorAnimation { duration: Animations.fast } }
                         }
 
-                        GridLayout {
-                            anchors.centerIn: parent
-                            width: Math.min(520, parent.width - Theme.space5 * 2)
-                            columns: 2
-                            rowSpacing: Theme.space3
-                            columnSpacing: Theme.space5
-                            visible: root.displayedSection !== "wifi"
+                        Rectangle {
+                            visible: root.displayedSection === "bluetooth"
+                                && (!!root.informationOption?.paired
+                                    || !!root.informationOption?.bonded
+                                    || !!root.informationOption?.trusted)
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: Theme.space2
+                            width: 112
+                            height: 27
+                            radius: Theme.radiusSmall
+                            color: forgetBluetoothHover.hovered
+                                ? Qt.alpha(Theme.error, 0.20)
+                                : Qt.alpha(Theme.error, 0.10)
+                            border.width: 1
+                            border.color: Qt.alpha(Theme.error, 0.38)
+                            activeFocusOnTab: true
 
-                            Repeater {
-                                model: root.informationRows()
-                                delegate: Item {
-                                    required property var modelData
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 48
+                            Text {
+                                anchors.centerIn: parent
+                                text: "Forget device"
+                                color: Theme.error
+                                font.family: Config.appearance.fontFamily
+                                font.pixelSize: 9
+                                font.weight: Font.DemiBold
+                            }
+                            HoverHandler { id: forgetBluetoothHover }
+                            TapHandler { onTapped: root.forgetInformationBluetooth() }
+                            Keys.onReturnPressed: root.forgetInformationBluetooth()
+                            Keys.onEnterPressed: root.forgetInformationBluetooth()
+                            Behavior on color { ColorAnimation { duration: Animations.fast } }
+                        }
 
-                                    Column {
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        spacing: 2
-                                        Text {
-                                            text: modelData.label.toUpperCase()
-                                            color: Theme.surfaceVariantText
-                                            font.family: Config.appearance.monoFontFamily
-                                            font.pixelSize: 8
-                                            font.letterSpacing: 1
+                        ColumnLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: Theme.space2
+                            visible: root.displayedSection === "bluetooth"
+                            spacing: Theme.space2
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 58
+                                spacing: Theme.space2
+
+                                Repeater {
+                                    model: root.informationRows()
+                                    delegate: Rectangle {
+                                        required property var modelData
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        clip: true
+                                        radius: Theme.radiusSmall
+                                        color: Qt.alpha(Theme.surfaceContainerHigh,
+                                            Theme.dark ? 0.70 : 0.58)
+                                        border.width: 1
+                                        border.color: Qt.alpha(
+                                            Theme.outlineVariant, 0.34)
+
+                                        ColumnLayout {
+                                            anchors.fill: parent
+                                            anchors.margins: Theme.space2
+                                            spacing: 2
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: modelData.label
+                                                color: Theme.surfaceVariantText
+                                                elide: Text.ElideRight
+                                                font.family: Config.appearance.fontFamily
+                                                font.pixelSize: 10
+                                                font.weight: Font.Medium
+                                            }
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: modelData.value
+                                                color: modelData.accent
+                                                elide: Text.ElideRight
+                                                font.family: Config.appearance.fontFamily
+                                                font.pixelSize: 11
+                                                font.weight: Font.DemiBold
+                                            }
                                         }
-                                        Text {
-                                            width: parent.width
-                                            text: modelData.value
-                                            color: Theme.surfaceText
-                                            elide: Text.ElideRight
-                                            font.family: Config.appearance.fontFamily
-                                            font.pixelSize: 11
-                                            font.weight: Font.DemiBold
-                                        }
-                                    }
-
-                                    Rectangle {
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.bottom: parent.bottom
-                                        height: 1
-                                        color: Qt.alpha(Theme.outlineVariant, 0.38)
                                     }
                                 }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                visible: BluetoothService.deviceError(
+                                    root.informationOption).length > 0
+                                text: BluetoothService.deviceError(
+                                    root.informationOption)
+                                color: Theme.error
+                                font.family: Config.appearance.fontFamily
+                                font.pixelSize: 8
+                                wrapMode: Text.WordWrap
                             }
                         }
                     }
