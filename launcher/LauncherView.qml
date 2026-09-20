@@ -10,6 +10,7 @@ Item {
     property string emptyText: "No matching Odyssey results"
     property string searchIcon: "󰍉"
     property bool copyShortcutEnabled: false
+    property bool active: visible
     property var results: {
         provider.revision
         return provider.search(searchField.text, Config.launcher.resultLimit)
@@ -56,8 +57,8 @@ Item {
         if (visible)
             resultRefresh.restart()
     }
-    onVisibleChanged: {
-        if (visible) {
+    onActiveChanged: {
+        if (active) {
             if (provider.opened)
                 provider.opened()
             searchField.text = ""

@@ -516,6 +516,7 @@ Item {
 
         ApplicationLauncher {
             visible: root.launcherOpen
+            active: root.active && root.launcherOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
             onDismissRequested: root.dismissRequested(false)
@@ -524,6 +525,7 @@ Item {
 
         CommandLauncher {
             visible: root.commandLauncherOpen
+            active: root.active && root.commandLauncherOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
             onDismissRequested: root.dismissRequested(false)

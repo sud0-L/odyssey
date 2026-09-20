@@ -6,8 +6,8 @@ LauncherView {
     placeholderText: "Search Odyssey"
     emptyText: "No matching Odyssey results"
 
-    onVisibleChanged: {
-        if (visible) {
+    onActiveChanged: {
+        if (active) {
             ClipboardService.refresh()
             KeybindService.refresh()
         }
