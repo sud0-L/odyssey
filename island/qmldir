@@ -1,4 +1,5 @@
 module Odyssey.Island
+IslandHost 1.0 IslandHost.qml
 Island 1.0 Island.qml
 IslandController 1.0 IslandController.qml
 IslandCaptureFeedback 1.0 IslandCaptureFeedback.qml
