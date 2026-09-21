@@ -17,7 +17,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        Island {
+        IslandHost {
             required property var modelData
             screen: modelData
         }

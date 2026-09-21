@@ -11,6 +11,7 @@ QtObject {
     property string errorMessage: ""
 
     readonly property var validModes: ["auto", "dark", "light"]
+    readonly property var validMaterials: ["solid", "glass"]
     readonly property var validSchemes: [
         "scheme-content", "scheme-tonal-spot", "scheme-vibrant",
         "scheme-monochrome", "scheme-expressive", "scheme-fidelity",
@@ -107,6 +108,11 @@ QtObject {
             return false
         setValue("appearance", "mode", mode)
         return true
+    }
+
+    function setMaterial(material: string): bool {
+        return setValidatedValue("appearance", "material", material,
+            validMaterials)
     }
 
     function setSurfaceOpacity(opacity: real): void {

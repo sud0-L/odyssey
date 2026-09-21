@@ -303,6 +303,36 @@ Item {
 
                             SettingsCard {
                                 Layout.fillWidth: true
+                                title: "Material"
+                                detail: Config.appearance.material === "glass"
+                                    ? "Tinted translucent surfaces with compositor blur"
+                                    : "Odyssey's original opaque surface treatment"
+                                inlineLayout: true
+                                contentHeight: 36
+                                RowLayout {
+                                    anchors.fill: parent
+                                    spacing: Theme.space1
+                                    Item { Layout.fillWidth: true }
+                                    Repeater {
+                                        model: [
+                                            { id: "solid", label: "Solid" },
+                                            { id: "glass", label: "Glass" }
+                                        ]
+                                        delegate: SettingsChoice {
+                                            required property var modelData
+                                            compact: true
+                                            label: modelData.label
+                                            selected: Config.appearance.material
+                                                === modelData.id
+                                            onActivated: AppearanceService
+                                                .setMaterial(modelData.id)
+                                        }
+                                    }
+                                }
+                            }
+
+                            SettingsCard {
+                                Layout.fillWidth: true
                                 title: "Surface opacity"
                                 detail: Math.round(Config.appearance.surfaceOpacity * 100)
                                     + "% · Applies live to expanded Odyssey surfaces"

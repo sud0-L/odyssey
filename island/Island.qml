@@ -9,6 +9,11 @@ import "../services"
 PanelWindow {
     id: window
 
+    // Fixed for this window's lifetime. IslandHost recreates only this bounded
+    // layer surface when the material changes so the compositor namespace and
+    // blur rule can switch live without restarting the shell.
+    property bool glassLayer: false
+
     readonly property var monitor: Hyprland.monitorFor(screen)
     readonly property bool monitorEnabled:
         HyprlandService.islandEnabledFor(monitor)
@@ -72,7 +77,10 @@ PanelWindow {
                 && islandController.overlayWithoutReservation)
         ? Config.island.reservedSpace : 0
 
-    WlrLayershell.namespace: "odyssey:island"
+    // A separate namespace lets Hyprland blur Glass without changing the
+    // intentionally translucent parts of Odyssey's original Solid material.
+    WlrLayershell.namespace: window.glassLayer
+        ? "odyssey:island:glass" : "odyssey:island"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: islandController.expandedActive
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
@@ -88,6 +96,7 @@ PanelWindow {
         property color powerPulseColor: Theme.success
         readonly property bool dormantPresentation:
             islandController.visualState === islandController.dormant
+        compactGlass: dormantPresentation ? 1 : 0
 
         x: Math.round((parent.width - width) / 2)
         y: liveEditActive ? liveEditOffset
@@ -335,8 +344,8 @@ PanelWindow {
             anchors.fill: parent
             visible: Config.island.showRevealLip && !islandController.fullscreen
             radius: height / 2
-            color: Qt.alpha(Theme.surfaceContainer, 0.88)
-            border.color: Qt.alpha(Theme.outlineVariant,
+            solidColor: Qt.alpha(Theme.surfaceContainer, 0.88)
+            solidBorderColor: Qt.alpha(Theme.outlineVariant,
                 Theme.dark ? 0.38 : 0.32)
         }
     }
@@ -360,6 +369,7 @@ PanelWindow {
         radius: Theme.radiusLarge
         outlineWidth: Config.island.borderEnabled
             ? Config.island.borderThickness : 0
+        compactGlass: window.liveEditMode === "rest" ? 1 : 0
         fillColor: Qt.alpha(Theme.surfaceContainer,
             Config.appearance.surfaceOpacity)
         outlineColor: Qt.alpha(Theme.outlineVariant,

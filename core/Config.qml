@@ -11,6 +11,12 @@ QtObject {
             return SettingsStore.validModes.indexOf(candidate) >= 0
                 ? candidate : "dark"
         }
+        readonly property string material: {
+            const candidate = SettingsStore.value("appearance", "material",
+                "solid")
+            return SettingsStore.validMaterials.indexOf(candidate) >= 0
+                ? candidate : "solid"
+        }
         readonly property string fontFamily: "Adwaita Sans"
         readonly property string monoFontFamily: "JetBrainsMono Nerd Font"
         // Optional packaged default; user selection is persisted by IdentityService.

@@ -204,6 +204,12 @@ render_integration() {
     fi
     if [[ $format == lua ]]; then
         printf '%s\n' "$(marker lua)" \
+            'hl.layer_rule({' \
+            '    name = "odyssey-liquid-glass",' \
+            '    match = { namespace = "^odyssey:island:glass$" },' \
+            '    blur = true,' \
+            '    ignore_alpha = 0.02,' \
+            '})' \
             'hl.on("hyprland.start", function()' \
             '    hl.exec_cmd("systemctl --user start odyssey.service")' \
             '    hl.exec_cmd("bash -c \"pgrep -u $USER -x wl-paste >/dev/null || wl-paste --watch cliphist store &\"")' \

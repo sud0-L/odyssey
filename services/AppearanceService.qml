@@ -30,6 +30,23 @@ QtObject {
             statusMessage = "Theme mode updated"
     }
 
+    function setMaterial(material: string): void {
+        if (SettingsStore.setMaterial(material)) {
+            statusMessage = material === "glass"
+                ? "Glass material enabled" : "Solid material enabled"
+            materialPresentationRestore.restart()
+        }
+    }
+
+    // Changing compositor blur requires a fresh layer-surface namespace.
+    // Restore the Appearance page on the next event turn so the interaction
+    // remains continuous from the user's point of view.
+    property Timer materialPresentationRestore: Timer {
+        interval: 1
+        repeat: false
+        onTriggered: ShellActions.settingsOpenRequested("appearance")
+    }
+
     function setSurfaceOpacity(opacity: real): void {
         SettingsStore.setSurfaceOpacity(opacity)
     }
