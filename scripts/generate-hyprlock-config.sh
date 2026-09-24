@@ -93,22 +93,22 @@ background {
     reload_cmd = \$status wallpaper
 }
 
-image {
-    monitor =
-    path = $identity
-    size = 110
-    rounding = -1
-    border_size = 2
-    border_color = rgba(${outline}cc)
-    shadow_passes = 2
-    shadow_size = 7
-    shadow_color = rgba(${surface}99)
-    reload_time = 2
-    reload_cmd = \$status identity
-    position = 0, 72
-    halign = center
-    valign = center
-}
+#image {
+#    monitor =
+#    path = $identity
+#    size = 110
+#    rounding = -1
+#    border_size = 2
+#    border_color = rgba(${outline}cc)
+#    shadow_passes = 2
+#    shadow_size = 7
+#    shadow_color = rgba(${surface}99)
+#    reload_time = 2
+#    reload_cmd = \$status identity
+#    position = 0, 72
+#    halign = center
+#    valign = center
+#}
 
 label {
     monitor =
@@ -166,12 +166,12 @@ input-field {
     fade_timeout = 3200
     placeholder_text = <span foreground="##$surface_variant">...</span>
     rounding = -1
-    check_color = rgb($primary)
+    check_color = rgba(${surface_high})20
     check_text = <span foreground="##$surface_variant">authenticating…</span>
-    fail_color = rgb($error)
+    fail_color = rgba(${surface_high})20
     fail_text = <span foreground="##$error">failed.</span>
     capslock_color = rgb($warning)
-    position = 0, -92
+    position = 0, 0
     halign = center
     valign = center
 }
@@ -235,20 +235,21 @@ label {
 # Hyprlock provides the click target; Odyssey keeps the menu state and dispatch
 # in a fixed-action helper so no arbitrary command can be armed from the lock
 # screen. Empty dynamic labels collapse until the power glyph opens the menu.
-label {
-    monitor =
-    text = 󰐥
-    color = rgb($surface_text)
-    font_size = 20
-    font_family = \$mono
-    shadow_passes = 2
-    shadow_size = 5
-    shadow_color = rgba(${surface}aa)
-    onclick = \$power toggle
-    position = -32, 30
-    halign = right
-    valign = bottom
-}
+
+#label {
+#    monitor =
+#    text = 󰐥
+#    color = rgb($surface_text)
+#    font_size = 20
+#    font_family = \$mono
+#    shadow_passes = 2
+#    shadow_size = 5
+#    shadow_color = rgba(${surface}aa)
+#    onclick = \$power toggle
+#    position = -32, 30
+#    halign = right
+#    valign = bottom
+#}
 
 label {
     monitor =

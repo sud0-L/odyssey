@@ -1,4 +1,5 @@
 module Odyssey.Components
+EdgeAttachedSurface 1.0 EdgeAttachedSurface.qml
 CompactStatus 1.0 CompactStatus.qml
 ControlTile 1.0 ControlTile.qml
 ConnectivityRow 1.0 ConnectivityRow.qml

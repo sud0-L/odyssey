@@ -8,13 +8,16 @@ from pathlib import Path
 import shutil
 from typing import Callable, Iterable
 
-QML_DIRECTORIES = ("applications", "components", "core", "island", "launcher", "panels", "services")
+QML_DIRECTORIES = (
+    "applications", "components", "core", "island", "launcher", "notes",
+    "panels", "services",
+)
 RUNTIME_SCRIPTS = (
     "capturectl.sh", "clipboardctl.sh", "command-launcherctl.py", "export-theme.sh", "generate-hyprlock-config.sh",
     "generate-palette.sh", "idle-brightnessctl.sh", "idlectl.sh", "install-hyprlock.sh",
     "lock-status.sh", "lock-powerctl.sh", "manage-theme-integration.sh", "notification-provenance.py",
     "odyssey-session.sh", "power-sound.sh", "sessionctl.sh", "settingsctl.sh",
-    "shortcutctl.sh", "system-sensor-paths.sh", "wallpaper-mode.sh", "wallpaperctl.sh",
+    "notesctl.py", "shortcutctl.sh", "system-sensor-paths.sh", "wallpaper-mode.sh", "wallpaperctl.sh",
     "terminal-integrations.sh", "kitty-themectl.py", "starship-themectl.py",
     "fastfetch-themectl.py", "host-configctl.sh", "zsh-setup.sh",
 )

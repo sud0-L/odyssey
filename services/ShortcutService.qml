@@ -35,7 +35,9 @@ QtObject {
         { id: "regionScreenshot", label: "Select-area screenshot",
             keys: "Super + Shift + S" },
         { id: "regionRecording", label: "Select-area recording",
-            keys: "Super + Shift + R" }
+            keys: "Super + Shift + R" },
+        { id: "notes", label: "Toggle Notes", keys: "Super + Alt + N" },
+        { id: "newNote", label: "New note", keys: "Super + Shift + N" }
     ]
 
     function enabled(action: string): bool {
@@ -56,6 +58,7 @@ QtObject {
     function probe(): void {
         if (busy)
             return
+        pendingAction = "probe"
         process.command = [helperPath, "status", configPath]
         process.running = true
     }
@@ -100,7 +103,7 @@ QtObject {
         pendingValue = true
         process.command = [helperPath, "apply", configPath,
             "true", "true", "true", "true", "true", "true", "true", "true",
-            "true", "true"]
+            "true", "true", "true", "true"]
         process.running = true
     }
 
@@ -124,6 +127,16 @@ QtObject {
             }
             root.errorMessage = ""
             root.installed = root.lastOutput.includes("MANAGED=true")
+            if (action === "probe" && root.installed) {
+                // Re-render the managed block from current preferences so a
+                // release can introduce new shortcuts without leaving an old
+                // integration block behind.
+                root.busy = true
+                root.pendingAction = "sync"
+                root.process.command = root.commandArguments("apply", "", false)
+                root.process.running = true
+                return
+            }
             if (action === "managed")
                 SettingsStore.setShortcutsManaged(root.pendingValue)
             else if (action === "reset")
@@ -131,7 +144,8 @@ QtObject {
                 SettingsStore.resetShortcuts()
                 SettingsStore.setShortcutsManaged(true)
             }
-            else if (action.length > 0)
+            else if (action.length > 0 && action !== "probe"
+                    && action !== "sync")
                 SettingsStore.setShortcutEnabled(action, root.pendingValue)
             root.pendingAction = ""
         }

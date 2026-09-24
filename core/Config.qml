@@ -372,6 +372,13 @@ QtObject {
         readonly property int height: 500
     }
 
+    readonly property QtObject notes: QtObject {
+        readonly property int width: 430
+        readonly property real heightRatio: 0.5
+        readonly property int minimumHeight: 440
+        readonly property int maximumHeight: 720
+    }
+
     readonly property QtObject shortcuts: QtObject {
         readonly property bool managed: SettingsStore.boolValue(
             "shortcuts", "managed", false)
@@ -395,6 +402,10 @@ QtObject {
             "shortcuts", "regionScreenshot", true)
         readonly property bool regionRecording: SettingsStore.boolValue(
             "shortcuts", "regionRecording", true)
+        readonly property bool notes: SettingsStore.boolValue(
+            "shortcuts", "notes", true)
+        readonly property bool newNote: SettingsStore.boolValue(
+            "shortcuts", "newNote", true)
     }
 
     readonly property QtObject wallpaper: QtObject {

@@ -206,7 +206,7 @@ render_integration() {
         printf '%s\n' "$(marker lua)" \
             'hl.layer_rule({' \
             '    name = "odyssey-liquid-glass",' \
-            '    match = { namespace = "^odyssey:island:glass$" },' \
+            '    match = { namespace = "^odyssey:(island|notes):glass$" },' \
             '    blur = true,' \
             '    ignore_alpha = 0.02,' \
             '})' \

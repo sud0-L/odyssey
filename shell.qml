@@ -3,6 +3,7 @@ import QtQuick
 import "applications"
 import "core"
 import "island"
+import "notes"
 import "services"
 
 ShellRoot {
@@ -18,6 +19,15 @@ ShellRoot {
         model: Quickshell.screens
 
         IslandHost {
+            required property var modelData
+            screen: modelData
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        NotesHost {
             required property var modelData
             screen: modelData
         }

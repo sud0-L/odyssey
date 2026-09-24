@@ -27,6 +27,10 @@ QtObject {
     signal settingsOpenRequested(string section)
     signal settingsCloseRequested()
     signal insightOpenRequested(string page)
+    signal notesToggleRequested()
+    signal notesOpenRequested()
+    signal notesCloseRequested()
+    signal newNoteRequested()
 
     property IpcHandler launcherIpc: IpcHandler {
         target: "launcher"
@@ -250,6 +254,30 @@ QtObject {
         function clipboard(): string {
             root.insightOpenRequested("clipboard")
             return "CLIPBOARD_OPEN_SUCCESS"
+        }
+    }
+
+    property IpcHandler notesIpc: IpcHandler {
+        target: "notes"
+
+        function toggle(): string {
+            root.notesToggleRequested()
+            return "NOTES_TOGGLE_SUCCESS"
+        }
+
+        function open(): string {
+            root.notesOpenRequested()
+            return "NOTES_OPEN_SUCCESS"
+        }
+
+        function close(): string {
+            root.notesCloseRequested()
+            return "NOTES_CLOSE_SUCCESS"
+        }
+
+        function create(): string {
+            root.newNoteRequested()
+            return "NOTES_CREATE_SUCCESS"
         }
     }
 }

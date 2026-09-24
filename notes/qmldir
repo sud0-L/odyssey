@@ -1,0 +1,4 @@
+module Odyssey.Notes
+NotesHost 1.0 NotesHost.qml
+NotesPanel 1.0 NotesPanel.qml
+NotesWindow 1.0 NotesWindow.qml

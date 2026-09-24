@@ -541,7 +541,7 @@ QtObject {
     function setShortcutEnabled(action: string, enabled: bool): bool {
         if (["launcher", "commandLauncher", "clipboard", "settings", "notifications",
                 "wallpaper", "controlCenter", "lock", "regionScreenshot",
-                "regionRecording"].indexOf(action) < 0)
+                "regionRecording", "notes", "newNote"].indexOf(action) < 0)
             return false
         setValue("shortcuts", action, enabled)
         return true

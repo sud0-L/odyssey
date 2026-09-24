@@ -64,7 +64,7 @@ render() {
     command=$(jq -rn --arg path "$launcher" '$path|@sh')' ipc'
     tmp=$(mktemp "${target_file}.odyssey.XXXXXX"); awk -v b="$begin" -v e="$end" '$0==b{inside=1;next}$0==e{inside=0;next}!inside{print}' "$target_file" > "$tmp"
     if [[ $target == true ]]; then
-        printf '%s\n' "$begin" >> "$tmp"; local keys=(A 'CTRL + A' V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R') actions=('launcher toggle' 'command-launcher toggle' 'clipboard toggle' 'settings open' 'notifications toggle' 'insights wallpaper' 'control-center toggle' 'session lock' 'capture screenshot region both' 'capture record region') labels=('Open application launcher' 'Open command launcher' 'Open clipboard history' 'Open Odyssey settings' 'Open notifications' 'Open wallpaper library' 'Open Control Center' 'Lock session' 'Capture and save a region screenshot' 'Record a screen region') index=0 enabled
+        printf '%s\n' "$begin" >> "$tmp"; local keys=(A 'CTRL + A' V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R' 'ALT + N' 'SHIFT + N') actions=('launcher toggle' 'command-launcher toggle' 'clipboard toggle' 'settings open' 'notifications toggle' 'insights wallpaper' 'control-center toggle' 'session lock' 'capture screenshot region both' 'capture record region' 'notes toggle' 'notes create') labels=('Open application launcher' 'Open command launcher' 'Open clipboard history' 'Open Odyssey settings' 'Open notifications' 'Open wallpaper library' 'Open Control Center' 'Lock session' 'Capture and save a region screenshot' 'Record a screen region' 'Toggle Notes' 'Create a new note') index=0 enabled
         for enabled in "$@"; do if [[ $enabled == true ]]; then
             if [[ $format == lua ]]; then action_literal=$(jq -Rn --arg command "$command ${actions[$index]}" '$command'); printf 'hl.bind("SUPER + %s", hl.dsp.exec_cmd(%s), { description = "%s" })\n' "${keys[$index]}" "$action_literal" "${labels[$index]}" >> "$tmp"
             elif [[ ${keys[$index]} == *' + '* ]]; then printf 'bind = SUPER %s, %s, exec, %s %s\n' "${keys[$index]% + *}" "${keys[$index]##* + }" "$command" "${actions[$index]}" >> "$tmp"
@@ -95,7 +95,7 @@ render() {
 }
 case $command_name in
  status) managed && printf 'MANAGED=true\n' || printf 'MANAGED=false\n' ;;
- apply) shift 2; (($#==10)) || { printf 'Expected ten shortcut toggles\n' >&2; exit 2; }; for value in "$@"; do valid "$value" || { printf 'Invalid shortcut toggle\n' >&2; exit 2; }; done; keys=(A 'CTRL + A' V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R'); index=0; for value in "$@"; do [[ $value != true ]] || ! conflict "${keys[$index]}" || { printf 'Shortcut conflict: SUPER + %s is already in use\n' "${keys[$index]}" >&2; exit 1; }; ((index+=1)); done; render true "$@"; printf 'MANAGED=true\n' ;;
+ apply) shift 2; (($#==12)) || { printf 'Expected twelve shortcut toggles\n' >&2; exit 2; }; for value in "$@"; do valid "$value" || { printf 'Invalid shortcut toggle\n' >&2; exit 2; }; done; keys=(A 'CTRL + A' V comma N Y space 'ALT + L' 'SHIFT + S' 'SHIFT + R' 'ALT + N' 'SHIFT + N'); index=0; for value in "$@"; do [[ $value != true ]] || ! conflict "${keys[$index]}" || { printf 'Shortcut conflict: SUPER + %s is already in use\n' "${keys[$index]}" >&2; exit 1; }; ((index+=1)); done; render true "$@"; printf 'MANAGED=true\n' ;;
  remove) render false; printf 'MANAGED=false\n' ;;
  *) printf 'usage: %s {status|apply|remove} MAIN_CONFIG [TOGGLES...]\n' "$0" >&2; exit 2;;
 esac
