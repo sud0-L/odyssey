@@ -10,6 +10,7 @@ Item {
     property string emptyText: "No matching Odyssey results"
     property string searchIcon: "󰍉"
     property bool copyShortcutEnabled: false
+    property bool clipboardHistoryMotion: false
     property bool active: visible
     property var results: {
         provider.revision
@@ -174,7 +175,11 @@ Item {
                 width: resultList.width
                 result: modelData
                 selected: index === root.currentIndex
-                onPointed: root.currentIndex = index
+                clipboardHistoryMotion: root.clipboardHistoryMotion
+                onPointed: {
+                    if (!root.clipboardHistoryMotion)
+                        root.currentIndex = index
+                }
                 onActivated: {
                     root.currentIndex = index
                     root.activateCurrent(false)

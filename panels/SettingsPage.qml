@@ -1724,9 +1724,9 @@ Item {
 
                             SettingsCard {
                                 Layout.fillWidth: true
-                                title: "Island widths"
-                                detail: "The live preview above follows the selected resting or hover state"
-                                contentHeight: 80
+                                title: "Island size"
+                                detail: "Height adjustment applies to every Island phase"
+                                contentHeight: 110
                                 ColumnLayout {
                                     anchors.fill: parent
                                     spacing: Theme.space2
@@ -1753,6 +1753,14 @@ Item {
                                         from: 620; to: 900
                                         onAdjusted: value => AppearanceService
                                             .setIslandMetric("expandedWidth", value)
+                                    }
+                                    MetricRow {
+                                        Layout.fillWidth: true
+                                        label: "Height"
+                                        value: Config.island.heightIncrease
+                                        from: 0; to: 32
+                                        onAdjusted: value => AppearanceService
+                                            .setIslandMetric("heightIncrease", value)
                                     }
                                 }
                             }
@@ -1806,8 +1814,9 @@ Item {
                                     : "Hover spacing & scale"
                                 detail: root.pillPreviewMode === "rest"
                                     ? "Tune resting spacing, text, and icon scale"
-                                    : "Spacing is automatically limited when the chosen width is full"
-                                contentHeight: 110
+                                    : "Adjust item gaps and outer padding independently"
+                                contentHeight: root.pillPreviewMode === "rest"
+                                    ? 110 : 140
                                 ColumnLayout {
                                     anchors.fill: parent
                                     spacing: Theme.space2
@@ -1821,6 +1830,15 @@ Item {
                                         to: root.pillPreviewMode === "rest" ? 18 : 20
                                         onAdjusted: value => root.setIslandSpacing(
                                             root.pillPreviewMode, value)
+                                    }
+                                    MetricRow {
+                                        visible: root.pillPreviewMode === "hover"
+                                        Layout.fillWidth: true
+                                        label: "Outer edge padding"
+                                        value: Config.island.hoverEdgePadding
+                                        from: 8; to: 48
+                                        onAdjusted: value => SettingsStore
+                                            .setIslandMetric("hoverEdgePadding", value)
                                     }
                                     PreferenceToggleRow {
                                         Layout.fillWidth: true

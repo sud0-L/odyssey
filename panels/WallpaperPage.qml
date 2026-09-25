@@ -9,6 +9,7 @@ Item {
 
     property var monitor
     property bool selectionMode: false
+    property bool refreshFeedback: false
     readonly property var filteredWallpapers:
         WallpaperService.filterWallpapers(searchInput.text)
     readonly property string monitorName: monitor?.name || ""
@@ -27,6 +28,27 @@ Item {
     onVisibleChanged: {
         if (visible && !selectionMode && Config.wallpaper.refreshOnOpen)
             WallpaperService.refresh()
+    }
+
+    Connections {
+        target: WallpaperService
+        function onLoadingChanged(): void {
+            if (WallpaperService.loading) {
+                root.refreshFeedback = true
+                refreshFeedbackTimer.restart()
+            } else if (!refreshFeedbackTimer.running) {
+                root.refreshFeedback = false
+            }
+        }
+    }
+
+    Timer {
+        id: refreshFeedbackTimer
+        interval: 500
+        onTriggered: {
+            if (!WallpaperService.loading)
+                root.refreshFeedback = false
+        }
     }
 
     ColumnLayout {
@@ -127,11 +149,10 @@ Item {
             TextButton {
                 Layout.preferredHeight: 34
                 Layout.preferredWidth: 68
-                // Refresh is a mouse utility action: retain the ordinary
-                // pressed/hover response without a persistent focus outline
-                // or a loading-label swap that makes the header flicker.
                 showFocusIndicator: false
+                showBorder: false
                 text: "Refresh"
+                busy: root.refreshFeedback
                 onClicked: WallpaperService.refresh()
             }
         }

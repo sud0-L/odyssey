@@ -8,16 +8,21 @@ Rectangle {
 
     required property var result
     property bool selected: false
+    property bool clipboardHistoryMotion: false
     signal activated()
     signal pointed()
 
     readonly property color resultAccent: result.kind === "workspace"
         ? Theme.tertiary : Theme.primary
 
-    implicitHeight: 58
+    implicitHeight: clipboardHistoryMotion ? 44 : 58
     radius: Theme.radiusMedium
-    color: selected ? Theme.primaryContainer
-        : resultHover.hovered ? Theme.surfaceContainerHigh : "transparent"
+    color: clipboardHistoryMotion
+        ? (selected ? Qt.alpha(Theme.primaryContainer, 0.62)
+            : resultHover.hovered ? Theme.surfaceContainerHigh
+            : Qt.alpha(Theme.surfaceContainerHigh, 0.52))
+        : selected ? Theme.primaryContainer
+            : resultHover.hovered ? Theme.surfaceContainerHigh : "transparent"
     opacity: result.enabled ? 1 : 0.46
 
     RowLayout {
@@ -27,8 +32,8 @@ Rectangle {
         spacing: Theme.space3
 
         Rectangle {
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
+            Layout.preferredWidth: root.clipboardHistoryMotion ? 30 : 40
+            Layout.preferredHeight: Layout.preferredWidth
             radius: Theme.radiusSmall
             color: root.selected ? Qt.alpha(root.resultAccent, 0.18)
                 : Theme.surfaceContainerHigh
@@ -120,7 +125,8 @@ Rectangle {
     Behavior on color {
         ColorAnimation {
             duration: Animations.fast
-            easing.type: Animations.emphasizedEase
+            easing.type: root.clipboardHistoryMotion
+                ? Easing.Linear : Animations.emphasizedEase
         }
     }
 }

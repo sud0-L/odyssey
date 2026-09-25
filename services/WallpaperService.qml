@@ -21,6 +21,13 @@ QtObject {
     property bool candidateReady: false
     property string pendingMonitorName: ""
     property bool directApplyPending: false
+    property string directRenderOutput: ""
+    property string directRenderError: ""
+    property string directPaletteOutput: ""
+    property string directPaletteError: ""
+    property string directPaletteToken: ""
+    property string queuedPaletteToken: ""
+    property var queuedPaletteCommand: []
     property bool loading: false
     property bool applying: false
     property bool backendAvailable: false
@@ -42,6 +49,7 @@ QtObject {
         path.startsWith("/") ? path : homeDirectory + "/" + path)
     readonly property string currentName: displayName(currentWallpaper)
     readonly property bool busy: operationProcess.running
+        || directRenderProcess.running
     readonly property string statusLabel: errorMessage
         || (backendState !== "ready" ? backendDetail
         : candidateReady ? "Candidate palette prepared — Apply to change Odyssey"
@@ -127,7 +135,9 @@ QtObject {
     }
 
     function selectCandidate(path: string): bool {
-        if (busy || applying || !wallpapers.some(item => item.path === path))
+        if (busy || applying || directPaletteProcess.running
+                || queuedPaletteCommand.length > 0
+                || !wallpapers.some(item => item.path === path))
             return false
         candidateReady = false
         candidateWallpaper = path
@@ -141,9 +151,9 @@ QtObject {
             Config.appearance.themeSourceColor])
     }
 
-    // A gallery choice is a commit request, not a UI preview. The helper still
-    // prepares an isolated candidate first, so palette validation and the
-    // atomic renderer/palette transaction retain their rollback boundary.
+    // Render a gallery choice first. Palette extraction is deliberately a
+    // separate, stale-safe background operation so large images do not delay
+    // the visible wallpaper transition.
     function applyWallpaper(path: string, monitorName: string): bool {
         if (busy || applying || !wallpapers.some(item => item.path === path))
             return false
@@ -152,19 +162,46 @@ QtObject {
             errorMessage = "No live display available"
             return false
         }
-        candidateReady = false
-        candidateWallpaper = path
         candidateToken = String(Date.now()) + "-apply-" + Math.random()
-        candidateStatus = "Preparing wallpaper transaction…"
+        candidateStatus = "Applying wallpaper…"
         pendingWallpaper = path
         pendingMonitorName = monitorName
         directApplyPending = true
         errorMessage = ""
-        operationState = "preparing"
-        return beginOperation("directCandidate", [helperPath, "candidate", path,
-            Config.wallpaper.scheme, candidateToken,
+        operationState = "applying"
+        applying = true
+        directRenderOutput = ""
+        directRenderError = ""
+        directRenderProcess.command = [helperPath, "render", path,
+            Config.wallpaper.scheme, Config.wallpaper.target, names,
+            Config.wallpaper.transition,
+            String(Config.wallpaper.transitionDuration),
+            Config.appearance.reducedMotion ? "true" : "false", candidateToken,
             Config.appearance.themeSourceMode,
-            Config.appearance.themeSourceColor])
+            Config.appearance.themeSourceColor]
+        directRenderProcess.running = true
+        return true
+    }
+
+    function queuePalette(path: string, token: string): void {
+        queuedPaletteCommand = [helperPath, "palette", path,
+            Config.wallpaper.scheme, token, Config.appearance.themeSourceMode,
+            Config.appearance.themeSourceColor]
+        queuedPaletteToken = token
+        if (!directPaletteProcess.running)
+            startQueuedPalette()
+    }
+
+    function startQueuedPalette(): void {
+        if (queuedPaletteCommand.length === 0)
+            return
+        directPaletteOutput = ""
+        directPaletteError = ""
+        directPaletteToken = queuedPaletteToken
+        queuedPaletteToken = ""
+        directPaletteProcess.command = queuedPaletteCommand
+        queuedPaletteCommand = []
+        directPaletteProcess.running = true
     }
 
     function clearCandidateState(): void {
@@ -194,7 +231,9 @@ QtObject {
     }
 
     function applyCandidate(monitorName: string): bool {
-        if (!candidateReady || !backendAvailable || busy || applying)
+        if (!candidateReady || !backendAvailable || busy || applying
+                || directPaletteProcess.running
+                || queuedPaletteCommand.length > 0)
             return false
         const names = outputNames(monitorName)
         if (!names) {
@@ -216,6 +255,8 @@ QtObject {
 
     function changeScheme(scheme: string): void {
         if (scheme === Config.wallpaper.scheme || busy || applying
+                || directPaletteProcess.running
+                || queuedPaletteCommand.length > 0
                 || (Config.appearance.themeSourceMode === "wallpaper"
                     && !currentWallpaper))
             return
@@ -244,7 +285,8 @@ QtObject {
     function changeThemeSource(mode: string, color: string,
             rememberCustom: bool): bool {
         const normalized = SettingsStore.normalizedThemeColor(color)
-        if (busy || applying
+        if (busy || applying || directPaletteProcess.running
+                || queuedPaletteCommand.length > 0
                 || (mode === "wallpaper" && !currentWallpaper)
                 || (mode !== "wallpaper" && mode !== "color")
                 || (mode === "color" && !normalized))
@@ -476,6 +518,63 @@ QtObject {
             onStreamFinished: root.operationError = text
         }
         onExited: exitCode => root.finishOperation(exitCode)
+    }
+
+    property Process directRenderProcess: Process {
+        stdout: StdioCollector {
+            onStreamFinished: root.directRenderOutput = text
+        }
+        stderr: StdioCollector {
+            onStreamFinished: root.directRenderError = text
+        }
+        onExited: exitCode => {
+            const output = root.directRenderOutput
+            root.parseStatus(output)
+            root.applying = false
+            root.pendingMonitorName = ""
+            if (exitCode === 0 && output.includes("COMMITTED=true")) {
+                const appliedPath = root.pendingWallpaper
+                root.currentWallpaper = appliedPath
+                root.pendingWallpaper = ""
+                root.directApplyPending = false
+                root.errorMessage = ""
+                root.operationState = "idle"
+                root.wallpaperApplied(appliedPath, false)
+                root.queuePalette(appliedPath, root.candidateToken)
+            } else {
+                root.pendingWallpaper = ""
+                root.directApplyPending = false
+                root.operationState = "idle"
+                root.errorMessage = root.directRenderError.trim()
+                    || "Wallpaper rendering failed; previous wallpaper was restored"
+                root.recoveryTimer.restart()
+            }
+        }
+    }
+
+    property Process directPaletteProcess: Process {
+        stdout: StdioCollector {
+            onStreamFinished: root.directPaletteOutput = text
+        }
+        stderr: StdioCollector {
+            onStreamFinished: root.directPaletteError = text
+        }
+        onExited: exitCode => {
+            const current = root.directPaletteToken === root.candidateToken
+            const committed = exitCode === 0
+                && root.directPaletteOutput.includes("COMMITTED=true")
+            if (current && committed) {
+                root.paletteAvailable = true
+                root.errorMessage = ""
+                root.wallpaperApplied(root.currentWallpaper,
+                    root.directPaletteOutput.includes("PALETTE=updated"))
+            } else if (current && exitCode !== 0
+                    && !root.directPaletteError.includes("stale palette request")) {
+                root.errorMessage = root.directPaletteError.trim()
+                    || "Wallpaper changed, but palette generation failed"
+            }
+            Qt.callLater(() => root.startQueuedPalette())
+        }
     }
 
     property Timer healthTimer: Timer {

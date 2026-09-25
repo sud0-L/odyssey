@@ -195,8 +195,9 @@ QtObject {
         const bounds = ({
             topMargin: [0, 16], reservedSpace: [26, 52],
             dormantWidth: [150, 320], hoverWidth: [470, 760],
-            expandedWidth: [620, 900], restItemSpacing: [2, 18],
-            hoverItemSpacing: [2, 20], autoHideDelay: [500, 10000],
+            expandedWidth: [620, 900], heightIncrease: [0, 32],
+            restItemSpacing: [2, 18], hoverItemSpacing: [2, 20],
+            hoverEdgePadding: [8, 48], autoHideDelay: [500, 10000],
             borderThickness: [1, 4]
         })
         const range = bounds[metric]

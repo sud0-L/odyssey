@@ -105,6 +105,8 @@ QtObject {
             "island", "reservedSpace", 30, 26, 52)
         readonly property int dormantWidth: SettingsStore.numberValue(
             "island", "dormantWidth", 214, 150, 320)
+        readonly property int heightIncrease: SettingsStore.numberValue(
+            "island", "heightIncrease", 0, 0, 32)
         readonly property int dormantHeight: 28
         readonly property bool restScaleSynced: SettingsStore.boolValue(
             "island", "restScaleSynced", true)
@@ -134,6 +136,9 @@ QtObject {
             hoverTextScale, hoverIconScale)
         readonly property int hoverItemSpacing: SettingsStore.numberValue(
             "island", "hoverItemSpacing", 8, 2, 20)
+        readonly property int hoverEdgePadding: SettingsStore.numberValue(
+            "island", "hoverEdgePadding", Math.max(18,
+                Math.round(24 * root.appearance.densityScale)), 8, 48)
         readonly property var hoverItemOrder: SettingsStore.stringListValue(
             "island", "hoverItemOrder", SettingsStore.validHoverIslandItems,
             SettingsStore.validHoverIslandItems)

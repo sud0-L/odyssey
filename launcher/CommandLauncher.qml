@@ -6,6 +6,7 @@ LauncherView {
     emptyText: "Type a command to run it in a new terminal"
     searchIcon: ""
     copyShortcutEnabled: true
+    clipboardHistoryMotion: true
 
     Connections {
         target: CommandLauncherService

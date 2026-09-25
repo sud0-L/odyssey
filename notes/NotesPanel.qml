@@ -510,6 +510,7 @@ FocusScope {
         color: "transparent"
         z: 20
 
+        HoverHandler { cursorShape: Qt.ArrowCursor }
         TapHandler { }
 
         Rectangle {

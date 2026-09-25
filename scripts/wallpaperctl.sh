@@ -5,10 +5,12 @@ set -euo pipefail
 project_dir=$(cd "$(dirname "$0")/.." && pwd)
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/odyssey"
 runtime_root="${XDG_RUNTIME_DIR:-/tmp}/odyssey"
+cache_root="${ODYSSEY_PALETTE_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/odyssey/palettes}"
 current_file="$state_dir/current-wallpaper"
 manifest_file="$state_dir/wallpaper-manifest.json"
 sddm_wallpaper_file="${ODYSSEY_SDDM_WALLPAPER_EXPORT:-/var/tmp/odyssey-sddm-current-wallpaper}"
 recovery_file="$state_dir/awww-recovery-attempts"
+request_file="$runtime_root/wallpaper-request"
 candidate_dir="$runtime_root/wallpaper-candidate"
 active_palette="${ODYSSEY_ACTIVE_PALETTE:-$state_dir/palette.json}"
 palette_generator="${ODYSSEY_PALETTE_GENERATOR:-$project_dir/scripts/generate-palette.sh}"
@@ -19,6 +21,8 @@ probe_count="${ODYSSEY_AWWW_PROBE_COUNT:-10}"
 probe_delay="${ODYSSEY_AWWW_PROBE_DELAY:-0.2}"
 verify_delay="${ODYSSEY_AWWW_VERIFY_DELAY:-}"
 backoff_base="${ODYSSEY_AWWW_BACKOFF_BASE:-0.2}"
+palette_cache_version=1
+palette_cache_limit="${ODYSSEY_PALETTE_CACHE_LIMIT:-64}"
 
 mkdir -p "$state_dir" "$runtime_root"
 chmod 700 "$runtime_root" 2>/dev/null || true
@@ -27,6 +31,13 @@ say() { printf '%s\n' "$*"; }
 die() { printf '%s\n' "$*" >&2; exit 1; }
 valid_image() { [[ -f $1 && ${1,,} =~ \.(png|jpe?g|webp)$ ]]; }
 canonical() { realpath -e -- "$1" 2>/dev/null; }
+valid_palette() {
+    jq -e '
+        (.mode == "dark" or .mode == "light") and
+        (.dark | has("primary") and has("surface") and has("onSurface")) and
+        (.light | has("primary") and has("surface") and has("onSurface"))
+    ' "$1" >/dev/null 2>&1
+}
 query() { awww query --namespace "$namespace" --json; }
 ready() { query >/dev/null 2>&1; }
 conflict() { pgrep -x hyprpaper >/dev/null 2>&1; }
@@ -251,14 +262,96 @@ prepare_candidate() {
         "$palette_generator" color "$source_color" "$scheme" \
             "$candidate_dir/palette.json" "$palette_mode" >/dev/null
     else
-        "$palette_generator" image "$image" "$scheme" \
-            "$candidate_dir/palette.json" >/dev/null
+        if ! cached_palette "$image" "$scheme" \
+                "$candidate_dir/palette.json"; then
+            "$palette_generator" image "$image" "$scheme" \
+                "$candidate_dir/palette.json" >/dev/null
+            store_cached_palette "$image" "$scheme" \
+                "$candidate_dir/palette.json" || true
+        fi
     fi
     jq -n --arg image "$image" --arg scheme "$scheme" --arg token "$token" \
         --arg sourceMode "$source_mode" --arg sourceColor "$source_color" \
         '{image:$image,scheme:$scheme,token:$token,sourceMode:$sourceMode,
           sourceColor:$sourceColor}' >"$candidate_dir/manifest.json"
     chmod 600 "$candidate_dir"/*.json
+}
+
+write_request_token() {
+    local token=$1 temporary
+    temporary=$(mktemp "$runtime_root/.wallpaper-request.XXXXXX")
+    printf '%s\n' "$token" >"$temporary"
+    chmod 600 "$temporary"
+    mv -f -- "$temporary" "$request_file"
+}
+
+request_is_current() {
+    local token=$1
+    [[ -f $request_file && $(<"$request_file") == "$token" ]]
+}
+
+prepare_palette_cache() {
+    [[ $cache_root == /* && $cache_root != / ]] || return 1
+    if [[ -e $cache_root || -L $cache_root ]]; then
+        [[ -d $cache_root && ! -L $cache_root ]] || return 1
+        [[ $(stat -c '%u' -- "$cache_root" 2>/dev/null) == "$UID" ]] || return 1
+    else
+        mkdir -p -- "$cache_root" 2>/dev/null || return 1
+    fi
+    chmod 700 "$cache_root" 2>/dev/null || return 1
+}
+
+palette_cache_key() {
+    local image=$1 scheme=$2 metadata engine generator
+    metadata=$(stat -c '%s:%y' -- "$image") || return 1
+    engine=$(matugen --version 2>/dev/null | head -n 1) || return 1
+    generator=$(sha256sum -- "$palette_generator" \
+        "$project_dir/scripts/wallpaper-mode.sh" \
+        "$project_dir/matugen/config.toml" "$project_dir/matugen/palette.json" \
+        | sha256sum | awk '{print $1}') || return 1
+    printf '%s\0%s\0%s\0%s\0%s\0%s' "$palette_cache_version" "$image" \
+        "$metadata" "$scheme" "$engine" "$generator" \
+        | sha256sum | awk '{print $1}'
+}
+
+cached_palette() {
+    local image=$1 scheme=$2 destination=$3 key entry
+    prepare_palette_cache || return 1
+    key=$(palette_cache_key "$image" "$scheme") || return 1
+    entry="$cache_root/$key.json"
+    if [[ ! -f $entry || -L $entry ]] || ! valid_palette "$entry"; then
+        [[ ! -e $entry && ! -L $entry ]] || rm -f -- "$entry"
+        return 1
+    fi
+    install -m 600 -- "$entry" "$destination" || return 1
+    touch -- "$entry" 2>/dev/null || true
+}
+
+prune_palette_cache() {
+    local limit=$palette_cache_limit index entry
+    [[ $limit =~ ^[0-9]+$ ]] || limit=64
+    (( limit >= 1 )) || limit=1
+    index=0
+    while IFS= read -r entry; do
+        ((index += 1))
+        (( index <= limit )) || rm -f -- "$entry"
+    done < <(find "$cache_root" -maxdepth 1 -type f -name '*.json' \
+        -printf '%T@ %p\n' 2>/dev/null | sort -rn | cut -d' ' -f2-)
+}
+
+store_cached_palette() {
+    local image=$1 scheme=$2 source=$3 key entry temporary
+    prepare_palette_cache || return 1
+    valid_palette "$source" || return 1
+    key=$(palette_cache_key "$image" "$scheme") || return 1
+    entry="$cache_root/$key.json"
+    temporary=$(mktemp "$cache_root/.palette.XXXXXX") || return 1
+    if ! install -m 600 -- "$source" "$temporary" \
+            || ! mv -f -- "$temporary" "$entry"; then
+        rm -f -- "$temporary"
+        return 1
+    fi
+    prune_palette_cache
 }
 
 restore_file() {
@@ -349,22 +442,62 @@ publish_commit() {
     trap - RETURN
 }
 
+publish_wallpaper_only() {
+    local image=$1 assignments=$2 scheme=$3 source_mode=${4:-wallpaper}
+    local source_color=${5:-} transaction
+    local manifest_existed=false current_existed=false sddm_existed=false
+    transaction=$(mktemp -d "$runtime_root/.wallpaper-publish.XXXXXX")
+    trap 'rm -rf "$transaction"' RETURN
+    if [[ -f $manifest_file ]]; then
+        cp -f -- "$manifest_file" "$transaction/manifest.before"
+        manifest_existed=true
+    fi
+    if [[ -f $current_file ]]; then
+        cp -f -- "$current_file" "$transaction/current.before"
+        current_existed=true
+    fi
+    if [[ -e $sddm_wallpaper_file || -L $sddm_wallpaper_file ]]; then
+        [[ -f $sddm_wallpaper_file && ! -L $sddm_wallpaper_file ]] || return 1
+        cp -f -- "$sddm_wallpaper_file" "$transaction/sddm.before"
+        sddm_existed=true
+    fi
+    jq -n --arg wallpaper "$image" --arg scheme "$scheme" \
+        --arg sourceMode "$source_mode" --arg sourceColor "$source_color" \
+        --argjson assignments "$assignments" \
+        '{version:2,wallpaper:$wallpaper,scheme:$scheme,assignments:$assignments,
+          sourceMode:$sourceMode,sourceColor:$sourceColor}' \
+        >"$transaction/manifest.next"
+    printf '%s\n' "$image" >"$transaction/current.next"
+    chmod 600 "$transaction/manifest.next" "$transaction/current.next"
+    if [[ ${ODYSSEY_FAIL_PUBLICATION:-false} == true ]] \
+            || ! publish_sddm_wallpaper "$image" \
+            || ! install -m 600 "$transaction/manifest.next" "$manifest_file" \
+            || ! install -m 600 "$transaction/current.next" "$current_file"; then
+        restore_file "$transaction/manifest.before" "$manifest_file" "$manifest_existed" || true
+        restore_file "$transaction/current.before" "$current_file" "$current_existed" || true
+        restore_sddm_wallpaper "$transaction/sddm.before" "$sddm_existed" || true
+        return 1
+    fi
+    rm -rf "$transaction"
+    trap - RETURN
+}
+
 publish_palette_only() {
-    local transaction palette_existed=false
+    local palette_dir=${1:-$candidate_dir} transaction palette_existed=false
     transaction=$(mktemp -d "$runtime_root/.theme-source-publish.XXXXXX")
     trap 'rm -rf "$transaction"' RETURN
     if [[ -f $active_palette ]]; then
         cp -f -- "$active_palette" "$transaction/palette.before"
         palette_existed=true
     fi
-    install -m 600 "$candidate_dir/palette.json" "$transaction/palette.next"
+    install -m 600 "$palette_dir/palette.json" "$transaction/palette.next"
     if [[ ${ODYSSEY_FAIL_PUBLICATION:-false} == true ]] \
             || ! install -m 600 "$transaction/palette.next" "$active_palette"; then
         restore_file "$transaction/palette.before" "$active_palette" \
             "$palette_existed" || true
         return 1
     fi
-    rm -rf "$candidate_dir" "$transaction"
+    rm -rf "$palette_dir" "$transaction"
     trap - RETURN
 }
 
@@ -428,6 +561,85 @@ case ${1:-} in
     cancel-candidate)
         rm -rf "$candidate_dir"
         say CANCELLED=true
+        ;;
+    render)
+        image=$(canonical "$2") || die 'wallpaper does not exist'
+        valid_image "$image" || die 'unsupported wallpaper format'
+        scheme=$3
+        target=$4
+        names=$5
+        effect=$6
+        seconds=$(clamp_duration "$7")
+        reduced=${8:-false}
+        token=$9
+        source_mode=${10:-wallpaper}
+        source_color=${11:-}
+        [[ $target == current || $target == all ]] || die 'invalid output target'
+        valid_source "$source_mode" "$source_color" || die 'invalid theme source'
+        write_request_token "$token"
+        start_renderer auto >/dev/null || die 'renderer unavailable'
+        [[ -n $names ]] || die 'no live outputs'
+        before=$(images) || die 'renderer query failed'
+        requested_outputs_exist "$before" "$names" || die 'requested output unavailable'
+        expected=$(jq -c --arg image "$image" --arg names "$names" '
+            ($names | split(",") | map(select(length > 0))) as $wanted
+            | [.[] | if (.name as $name | any($wanted[]; . == $name))
+                then .image = $image else . end]
+        ' <<<"$before")
+        mapfile -d '' args < <(effect_args "$effect" "$seconds" "$reduced")
+        if ! awww img --namespace "$namespace" --outputs "$names" \
+                "${args[@]}" "$image"; then
+            restore_snapshot "$before" "$names" || true
+            die 'renderer apply failed; previous assignments restored'
+        fi
+        if ! verify_assignments "$(select_assignments "$expected" "$names")"; then
+            restore_snapshot "$before" "$names" || true
+            die 'renderer verification failed; previous assignments restored'
+        fi
+        after=$(images) || {
+            restore_snapshot "$before" "$names" || true
+            die 'renderer query failed; previous assignments restored'
+        }
+        if ! publish_wallpaper_only "$image" "$after" "$scheme" \
+                "$source_mode" "$source_color"; then
+            restore_snapshot "$before" "$names" || true
+            die 'wallpaper publication failed; previous assignments restored'
+        fi
+        say "CURRENT=$image"
+        say WALLPAPER=updated
+        say COMMITTED=true
+        ;;
+    palette)
+        image=$(canonical "$2") || die 'wallpaper does not exist'
+        valid_image "$image" || die 'unsupported wallpaper format'
+        scheme=$3
+        token=$4
+        source_mode=${5:-wallpaper}
+        source_color=${6:-}
+        request_is_current "$token" || die 'stale palette request'
+        direct_candidate=$(mktemp -d "$runtime_root/.wallpaper-palette.XXXXXX")
+        trap 'rm -rf "$direct_candidate"' EXIT
+        if [[ $source_mode == color ]]; then
+            say PALETTE=unchanged
+            say COMMITTED=true
+            exit 0
+        fi
+        if cached_palette "$image" "$scheme" \
+                "$direct_candidate/palette.json"; then
+            say CACHE=hit
+        else
+            say CACHE=miss
+            "$palette_generator" image "$image" "$scheme" \
+                "$direct_candidate/palette.json" >/dev/null
+            store_cached_palette "$image" "$scheme" \
+                "$direct_candidate/palette.json" || true
+        fi
+        chmod 600 "$direct_candidate/palette.json"
+        request_is_current "$token" || die 'stale palette request'
+        publish_palette_only "$direct_candidate" || die 'palette publication failed'
+        trap - EXIT
+        say PALETTE=updated
+        say COMMITTED=true
         ;;
     apply)
         image=$(canonical "$2") || die 'wallpaper does not exist'
@@ -504,7 +716,7 @@ case ${1:-} in
         say RECONCILED=true
         ;;
     *)
-        printf 'usage: %s {list|probe|bootstrap|candidate|theme-source|cancel-candidate|apply|scheme|reconcile}\n' \
+        printf 'usage: %s {list|probe|bootstrap|candidate|theme-source|cancel-candidate|render|palette|apply|scheme|reconcile}\n' \
             "$0" >&2
         exit 2
         ;;

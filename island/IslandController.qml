@@ -28,6 +28,7 @@ QtObject {
     property bool notificationDismissing: false
     signal transientDismissAnimationFinished()
     property bool mediaVisible: false
+    property int hoverContentWidth: Config.island.hoverWidth
     property bool recordingActive: false
     property bool fullscreen: false
     property string expandedPage: "overview"
@@ -74,14 +75,10 @@ QtObject {
         : visualState === media ? Config.island.mediaWidth
         : visualState === notification ? Config.island.mediaWidth
         : transientActive ? Config.island.osdWidth
-        : visualState === hover ? (mediaVisible
-            ? Math.max(Config.island.hoverWidth,
-                Config.island.hoverMediaMinimumWidth)
-            : Math.max(Config.island.hoverWidth,
-                Config.island.hoverMinimumWidth))
+        : visualState === hover ? hoverContentWidth
         : Math.max(Config.island.dormantWidth,
             Config.island.restMinimumWidth)
-    readonly property int targetHeight: visualState === expanded
+    readonly property int baseTargetHeight: visualState === expanded
         ? (dashboardPage ? Config.dashboard.height
             : expandedPage === "notifications" ? Config.notifications.height
             : wallpaperPage ? Config.wallpaper.height
@@ -102,6 +99,8 @@ QtObject {
         : transientActive ? Config.island.osdHeight
         : visualState === hover ? Config.island.hoverHeight
         : Config.island.dormantHeight
+    readonly property int targetHeight: baseTargetHeight
+        + Config.island.heightIncrease
 
     function statePriority(state): int {
         if (state === screenshot)

@@ -27,6 +27,7 @@ PanelWindow {
         fullscreen: HyprlandService.trueFullscreenOn(
             window.monitor?.activeWorkspace)
         mediaVisible: MediaService.hoverVisible && Config.island.hoverShowMedia
+        hoverContentWidth: hoverContent.implicitWidth
         recordingActive: CaptureService.recording
         expandedDetailProgress: expandedContent.controlCenterDetailProgress
         expandedDetailTransitionActive:
@@ -55,17 +56,17 @@ PanelWindow {
         expandedContent.settingsLivePreviewActive
     readonly property string liveEditMode: expandedContent.settingsPreviewMode
     readonly property int liveEditPreviewHeight: liveEditMode === "hover"
-        ? Config.island.hoverHeight : Config.island.dormantHeight
+        ? Config.island.hoverHeight + Config.island.heightIncrease
+        : Config.island.dormantHeight + Config.island.heightIncrease
     readonly property int liveEditOffset: liveEditActive
         ? liveEditPreviewHeight + Theme.space3 : 0
     implicitWidth: Math.max(Config.island.expandedWidth, Config.launcher.width,
-        Config.island.restMinimumWidth, Config.island.hoverMinimumWidth,
-        Config.island.hoverMediaMinimumWidth)
+        Config.island.restMinimumWidth, islandController.hoverContentWidth)
         + (Config.appearance.islandAttached ? 44 : 0)
     implicitHeight: Math.max(Config.island.expandedHeight, Config.launcher.height,
         Config.controlCenter.detailExpandedHeight, Config.insights.height,
         Config.dashboard.height, Config.session.height, Config.settings.height)
-        + liveEditOffset
+        + Config.island.heightIncrease + liveEditOffset
     color: "transparent"
     visible: monitorEnabled && islandController.shouldShow
     mask: Region {
@@ -75,7 +76,7 @@ PanelWindow {
             && !islandController.revealOnly
             && !(Config.island.autoHide
                 && islandController.overlayWithoutReservation)
-        ? Config.island.reservedSpace : 0
+        ? Config.island.reservedSpace + Config.island.heightIncrease : 0
 
     // A separate namespace lets Hyprland blur Glass without changing the
     // intentionally translucent parts of Odyssey's original Solid material.
@@ -159,6 +160,7 @@ PanelWindow {
                 width: Math.max(Config.island.dormantWidth,
                     Config.island.restMinimumWidth)
                 height: Config.island.dormantHeight
+                    + Config.island.heightIncrease
                 enabled: !islandController.dismissing
                     && islandController.visualState === islandController.dormant
                 opacity: enabled ? 1 : 0
@@ -174,16 +176,14 @@ PanelWindow {
             Item {
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: MediaService.hoverVisible
-                    ? Math.max(Config.island.hoverWidth,
-                        Config.island.hoverMediaMinimumWidth)
-                    : Math.max(Config.island.hoverWidth,
-                        Config.island.hoverMinimumWidth)
+                width: islandController.hoverContentWidth
                 height: Config.island.hoverHeight
+                    + Config.island.heightIncrease
                 enabled: !islandController.dismissing
                     && islandController.visualState === islandController.hover
                 opacity: enabled ? 1 : 0
                 IslandHover {
+                    id: hoverContent
                     anchors.fill: parent
                     monitor: window.monitor
                 }
@@ -201,9 +201,7 @@ PanelWindow {
                             ? Config.insights.width : islandController.sessionPage
                                 ? Config.session.width : islandController.settingsPage
                                     ? Config.settings.width : Config.island.expandedWidth
-                height: islandController.expandedPage === "launcher"
-                    ? Config.launcher.height
-                    : islandController.targetHeight
+                height: islandController.targetHeight
                 enabled: islandController.expandedPresentationActive
                 opacity: islandController.expandedActive ? 1 : 0
                 IslandExpanded {
@@ -230,6 +228,7 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.osdWidth
                 height: Config.island.osdHeight
+                    + Config.island.heightIncrease
                 enabled: islandController.transientActive
                     && islandController.visualState !== islandController.media
                     && islandController.visualState !== islandController.notification
@@ -250,6 +249,7 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.mediaWidth
                 height: Config.island.mediaHeight
+                    + Config.island.heightIncrease
                 enabled: islandController.visualState === islandController.media
                 opacity: enabled ? 1 : 0
                 IslandMedia { anchors.fill: parent }
@@ -261,6 +261,7 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.mediaWidth
                 height: Config.island.mediaHeight
+                    + Config.island.heightIncrease
                 enabled: islandController.visualState === islandController.notification
                     && !islandController.notificationDismissing
                 opacity: islandController.visualState === islandController.notification
@@ -279,6 +280,7 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.osdWidth
                 height: Config.island.osdHeight
+                    + Config.island.heightIncrease
                 enabled: islandController.visualState === islandController.screenshot
                 opacity: enabled ? 1 : 0
                 IslandCaptureFeedback { anchors.fill: parent }
@@ -326,13 +328,16 @@ PanelWindow {
     // visual lip is optional and is always suppressed over fullscreen content.
     Rectangle {
         id: revealTarget
+        readonly property real restingBodyWidth: Math.max(
+            Config.island.dormantWidth, Config.island.restMinimumWidth)
         visible: islandController.revealOnly && !window.liveEditActive
         x: Math.round((parent.width - width) / 2)
         y: 0
-        width: Math.max(Config.island.dormantWidth,
-            Config.island.restMinimumWidth)
+        width: Config.appearance.islandAttached
+            ? attachedReveal.width : restingBodyWidth
         height: Config.island.revealHeight
         color: "transparent"
+        clip: Config.appearance.islandAttached
 
         HoverHandler {
             onHoveredChanged: hovered ? islandController.enter()
@@ -343,9 +348,31 @@ PanelWindow {
             id: revealStrip
             anchors.fill: parent
             visible: Config.island.showRevealLip && !islandController.fullscreen
+                && !Config.appearance.islandAttached
             radius: height / 2
             solidColor: Qt.alpha(Theme.surfaceContainer, 0.88)
             solidBorderColor: Qt.alpha(Theme.outlineVariant,
+                Theme.dark ? 0.38 : 0.32)
+        }
+
+        // Show the top slice of the resting attached surface, preserving its
+        // shoulder curves without increasing the reveal target's height.
+        IslandSurface {
+            id: attachedReveal
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: Config.island.showRevealLip && !islandController.fullscreen
+                && Config.appearance.islandAttached
+            bodyWidth: revealTarget.restingBodyWidth
+            height: Config.island.dormantHeight
+                + Config.island.heightIncrease
+            attached: true
+            radius: Theme.radiusLarge
+            outlineWidth: Config.island.borderEnabled
+                ? Config.island.borderThickness : 0
+            compactGlass: 1
+            fillColor: Qt.alpha(Theme.surfaceContainer, 0.88)
+            outlineColor: Qt.alpha(Theme.outlineVariant,
                 Theme.dark ? 0.38 : 0.32)
         }
     }
@@ -357,11 +384,7 @@ PanelWindow {
         x: Math.round((parent.width - width) / 2)
         y: 0
         bodyWidth: window.liveEditMode === "hover"
-            ? (MediaService.hoverVisible && Config.island.hoverShowMedia
-                ? Math.max(Config.island.hoverWidth,
-                    Config.island.hoverMediaMinimumWidth)
-                : Math.max(Config.island.hoverWidth,
-                    Config.island.hoverMinimumWidth))
+            ? islandController.hoverContentWidth
             : Math.max(Config.island.dormantWidth,
                 Config.island.restMinimumWidth)
         height: window.liveEditPreviewHeight

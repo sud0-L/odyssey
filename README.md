@@ -25,6 +25,8 @@ odyssey's Dynamic Island stays compact at rest and expands contextually as you i
 
 It provides access to notifications, media, workspaces, device status, system controls, and focused OSD feedback for volume, microphone, brightness, and power changes without permanently occupying additional screen space.
 
+Under **Settings → Island & Motion**, you can adjust the resting and hover layouts, including item spacing, hover outer-edge padding, and island height. The existing height remains the default. Floating and attached styles are available, with a reveal lip that follows the attached island's edges and chosen width.
+
 <img width="1280" height="720" alt="overview" src="https://github.com/user-attachments/assets/4e345f7e-493a-454d-a7df-b100ffbcaf7d" />
 
 ### Dashboard and insights
@@ -38,6 +40,8 @@ Weather is unconfigured by default. Set your location under **Settings → Dashb
 ### Launcher and command palette
 
 Search and launch applications, switch Hyprland workspaces, or execute odyssey actions from a keyboard-friendly launcher and command palette.
+
+The Command Launcher also lets you search and reuse your local shell command history.
 
 <img width="1280" height="720" alt="launcher" src="https://github.com/user-attachments/assets/471655d0-56fb-40ec-a13d-6db0b48d460d" />
 
@@ -69,6 +73,8 @@ Browse and apply wallpapers per monitor directly from odyssey.
 
 odyssey uses **Matugen** to generate an adaptive color palette from your wallpaper and propagate it throughout the shell and supported desktop integrations for a cohesive appearance.
 
+The wallpaper changes first, then its color palette follows shortly after. Generated palettes are cached per user, so selecting the same unchanged wallpaper again can be faster. The wallpaper refresh button gently pulses while a refresh is in progress.
+
 <img width="1280" height="720" alt="wallpaper" src="https://github.com/user-attachments/assets/2647efb7-75a2-4f13-9135-6187a74872f9" />
 
 ## Features
@@ -77,6 +83,7 @@ odyssey currently includes:
 
 - contextual Dynamic Island and system OSDs
 - application launcher and command palette
+- searchable shell command history
 - Hyprland workspace integration
 - Dashboard and system insights
 - notification service and notification history
@@ -87,6 +94,7 @@ odyssey currently includes:
 - brightness and power controls
 - weather and forecasts
 - calendar views
+- locally saved notes
 - wallpaper management
 - Matugen-powered adaptive theming
 - system monitoring
