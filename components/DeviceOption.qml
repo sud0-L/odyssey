@@ -21,7 +21,7 @@ Rectangle {
     color: selected ? Qt.alpha(accent, Theme.dark ? 0.19 : 0.13)
         : optionHover.hovered || activeFocus
             ? Theme.surfaceContainerHigh : "transparent"
-    border.width: 1
+    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: selected ? Qt.alpha(accent, 0.56)
         : activeFocus ? Qt.alpha(Theme.primary, 0.44) : "transparent"
 
@@ -34,7 +34,7 @@ Rectangle {
             text: root.busy ? "󰡌" : root.icon
             color: root.selected ? root.accent : Theme.surfaceVariantText
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: Theme.iconSmall
+            font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
 
             RotationAnimation on rotation {
                 running: root.busy && !Config.appearance.reducedMotion
@@ -55,7 +55,7 @@ Rectangle {
                 color: Theme.surfaceText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
                 font.weight: Font.DemiBold
             }
             Text {
@@ -64,7 +64,7 @@ Rectangle {
                 color: Theme.surfaceVariantText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 8
+                font.pixelSize: Config.island.expandedPixelSize(8, false)
             }
         }
 
@@ -72,7 +72,7 @@ Rectangle {
             text: root.selected ? "✓" : "›"
             color: root.selected ? root.accent : Theme.surfaceVariantText
             font.family: Config.appearance.fontFamily
-            font.pixelSize: root.selected ? 12 : 17
+            font.pixelSize: Config.island.expandedPixelSize(root.selected ? 12 : 17, false)
             font.weight: Font.DemiBold
         }
     }

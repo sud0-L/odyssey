@@ -15,7 +15,7 @@ Rectangle {
     opacity: available ? 1 : 0.38
     color: checked ? Qt.alpha(Theme.primaryContainer, 0.96)
         : Theme.surfaceContainerHigh
-    border.width: activeFocus ? 2 : 1
+    border.width: Config.island.expandedItemBordersEnabled ? (activeFocus ? 2 : 1) : 0
     border.color: activeFocus ? Theme.primary
         : checked ? Qt.alpha(Theme.primary, 0.72)
         : Qt.alpha(Theme.outlineVariant, 0.64)

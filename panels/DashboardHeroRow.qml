@@ -42,21 +42,21 @@ RowLayout {
                     text: Qt.formatDate(ShellState.now, "dddd").toUpperCase()
                     color: Theme.primary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                     font.letterSpacing: 1
                 }
                 Text {
                     text: Qt.formatDate(ShellState.now, "d")
                     color: Theme.surfaceText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 34
+                    font.pixelSize: Config.island.expandedPixelSize(34, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
                     text: Qt.formatDate(ShellState.now, "MMMM yyyy")
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                 }
             }
 
@@ -67,7 +67,7 @@ RowLayout {
                     text: ShellState.time
                     color: Theme.surfaceText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 17
+                    font.pixelSize: Config.island.expandedPixelSize(17, false)
                     font.weight: Font.Bold
                 }
                 Text {
@@ -75,7 +75,7 @@ RowLayout {
                     text: "Calendar  ›"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                 }
             }
         }
@@ -108,7 +108,7 @@ RowLayout {
                     text: WeatherService.available ? WeatherService.icon : "󰖐"
                     color: Theme.tertiary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 40
+                    font.pixelSize: Config.island.expandedPixelSize(40, true)
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -118,7 +118,7 @@ RowLayout {
                             ? WeatherService.temperatureLabel : "—"
                         color: Theme.surfaceText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 28
+                        font.pixelSize: Config.island.expandedPixelSize(28, false)
                         font.weight: Font.DemiBold
                     }
                     Text {
@@ -128,7 +128,7 @@ RowLayout {
                         color: Theme.surfaceVariantText
                         elide: Text.ElideRight
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Config.island.expandedPixelSize(10, false)
                     }
                 }
                 ColumnLayout {
@@ -139,7 +139,7 @@ RowLayout {
                         text: Config.weather.locationName
                         color: Theme.surfaceText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 16
+                        font.pixelSize: Config.island.expandedPixelSize(16, false)
                         font.weight: Font.DemiBold
                     }
                     Text {
@@ -147,7 +147,7 @@ RowLayout {
                         text: WeatherService.highLowLabel
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Config.island.expandedPixelSize(9, false)
                     }
                     Text {
                         Layout.alignment: Qt.AlignRight
@@ -155,7 +155,7 @@ RowLayout {
                             + WeatherService.sunset
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Config.island.expandedPixelSize(9, false)
                     }
                 }
             }
@@ -180,14 +180,14 @@ RowLayout {
                     text: NotificationService.doNotDisturb ? "󰂛" : "󰂚"
                     color: Theme.primary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Config.island.expandedPixelSize(14, true)
                 }
                 Text {
                     Layout.fillWidth: true
                     text: "NOTIFICATIONS"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                     font.letterSpacing: 1
                 }
                 Text {
@@ -195,7 +195,7 @@ RowLayout {
                     text: NotificationService.count.toString()
                     color: Theme.primary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                     font.weight: Font.Bold
                 }
             }
@@ -206,7 +206,7 @@ RowLayout {
                 color: Theme.surfaceText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Config.island.expandedPixelSize(11, false)
                 font.weight: Font.DemiBold
             }
             Text {
@@ -218,7 +218,7 @@ RowLayout {
                 color: Theme.surfaceVariantText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
             }
         }
     }
@@ -236,13 +236,13 @@ RowLayout {
                 text: datum.icon
                 color: Theme.primary
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, true)
             }
             Text {
                 text: datum.value
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
                 font.weight: Font.DemiBold
             }
         }

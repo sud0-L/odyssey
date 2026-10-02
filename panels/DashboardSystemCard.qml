@@ -25,21 +25,21 @@ DashboardCard {
                 text: "󰍛"
                 color: root.systemAccent
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 18
+                font.pixelSize: Config.island.expandedPixelSize(18, true)
             }
             Text {
                 Layout.fillWidth: true
                 text: "SYSTEM"
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
                 font.letterSpacing: 1
             }
             Text {
                 text: "Details  ›"
                 color: root.systemAccent
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
             }
         }
 
@@ -55,13 +55,13 @@ DashboardCard {
                     text: "CPU"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                 }
                 Text {
                     text: SystemService.cpuPercent + "%"
                     color: Theme.surfaceText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: Config.island.expandedPixelSize(13, false)
                     font.weight: Font.Bold
                 }
             }
@@ -78,13 +78,13 @@ DashboardCard {
                     text: "MEMORY"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                 }
                 Text {
                     text: SystemService.memoryPercent + "%"
                     color: Theme.surfaceText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: Config.island.expandedPixelSize(13, false)
                     font.weight: Font.Bold
                 }
             }
@@ -141,7 +141,7 @@ DashboardCard {
                 color: Theme.surfaceVariantText
                 elide: Text.ElideRight
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
             }
         }
     }
@@ -158,14 +158,14 @@ DashboardCard {
             text: metric.label
             color: Theme.surfaceVariantText
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 9
+            font.pixelSize: Config.island.expandedPixelSize(9, false)
             font.letterSpacing: 0.5
         }
         Text {
             text: metric.value
             color: metric.accent
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 10
+            font.pixelSize: Config.island.expandedPixelSize(10, false)
             font.weight: Font.Bold
         }
     }

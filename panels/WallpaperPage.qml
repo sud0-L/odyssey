@@ -71,7 +71,7 @@ Item {
                     text: root.selectionMode ? "Personal image" : "Wallpaper"
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textTitle
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
@@ -84,7 +84,7 @@ Item {
                         ? Theme.warning : Theme.surfaceVariantText
                     elide: Text.ElideRight
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                 }
             }
 
@@ -115,7 +115,7 @@ Item {
                         text: "󰍉"
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 13
+                        font.pixelSize: Config.island.expandedPixelSize(13, true)
                     }
                     TextInput {
                         id: searchInput
@@ -124,7 +124,7 @@ Item {
                         selectionColor: Theme.primaryContainer
                         selectedTextColor: Theme.primaryContainerText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Config.island.expandedPixelSize(11, false)
                         clip: true
 
                         Text {
@@ -163,14 +163,14 @@ Item {
             Layout.preferredHeight: visible ? 52 : 0
             radius: Theme.radiusMedium
             color: Qt.alpha(Theme.surfaceContainerHigh, 0.72)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: WallpaperService.errorMessage.length > 0 ? Theme.warning
                 : Qt.alpha(Theme.outlineVariant, 0.45)
             RowLayout {
                 anchors.fill: parent; anchors.margins: Theme.space2; spacing: Theme.space2
                 ColumnLayout { Layout.fillWidth: true; spacing: 1
-                    Text { text: "Wallpaper setup"; color: Theme.surfaceText; font.family: Config.appearance.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; elide: Text.ElideRight }
-                    Text { Layout.fillWidth: true; text: WallpaperService.backendDetail; color: Theme.surfaceVariantText; font.family: Config.appearance.fontFamily; font.pixelSize: 9; elide: Text.ElideRight }
+                    Text { text: "Wallpaper setup"; color: Theme.surfaceText; font.family: Config.appearance.fontFamily; font.pixelSize: Config.island.expandedPixelSize(10, false); font.weight: Font.DemiBold; elide: Text.ElideRight }
+                    Text { Layout.fillWidth: true; text: WallpaperService.backendDetail; color: Theme.surfaceVariantText; font.family: Config.appearance.fontFamily; font.pixelSize: Config.island.expandedPixelSize(9, false); elide: Text.ElideRight }
                 }
                 TextButton { visible: WallpaperService.backendState !== "ready"; text: "Check again"; onClicked: WallpaperService.retry() }
             }
@@ -181,7 +181,7 @@ Item {
             Layout.fillHeight: true
             radius: Theme.radiusLarge
             color: Qt.alpha(Theme.surfaceContainerLow, 0.48)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.outlineVariant, 0.32)
             clip: true
 
@@ -226,7 +226,7 @@ Item {
                     text: "󰸉"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 28
+                    font.pixelSize: Config.island.expandedPixelSize(28, true)
                 }
                 Text {
                     text: searchInput.text.length > 0
@@ -236,7 +236,7 @@ Item {
                             : "No wallpapers discovered")
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textBody
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                 }
             }
         }

@@ -50,7 +50,7 @@ RowLayout {
             color: quickHover.hovered
                 ? Theme.surfaceContainerHigh
                 : Qt.alpha(Theme.surfaceContainerHigh, 0.48)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: quickHover.hovered
                 ? Qt.alpha(modelData.accent, 0.48)
                 : Qt.alpha(Theme.outlineVariant, 0.30)
@@ -67,13 +67,13 @@ RowLayout {
                     text: modelData.icon
                     color: modelData.accent
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 15
+                    font.pixelSize: Config.island.expandedPixelSize(15, true)
                 }
                 Text {
                     text: modelData.label
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                     font.weight: Font.DemiBold
                 }
                 Item {
@@ -81,13 +81,12 @@ RowLayout {
                     Layout.preferredHeight: 1
                 }
                 Text {
-                    Layout.preferredWidth: Math.max(48,
-                        parent.width - 15 - Theme.space1)
+                    Layout.preferredWidth: 60
                     text: modelData.value
                     color: Theme.surfaceVariantText
                     elide: Text.ElideRight
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 8
+                    font.pixelSize: Config.island.expandedPixelSize(8, false)
                 }
             }
 

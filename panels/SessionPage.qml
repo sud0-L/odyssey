@@ -203,14 +203,14 @@ FocusScope {
                     text: "Session"
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textTitle
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
                     text: "Secure, pause, or end this session"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                 }
             }
         }
@@ -237,7 +237,7 @@ FocusScope {
                     color: selected || actionHover.hovered
                         ? Theme.surfaceContainerHigh
                         : Qt.alpha(Theme.surfaceContainer, 0.74)
-                    border.width: 1
+                    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                     border.color: selected
                         ? Qt.alpha(modelData.destructive ? Theme.error : Theme.primary, 0.62)
                         : Qt.alpha(Theme.outlineVariant, 0.44)
@@ -261,7 +261,7 @@ FocusScope {
                                 color: modelData.destructive
                                     ? Theme.error : Theme.primary
                                 font.family: Config.appearance.monoFontFamily
-                                font.pixelSize: Theme.iconMedium
+                                font.pixelSize: Config.island.expandedPixelSize(Theme.iconMedium, true)
                             }
                         }
 
@@ -272,7 +272,7 @@ FocusScope {
                             text: modelData.title
                             color: Theme.surfaceText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: Theme.textBody
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                             font.weight: Font.DemiBold
                         }
                         Text {
@@ -280,7 +280,7 @@ FocusScope {
                             text: modelData.available ? modelData.detail : "Unavailable"
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: Theme.textSmall
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                             elide: Text.ElideRight
                         }
                     }
@@ -334,7 +334,7 @@ FocusScope {
                     color: root.pendingDetails.destructive
                         ? Theme.error : Theme.warning
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 24
+                    font.pixelSize: Config.island.expandedPixelSize(24, true)
                 }
             }
 
@@ -344,7 +344,7 @@ FocusScope {
                 text: root.pendingDetails.title + "?"
                 color: Theme.surfaceText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textTitle
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                 font.weight: Font.DemiBold
             }
             Text {
@@ -360,7 +360,7 @@ FocusScope {
                             : "Open applications will be closed before the computer powers off."
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textBody
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
             }
 
             RowLayout {
@@ -384,7 +384,7 @@ FocusScope {
                                     ? Theme.error : Theme.warning)
                                 : Theme.primaryContainer)
                             : Theme.surfaceContainerHigh
-                        border.width: 1
+                        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                         border.color: root.confirmationChoice === index
                             ? Qt.alpha(Theme.surfaceText, 0.42)
                             : Qt.alpha(Theme.outlineVariant, 0.42)
@@ -398,7 +398,7 @@ FocusScope {
                                     : Theme.primaryContainerText)
                                 : Theme.surfaceText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: Theme.textBody
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                             font.weight: Font.DemiBold
                         }
                         HoverHandler {
@@ -420,7 +420,7 @@ FocusScope {
                 text: "see you later."
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
             }
         }
 

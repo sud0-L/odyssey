@@ -93,6 +93,7 @@ Item {
                 Layout.preferredWidth: 34
                 Layout.preferredHeight: 30
                 imageMargin: 2
+                topBarIcon: true
                 onEditRequested: root.openIdentityPicker()
             }
             Rectangle {
@@ -109,7 +110,7 @@ Item {
                     color: PowerProfileService.profileId === "performance"
                         ? Theme.tertiary : Theme.primary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: profileNavHover }
@@ -134,7 +135,7 @@ Item {
                     color: root.sessionOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: sessionNavHover }
@@ -160,7 +161,7 @@ Item {
                     color: root.commandLauncherOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: commandLauncherNavHover }
@@ -186,7 +187,7 @@ Item {
                     color: root.wallpaperOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: wallpaperNavHover }
@@ -213,7 +214,7 @@ Item {
                         : root.captureOpen ? Theme.primaryContainerText
                         : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: captureNavHover }
@@ -239,7 +240,7 @@ Item {
                     color: root.controlCenterOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: controlsNavHover }
@@ -265,7 +266,7 @@ Item {
                     color: root.clipboardOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: clipboardNavHover }
@@ -291,7 +292,7 @@ Item {
                     color: root.insightOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: insightsNavHover }
@@ -316,7 +317,7 @@ Item {
                     color: root.launcherOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: launcherNavHover }
@@ -340,7 +341,7 @@ Item {
                     color: root.settingsOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 HoverHandler { id: settingsNavHover }
@@ -364,7 +365,7 @@ Item {
                     color: root.notificationsOpen
                         ? Theme.primaryContainerText : Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                 }
 
                 Rectangle {
@@ -382,7 +383,7 @@ Item {
                             : NotificationService.count.toString()
                         color: Theme.primaryText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 8
+                        font.pixelSize: Config.island.expandedPixelSize(8, false)
                         font.weight: Font.Bold
                     }
                 }
@@ -417,7 +418,7 @@ Item {
                         color: IdleService.inhibited
                             ? Theme.error : Theme.surfaceText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: Theme.iconSmall
+                        font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                     }
 
                     HoverHandler { id: caffeineHover }
@@ -439,14 +440,14 @@ Item {
                             ? Theme.error : BatteryService.charging
                                 ? Theme.success : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: Theme.textBody
+                        font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.textBody)
                         font.weight: Font.Bold
                     }
                     Text {
                         text: BatteryService.percentageInt + "%"
                         color: Theme.surfaceText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: Theme.textBody
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                         font.weight: Font.Bold
                     }
                 }
@@ -457,7 +458,7 @@ Item {
                     text: ShellState.time
                     color: Theme.primary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.textBody
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                     font.weight: Font.Bold
                 }
             }

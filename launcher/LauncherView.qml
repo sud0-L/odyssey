@@ -89,7 +89,7 @@ Item {
                     text: root.searchIcon
                     color: Theme.primary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.iconSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
                 }
 
                 TextInput {
@@ -102,7 +102,7 @@ Item {
                     selectByMouse: true
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textBody
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
 
                     Text {
                         anchors.fill: parent
@@ -142,7 +142,7 @@ Item {
                     text: root.results.length.toString()
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                 }
             }
         }
@@ -192,7 +192,7 @@ Item {
                 text: root.emptyText
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textBody
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
             }
         }
     }

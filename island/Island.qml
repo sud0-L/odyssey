@@ -56,17 +56,24 @@ PanelWindow {
         expandedContent.settingsLivePreviewActive
     readonly property string liveEditMode: expandedContent.settingsPreviewMode
     readonly property int liveEditPreviewHeight: liveEditMode === "hover"
-        ? Config.island.hoverHeight + Config.island.heightIncrease
-        : Config.island.dormantHeight + Config.island.heightIncrease
+        ? Config.island.hoverHeight + Config.island.hoverHeightIncrease
+        : Config.island.dormantHeight + Config.island.restHeightIncrease
     readonly property int liveEditOffset: liveEditActive
         ? liveEditPreviewHeight + Theme.space3 : 0
-    implicitWidth: Math.max(Config.island.expandedWidth, Config.launcher.width,
-        Config.island.restMinimumWidth, islandController.hoverContentWidth)
+    implicitWidth: Math.max(Math.round(Math.max(
+            Config.island.expandedWidth, Config.launcher.width)
+            * Config.island.expandedScale), Config.island.restMinimumWidth,
+        islandController.hoverContentWidth)
         + (Config.appearance.islandAttached ? 44 : 0)
-    implicitHeight: Math.max(Config.island.expandedHeight, Config.launcher.height,
-        Config.controlCenter.detailExpandedHeight, Config.insights.height,
-        Config.dashboard.height, Config.session.height, Config.settings.height)
-        + Config.island.heightIncrease + liveEditOffset
+    implicitHeight: Math.max(Math.round((Math.max(
+            Config.island.expandedHeight, Config.launcher.height,
+            Config.controlCenter.detailExpandedHeight, Config.insights.height,
+            Config.dashboard.height, Config.session.height,
+            Config.settings.height)) * Config.island.expandedScale),
+        Config.island.hoverHeight + Config.island.hoverHeightIncrease,
+        Config.island.dormantHeight + Config.island.restHeightIncrease,
+        Config.island.mediaHeight)
+        + liveEditOffset
     color: "transparent"
     visible: monitorEnabled && islandController.shouldShow
     mask: Region {
@@ -76,7 +83,12 @@ PanelWindow {
             && !islandController.revealOnly
             && !(Config.island.autoHide
                 && islandController.overlayWithoutReservation)
-        ? Config.island.reservedSpace + Config.island.heightIncrease : 0
+        ? Config.island.reservedSpace
+            + (islandController.visualState === islandController.dormant
+                ? Config.island.restHeightIncrease
+                : islandController.visualState === islandController.hover
+                    ? Config.island.hoverHeightIncrease : 0)
+        : 0
 
     // A separate namespace lets Hyprland blur Glass without changing the
     // intentionally translucent parts of Odyssey's original Solid material.
@@ -109,9 +121,12 @@ PanelWindow {
         bodyWidth: islandController.targetWidth
         height: islandController.targetHeight
         attached: Config.appearance.islandAttached
-        radius: Theme.radiusLarge
+        radius: Theme.radiusLarge * (islandController.visualState
+            === islandController.expanded ? Config.island.expandedScale : 1)
         outlineWidth: Config.island.borderEnabled
-            ? Config.island.borderThickness : 0
+            ? Config.island.borderThickness * (islandController.visualState
+                === islandController.expanded ? Config.island.expandedScale : 1)
+            : 0
         fillColor: Qt.tint(Qt.alpha(Theme.surfaceContainer, dormantPresentation
                 ? 0.88 : Config.appearance.surfaceOpacity),
             Qt.alpha(powerPulseColor, powerPulse * 0.46))
@@ -160,7 +175,7 @@ PanelWindow {
                 width: Math.max(Config.island.dormantWidth,
                     Config.island.restMinimumWidth)
                 height: Config.island.dormantHeight
-                    + Config.island.heightIncrease
+                    + Config.island.restHeightIncrease
                 enabled: !islandController.dismissing
                     && islandController.visualState === islandController.dormant
                 opacity: enabled ? 1 : 0
@@ -178,7 +193,7 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: islandController.hoverContentWidth
                 height: Config.island.hoverHeight
-                    + Config.island.heightIncrease
+                    + Config.island.hoverHeightIncrease
                 enabled: !islandController.dismissing
                     && islandController.visualState === islandController.hover
                 opacity: enabled ? 1 : 0
@@ -192,16 +207,13 @@ PanelWindow {
 
             Item {
                 anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
                 // Keep expanded content at stable final geometry while the
                 // containing surface clips across its enter/exit morph.
-                width: islandController.expandedPage === "launcher"
-                    ? Config.launcher.width : islandController.dashboardPage
-                        ? Config.dashboard.width : islandController.insightPage
-                            ? Config.insights.width : islandController.sessionPage
-                                ? Config.session.width : islandController.settingsPage
-                                    ? Config.settings.width : Config.island.expandedWidth
-                height: islandController.targetHeight
+                x: Math.round((parent.width - width * scale) / 2)
+                width: islandController.expandedContentWidth
+                height: islandController.expandedContentHeight
+                transformOrigin: Item.TopLeft
+                scale: Config.island.expandedScale
                 enabled: islandController.expandedPresentationActive
                 opacity: islandController.expandedActive ? 1 : 0
                 IslandExpanded {
@@ -228,7 +240,6 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.osdWidth
                 height: Config.island.osdHeight
-                    + Config.island.heightIncrease
                 enabled: islandController.transientActive
                     && islandController.visualState !== islandController.media
                     && islandController.visualState !== islandController.notification
@@ -249,7 +260,6 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.mediaWidth
                 height: Config.island.mediaHeight
-                    + Config.island.heightIncrease
                 enabled: islandController.visualState === islandController.media
                 opacity: enabled ? 1 : 0
                 IslandMedia { anchors.fill: parent }
@@ -261,7 +271,6 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.mediaWidth
                 height: Config.island.mediaHeight
-                    + Config.island.heightIncrease
                 enabled: islandController.visualState === islandController.notification
                     && !islandController.notificationDismissing
                 opacity: islandController.visualState === islandController.notification
@@ -280,7 +289,6 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.osdWidth
                 height: Config.island.osdHeight
-                    + Config.island.heightIncrease
                 enabled: islandController.visualState === islandController.screenshot
                 opacity: enabled ? 1 : 0
                 IslandCaptureFeedback { anchors.fill: parent }
@@ -365,7 +373,7 @@ PanelWindow {
                 && Config.appearance.islandAttached
             bodyWidth: revealTarget.restingBodyWidth
             height: Config.island.dormantHeight
-                + Config.island.heightIncrease
+                + Config.island.restHeightIncrease
             attached: true
             radius: Theme.radiusLarge
             outlineWidth: Config.island.borderEnabled

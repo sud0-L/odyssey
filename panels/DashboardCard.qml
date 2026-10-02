@@ -12,7 +12,7 @@ Rectangle {
     color: cardHover.hovered && interactive
         ? Theme.surfaceContainerHigh
         : Qt.alpha(Theme.surfaceContainerHigh, 0.58)
-    border.width: 1
+    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: cardHover.hovered && interactive
         ? Qt.alpha(accent, 0.52)
         : Qt.alpha(Theme.outlineVariant, 0.36)

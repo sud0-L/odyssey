@@ -21,7 +21,7 @@ Item {
                     text: "Notifications"
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textBody
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                     font.weight: Font.DemiBold
                 }
 
@@ -30,7 +30,7 @@ Item {
                         ? "1 recent item" : NotificationService.count + " recent items"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                 }
             }
 
@@ -42,7 +42,7 @@ Item {
                 text: "Clear all"
                 color: clearHover.hovered ? Theme.error : Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
                 font.weight: Font.Medium
 
                 HoverHandler { id: clearHover }
@@ -57,7 +57,7 @@ Item {
                     ? (NotificationService.doNotDisturb
                         ? Theme.primaryContainer : Theme.surfaceContainerHigh)
                     : "transparent"
-                border.width: dndHover.hovered ? 1 : 0
+                border.width: Config.island.expandedItemBordersEnabled && dndHover.hovered ? 1 : 0
                 border.color: Qt.alpha(Theme.outlineVariant, 0.54)
 
                 RowLayout {
@@ -69,7 +69,7 @@ Item {
                         text: NotificationService.doNotDisturb ? "󰂛" : "󰂚"
                         color: Theme.surfaceText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: Theme.iconSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
                     }
 
                     Text {
@@ -78,7 +78,7 @@ Item {
                         // legible and stable across dark/light palettes.
                         color: Theme.surfaceText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Config.island.expandedPixelSize(10, false)
                         font.weight: Font.Medium
                     }
                 }
@@ -110,7 +110,7 @@ Item {
                     ? "Quiet mode is active" : "All quiet"
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textBody
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
             }
         }
     }

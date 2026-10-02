@@ -7,6 +7,7 @@ Item {
     id: root
 
     property real imageMargin: 2
+    property bool topBarIcon: false
     readonly property bool hasImage: IdentityService.hasPersonalImage
     readonly property bool imageFailed:
         personalImage.status === Image.Error
@@ -26,7 +27,7 @@ Item {
         color: logoHover.hovered
             ? Qt.alpha(Theme.surfaceContainerHigh, 0.82)
             : Qt.alpha(Theme.surfaceContainer, root.hasImage ? 0.18 : 0.48)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: logoHover.hovered
             ? Qt.alpha(Theme.primary, 0.72)
             : Qt.alpha(Theme.outlineVariant, root.hasImage ? 0.26 : 0.48)
@@ -49,7 +50,11 @@ Item {
             text: root.imageFailed ? "󰏫" : "󰋩"
             color: Theme.primary
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: Math.max(10, circle.width * 0.28)
+            font.pixelSize: root.topBarIcon
+                ? Config.island.expandedTopIconPixelSize(
+                    Math.max(10, circle.width * 0.28))
+                : Config.island.expandedPixelSize(
+                    Math.max(10, circle.width * 0.28), true)
         }
 
         Rectangle {
@@ -63,7 +68,11 @@ Item {
                 text: "󰏫"
                 color: Theme.surfaceText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Math.max(9, circle.width * 0.22)
+                font.pixelSize: root.topBarIcon
+                    ? Config.island.expandedTopIconPixelSize(
+                        Math.max(9, circle.width * 0.22))
+                    : Config.island.expandedPixelSize(
+                        Math.max(9, circle.width * 0.22), true)
             }
         }
 

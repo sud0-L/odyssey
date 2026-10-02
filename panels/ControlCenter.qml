@@ -457,14 +457,14 @@ Item {
                     text: "Control Center"
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textBody
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
                     text: root.detailOpen ? root.detailTitle() : "Focused system controls"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                 }
             }
 
@@ -475,7 +475,7 @@ Item {
                 color: NetworkService.connected
                     ? Theme.success : Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
             }
         }
 
@@ -605,7 +605,7 @@ Item {
             clip: true
             radius: Theme.radiusMedium
             color: Qt.alpha(Theme.surfaceContainer, 0.80)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.outlineVariant, 0.52)
 
             ColumnLayout {
@@ -628,7 +628,7 @@ Item {
                             text: "‹"
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: 18
+                            font.pixelSize: Config.island.expandedPixelSize(18, false)
                         }
                         HoverHandler { id: detailBackHover }
                         TapHandler { onTapped: root.closeDetailSubview() }
@@ -638,7 +638,7 @@ Item {
                             : root.detailTitle()
                         color: Theme.surfaceText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Config.island.expandedPixelSize(10, false)
                         font.weight: Font.DemiBold
                     }
                     Item { Layout.fillWidth: true }
@@ -660,7 +660,7 @@ Item {
                                 opacity: NetworkService.wifiProfileSaving ? 0.55 : 1
                                 color: root.wifiAutomatic === modelData.automatic
                                     ? Theme.primaryContainer : "transparent"
-                                border.width: 1
+                                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                 border.color: root.wifiAutomatic === modelData.automatic
                                     ? Qt.alpha(Theme.primary, 0.5)
                                     : Qt.alpha(Theme.outlineVariant, 0.44)
@@ -672,7 +672,7 @@ Item {
                                         ? Theme.primaryContainerText
                                         : Theme.surfaceVariantText
                                     font.family: Config.appearance.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                                     font.weight: Font.DemiBold
                                 }
                                 TapHandler {
@@ -705,7 +705,7 @@ Item {
                                     : (BluetoothService.discovering ? "󰑓" : "󰂯")
                                 color: Theme.primary
                                 font.family: Config.appearance.monoFontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Config.island.expandedPixelSize(10, false)
                                 RotationAnimation on rotation {
                                     running: !Config.appearance.reducedMotion
                                         && (root.displayedSection === "wifi"
@@ -725,7 +725,7 @@ Item {
                                         ? "Searching" : "Search"
                                 color: Theme.surfaceVariantText
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 8
+                                font.pixelSize: Config.island.expandedPixelSize(8, false)
                             }
                         }
                         HoverHandler { id: scanHover }
@@ -737,7 +737,7 @@ Item {
                         text: root.detailModel.length + (root.detailModel.length === 1 ? " option" : " options")
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 8
+                        font.pixelSize: Config.island.expandedPixelSize(8, false)
                     }
                 }
 
@@ -811,8 +811,9 @@ Item {
                                 color: root.wifiPasswordRejected
                                     ? Qt.alpha(Theme.error, 0.20)
                                     : Theme.surfaceContainerHigh
-                                border.width: root.wifiPasswordRejected
-                                    || wifiPasswordInput.activeFocus ? 1 : 0
+                                border.width: Config.island.expandedItemBordersEnabled
+                                    && (root.wifiPasswordRejected
+                                        || wifiPasswordInput.activeFocus) ? 1 : 0
                                 border.color: root.wifiPasswordRejected
                                     ? Theme.error : Qt.alpha(Theme.primary, 0.72)
 
@@ -832,7 +833,7 @@ Item {
                                     passwordCharacter: "•"
                                     verticalAlignment: TextInput.AlignVCenter
                                     font.family: Config.appearance.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                                     Keys.onReturnPressed: root.submitWifiPassword()
                                     Keys.onEnterPressed: root.submitWifiPassword()
                                     Keys.onEscapePressed: root.clearWifiCredentials()
@@ -852,7 +853,7 @@ Item {
                                         ? "Connecting" : "Connect"
                                     color: Theme.primaryText
                                     font.family: Config.appearance.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                                     font.weight: Font.DemiBold
                                 }
                                 TapHandler {
@@ -874,7 +875,7 @@ Item {
                                 ? "Searching for networks…" : "No networks found")
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Config.island.expandedPixelSize(10, false)
                     }
 
                     Rectangle {
@@ -912,7 +913,7 @@ Item {
                                         radius: Theme.radiusSmall
                                         color: Qt.alpha(Theme.surfaceContainerHigh,
                                             Theme.dark ? 0.70 : 0.58)
-                                        border.width: 1
+                                        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                         border.color: Qt.alpha(Theme.outlineVariant, 0.34)
 
                                         ColumnLayout {
@@ -926,7 +927,7 @@ Item {
                                                 color: Theme.surfaceVariantText
                                                 elide: Text.ElideRight
                                                 font.family: Config.appearance.fontFamily
-                                                font.pixelSize: 10
+                                                font.pixelSize: Config.island.expandedPixelSize(10, false)
                                                 font.weight: Font.Medium
                                             }
                                             Text {
@@ -937,7 +938,7 @@ Item {
                                                 color: modelData.accent
                                                 elide: Text.ElideRight
                                                 font.family: Config.appearance.fontFamily
-                                                font.pixelSize: 11
+                                                font.pixelSize: Config.island.expandedPixelSize(11, false)
                                                 font.weight: Font.DemiBold
                                             }
                                             TextInput {
@@ -954,7 +955,7 @@ Item {
                                                 selectedTextColor: Theme.primaryText
                                                 selectByMouse: true
                                                 font.family: Config.appearance.monoFontFamily
-                                                font.pixelSize: 10
+                                                font.pixelSize: Config.island.expandedPixelSize(10, false)
                                                 onTextEdited: {
                                                     userEdited = true
                                                     if (modelData.key === "address")
@@ -985,7 +986,7 @@ Item {
                                 radius: Theme.radiusSmall
                                 color: Qt.alpha(Theme.surfaceContainerHigh,
                                     Theme.dark ? 0.52 : 0.42)
-                                border.width: 1
+                                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                 border.color: Qt.alpha(Theme.outlineVariant, 0.34)
 
                                 ColumnLayout {
@@ -1002,7 +1003,7 @@ Item {
                                             text: "DNS servers"
                                             color: Theme.surfaceText
                                             font.family: Config.appearance.fontFamily
-                                            font.pixelSize: 11
+                                            font.pixelSize: Config.island.expandedPixelSize(11, false)
                                             font.weight: Font.DemiBold
                                         }
                                         Text {
@@ -1011,7 +1012,7 @@ Item {
                                                 : "Use a custom IPv4 resolver"
                                             color: Theme.surfaceVariantText
                                             font.family: Config.appearance.fontFamily
-                                            font.pixelSize: 9
+                                            font.pixelSize: Config.island.expandedPixelSize(9, false)
                                         }
                                     }
 
@@ -1033,7 +1034,7 @@ Item {
                                                 height: 27
                                                 radius: Theme.radiusSmall
                                                 color: Qt.alpha(Theme.surfaceContainer, 0.66)
-                                                border.width: 1
+                                                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                                 border.color: Qt.alpha(
                                                     Theme.outlineVariant, 0.32)
 
@@ -1046,7 +1047,7 @@ Item {
                                                     elide: Text.ElideRight
                                                     horizontalAlignment: Text.AlignHCenter
                                                     font.family: Config.appearance.monoFontFamily
-                                                    font.pixelSize: 9
+                                                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                                                 }
                                             }
                                         }
@@ -1059,7 +1060,7 @@ Item {
                                         clip: true
                                         radius: Theme.radiusSmall
                                         color: Qt.alpha(Theme.surfaceContainer, 0.92)
-                                        border.width: 1
+                                        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                         border.color: wifiDnsInput.activeFocus
                                             ? Qt.alpha(Theme.primary, 0.72)
                                             : Qt.alpha(Theme.outlineVariant, 0.32)
@@ -1076,7 +1077,7 @@ Item {
                                             selectionColor: Theme.primary
                                             selectedTextColor: Theme.primaryText
                                             font.family: Config.appearance.monoFontFamily
-                                            font.pixelSize: 10
+                                            font.pixelSize: Config.island.expandedPixelSize(10, false)
                                             onTextEdited: {
                                                 userEdited = true
                                                 root.manualWifiDnsServers = text
@@ -1102,7 +1103,7 @@ Item {
                                 text: NetworkService.wifiProfileError || NetworkService.wifiProfileStatus
                                 color: NetworkService.wifiProfileError.length > 0 ? Theme.error : Theme.success
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 8
+                                font.pixelSize: Config.island.expandedPixelSize(8, false)
                                 wrapMode: Text.WordWrap
                             }
                         }
@@ -1119,7 +1120,7 @@ Item {
                             color: forgetWifiHover.hovered
                                 ? Qt.alpha(Theme.error, 0.20)
                                 : Qt.alpha(Theme.error, 0.10)
-                            border.width: 1
+                            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                             border.color: Qt.alpha(Theme.error, 0.38)
                             activeFocusOnTab: true
 
@@ -1128,7 +1129,7 @@ Item {
                                 text: "Forget network"
                                 color: Theme.error
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Config.island.expandedPixelSize(9, false)
                                 font.weight: Font.DemiBold
                             }
                             HoverHandler { id: forgetWifiHover }
@@ -1152,7 +1153,7 @@ Item {
                             color: forgetBluetoothHover.hovered
                                 ? Qt.alpha(Theme.error, 0.20)
                                 : Qt.alpha(Theme.error, 0.10)
-                            border.width: 1
+                            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                             border.color: Qt.alpha(Theme.error, 0.38)
                             activeFocusOnTab: true
 
@@ -1161,7 +1162,7 @@ Item {
                                 text: "Forget device"
                                 color: Theme.error
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Config.island.expandedPixelSize(9, false)
                                 font.weight: Font.DemiBold
                             }
                             HoverHandler { id: forgetBluetoothHover }
@@ -1194,7 +1195,7 @@ Item {
                                         radius: Theme.radiusSmall
                                         color: Qt.alpha(Theme.surfaceContainerHigh,
                                             Theme.dark ? 0.70 : 0.58)
-                                        border.width: 1
+                                        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                         border.color: Qt.alpha(
                                             Theme.outlineVariant, 0.34)
 
@@ -1209,7 +1210,7 @@ Item {
                                                 color: Theme.surfaceVariantText
                                                 elide: Text.ElideRight
                                                 font.family: Config.appearance.fontFamily
-                                                font.pixelSize: 10
+                                                font.pixelSize: Config.island.expandedPixelSize(10, false)
                                                 font.weight: Font.Medium
                                             }
                                             Text {
@@ -1218,7 +1219,7 @@ Item {
                                                 color: modelData.accent
                                                 elide: Text.ElideRight
                                                 font.family: Config.appearance.fontFamily
-                                                font.pixelSize: 11
+                                                font.pixelSize: Config.island.expandedPixelSize(11, false)
                                                 font.weight: Font.DemiBold
                                             }
                                         }
@@ -1234,7 +1235,7 @@ Item {
                                     root.informationOption)
                                 color: Theme.error
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 8
+                                font.pixelSize: Config.island.expandedPixelSize(8, false)
                                 wrapMode: Text.WordWrap
                             }
                         }

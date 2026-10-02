@@ -41,7 +41,7 @@ RowLayout {
         color: valueInput.activeFocus
             ? Qt.alpha(Theme.primaryContainer, 0.42)
             : Qt.alpha(Theme.surfaceContainerHigh, 0.72)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: valueInput.activeFocus
             ? Theme.primary : Qt.alpha(Theme.outlineVariant, 0.54)
 
@@ -64,7 +64,7 @@ RowLayout {
                     regularExpression: /[0-9]{0,9}/
                 }
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
                 font.weight: Font.DemiBold
 
                 function restoreValue(): void {
@@ -106,7 +106,7 @@ RowLayout {
                 text: root.suffix
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
             }
         }
 

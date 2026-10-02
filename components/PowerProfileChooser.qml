@@ -13,7 +13,7 @@ Rectangle {
 
     radius: Theme.radiusMedium
     color: Theme.surfaceContainerHigh
-    border.width: 1
+    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: Qt.alpha(Theme.outlineVariant, 0.52)
 
     RowLayout {
@@ -51,7 +51,7 @@ Rectangle {
                         color: option.active ? Theme.primaryContainerText
                             : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: Theme.iconSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
                     }
 
                     Text {
@@ -59,7 +59,7 @@ Rectangle {
                         color: option.active ? Theme.primaryContainerText
                             : Theme.surfaceText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Config.island.expandedPixelSize(10, false)
                         font.weight: option.active ? Font.DemiBold : Font.Medium
                     }
                 }

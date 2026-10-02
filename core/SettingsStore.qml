@@ -195,7 +195,8 @@ QtObject {
         const bounds = ({
             topMargin: [0, 16], reservedSpace: [26, 52],
             dormantWidth: [150, 320], hoverWidth: [470, 760],
-            expandedWidth: [620, 900], heightIncrease: [0, 32],
+            expandedWidth: [620, 900], expandedScale: [80, 120],
+            restHeightIncrease: [0, 32], hoverHeightIncrease: [0, 32],
             restItemSpacing: [2, 18], hoverItemSpacing: [2, 20],
             hoverEdgePadding: [8, 48], autoHideDelay: [500, 10000],
             borderThickness: [1, 4]
@@ -254,6 +255,10 @@ QtObject {
         setValue("island", "borderEnabled", enabled)
     }
 
+    function setExpandedItemBordersEnabled(enabled: bool): void {
+        setValue("island", "expandedItemBordersEnabled", enabled)
+    }
+
     function setIslandContentSync(context: string, enabled: bool): bool {
         if (["rest", "hover"].indexOf(context) < 0)
             return false
@@ -275,7 +280,7 @@ QtObject {
 
     function setIslandContentScale(context: string, channel: string,
             percentage: real): bool {
-        if (["rest", "hover"].indexOf(context) < 0
+        if (["rest", "hover", "expanded"].indexOf(context) < 0
                 || ["text", "icon"].indexOf(channel) < 0)
             return false
         const numeric = Number(percentage)
@@ -287,7 +292,8 @@ QtObject {
             updated.island = {}
         updated.island[context + (channel === "text"
             ? "TextScale" : "IconScale")] = bounded
-        if (boolValue("island", context + "ScaleSynced", true))
+        if (context !== "expanded"
+                && boolValue("island", context + "ScaleSynced", true))
             updated.island[context + (channel === "text"
                 ? "IconScale" : "TextScale")] = bounded
         values = updated

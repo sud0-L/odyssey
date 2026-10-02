@@ -17,35 +17,35 @@ Item {
     TextMetrics {
         id: screenshotTitleMetrics
         font.family: Config.appearance.fontFamily
-        font.pixelSize: Theme.textBody
+        font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
         text: "M"
     }
 
     TextMetrics {
         id: screenshotSubtitleMetrics
         font.family: Config.appearance.fontFamily
-        font.pixelSize: Theme.textSmall
+        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
         text: "M"
     }
 
     TextMetrics {
         id: recordingTitleMetrics
         font.family: Config.appearance.fontFamily
-        font.pixelSize: Theme.textBody
+        font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
         text: "M"
     }
 
     TextMetrics {
         id: recordingSubtitleMetrics
         font.family: Config.appearance.monoFontFamily
-        font.pixelSize: Theme.textSmall
+        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
         text: "M"
     }
 
     TextMetrics {
         id: outputLabelMetrics
         font.family: Config.appearance.monoFontFamily
-        font.pixelSize: 9
+        font.pixelSize: Config.island.expandedPixelSize(9, false)
         text: "M"
     }
 
@@ -83,14 +83,14 @@ Item {
                     text: "Capture"
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textTitle
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
                     text: "Screenshots and screen recording"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                 }
             }
 
@@ -113,7 +113,7 @@ Item {
                     text: "Recording  " + CaptureService.elapsedLabel
                     color: Theme.error
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                 }
             }
         }
@@ -128,7 +128,7 @@ Item {
                 Layout.fillHeight: true
                 radius: Theme.radiusLarge
                 color: Qt.alpha(Theme.surfaceContainer, 0.74)
-                border.width: 1
+                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                 border.color: Qt.alpha(Theme.outlineVariant, 0.42)
 
                 ColumnLayout {
@@ -145,7 +145,7 @@ Item {
                             text: "󰄀"
                             color: Theme.primary
                             font.family: Config.appearance.monoFontFamily
-                            font.pixelSize: Theme.iconMedium
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.iconMedium, true)
                         }
                         Text {
                             Layout.fillWidth: true
@@ -153,7 +153,7 @@ Item {
                             text: "Screenshot"
                             color: Theme.surfaceText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: Theme.textBody
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                             font.weight: Font.DemiBold
                         }
                     }
@@ -185,7 +185,7 @@ Item {
                                 color: shotHover.hovered
                                     ? Theme.surfaceContainerHigh
                                     : Qt.alpha(Theme.surfaceContainerHigh, 0.50)
-                                border.width: 1
+                                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                 border.color: shotHover.hovered
                                     ? Qt.alpha(Theme.primary, 0.56)
                                     : Qt.alpha(Theme.outlineVariant, 0.34)
@@ -200,7 +200,7 @@ Item {
                                         text: modelData.icon
                                         color: Theme.primary
                                         font.family: Config.appearance.monoFontFamily
-                                        font.pixelSize: Theme.iconMedium
+                                        font.pixelSize: Config.island.expandedPixelSize(Theme.iconMedium, true)
                                     }
                                     ColumnLayout {
                                         Layout.fillWidth: true
@@ -209,7 +209,7 @@ Item {
                                             text: modelData.title
                                             color: Theme.surfaceText
                                             font.family: Config.appearance.fontFamily
-                                            font.pixelSize: 12
+                                            font.pixelSize: Config.island.expandedPixelSize(12, false)
                                             font.weight: Font.DemiBold
                                         }
                                         Text {
@@ -218,7 +218,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                             elide: Text.ElideRight
                                             font.family: Config.appearance.fontFamily
-                                            font.pixelSize: 9
+                                            font.pixelSize: Config.island.expandedPixelSize(9, false)
                                         }
                                     }
                                 }
@@ -267,7 +267,7 @@ Item {
                                             ? Theme.primaryContainerText
                                             : Theme.surfaceVariantText
                                         font.family: Config.appearance.fontFamily
-                                        font.pixelSize: 10
+                                        font.pixelSize: Config.island.expandedPixelSize(10, false)
                                         font.weight: Font.Medium
                                     }
                                     HoverHandler { id: outputHover }
@@ -288,7 +288,7 @@ Item {
                 Layout.fillHeight: true
                 radius: Theme.radiusLarge
                 color: Qt.alpha(Theme.surfaceContainer, 0.74)
-                border.width: 1
+                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                 border.color: CaptureService.recording
                     ? Qt.alpha(Theme.error, 0.58)
                     : Qt.alpha(Theme.outlineVariant, 0.42)
@@ -307,7 +307,7 @@ Item {
                             text: "󰑊"
                             color: CaptureService.recording ? Theme.error : Theme.tertiary
                             font.family: Config.appearance.monoFontFamily
-                            font.pixelSize: Theme.iconMedium
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.iconMedium, true)
                         }
                         Text {
                             Layout.fillWidth: true
@@ -315,7 +315,7 @@ Item {
                             text: "Screen recording"
                             color: Theme.surfaceText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: Theme.textBody
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                             font.weight: Font.DemiBold
                         }
                     }
@@ -327,7 +327,7 @@ Item {
                             text: "CAPTURE"
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.monoFontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Config.island.expandedPixelSize(9, false)
                             font.letterSpacing: 1.2
                         }
                         Repeater {
@@ -344,7 +344,7 @@ Item {
                                     ? Qt.alpha(Theme.tertiary, 0.18)
                                     : targetHover.hovered
                                         ? Theme.surfaceContainerHigh : "transparent"
-                                border.width: 1
+                                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                 border.color: root.recordingTarget === modelData.value
                                     ? Qt.alpha(Theme.tertiary, 0.50)
                                     : Qt.alpha(Theme.outlineVariant, 0.28)
@@ -355,20 +355,22 @@ Item {
                                         text: modelData.icon
                                         color: Theme.tertiary
                                         font.family: Config.appearance.monoFontFamily
-                                        font.pixelSize: Theme.iconSmall
+                                        font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
                                     }
                                     Text {
                                         Layout.fillWidth: true
                                         text: modelData.label
                                         color: Theme.surfaceText
                                         font.family: Config.appearance.fontFamily
-                                        font.pixelSize: 11
+                                        font.pixelSize: Config.island.expandedPixelSize(11, false)
                                     }
                                     Text {
                                         visible: root.recordingTarget === modelData.value
                                         text: "󰄬"
                                         color: Theme.tertiary
                                         font.family: Config.appearance.monoFontFamily
+                                        font.pixelSize: Config.island.expandedPixelSize(
+                                            Theme.textBody, true)
                                     }
                                 }
                                 HoverHandler { id: targetHover }
@@ -394,14 +396,14 @@ Item {
                                 color: root.includeSystemAudio
                                     ? Theme.primary : Theme.surfaceVariantText
                                 font.family: Config.appearance.monoFontFamily
-                                font.pixelSize: Theme.iconSmall
+                                font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
                             }
                             Text {
                                 Layout.fillWidth: true
                                 text: "System audio"
                                 color: Theme.surfaceText
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Config.island.expandedPixelSize(11, false)
                                 font.weight: Font.Normal
                             }
                             Text {
@@ -409,7 +411,7 @@ Item {
                                 color: root.includeSystemAudio
                                     ? Theme.primary : Theme.surfaceVariantText
                                 font.family: Config.appearance.monoFontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Config.island.expandedPixelSize(11, false)
                                 font.weight: Font.Normal
                             }
                         }
@@ -430,7 +432,7 @@ Item {
                             ? Qt.alpha(Theme.error, recordHover.hovered ? 0.34 : 0.26)
                             : recordHover.hovered
                                 ? Theme.tertiary : Qt.alpha(Theme.tertiary, 0.82)
-                        border.width: CaptureService.recording ? 1 : 0
+                        border.width: Config.island.expandedItemBordersEnabled && CaptureService.recording ? 1 : 0
                         border.color: Qt.alpha(Theme.error, 0.72)
                         opacity: CaptureService.recordingAvailable
                             && !CaptureService.busy ? 1 : 0.42
@@ -451,7 +453,7 @@ Item {
                                 color: CaptureService.recording
                                     ? Theme.error : Theme.primaryText
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 12
+                                font.pixelSize: Config.island.expandedPixelSize(12, false)
                                 font.weight: Font.DemiBold
                             }
                         }

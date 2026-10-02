@@ -45,7 +45,7 @@ Rectangle {
     opacity: available ? 1 : 0.42
     radius: Theme.radiusMedium
     color: Qt.alpha(Theme.surfaceContainer, 0.78)
-    border.width: 1
+    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: activeFocus ? Qt.alpha(Theme.primary, 0.52)
         : Qt.alpha(Theme.outlineVariant, 0.48)
 
@@ -67,7 +67,7 @@ Rectangle {
                 text: root.icon
                 color: root.actionActive ? Theme.error : root.accent
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Theme.iconSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
             }
 
             HoverHandler { id: actionHover; enabled: root.available }
@@ -95,7 +95,7 @@ Rectangle {
                         color: Theme.surfaceText
                         elide: Text.ElideRight
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Config.island.expandedPixelSize(11, false)
                         font.weight: Font.DemiBold
                     }
                     Text {
@@ -104,7 +104,7 @@ Rectangle {
                         color: Theme.surfaceVariantText
                         elide: Text.ElideRight
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Config.island.expandedPixelSize(9, false)
                     }
                 }
 
@@ -112,7 +112,7 @@ Rectangle {
                     text: Math.round(root.displayedLevel * 100) + "%"
                     color: root.accent
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
@@ -121,7 +121,7 @@ Rectangle {
                     color: root.expanded ? root.accent : Theme.surfaceVariantText
                     rotation: root.expanded ? 180 : 0
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: Config.island.expandedPixelSize(13, true)
 
                     Behavior on rotation {
                         NumberAnimation {

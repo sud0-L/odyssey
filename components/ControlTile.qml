@@ -23,7 +23,7 @@ Rectangle {
     color: checked ? Qt.alpha(accent, Theme.dark ? 0.22 : 0.15)
         : tileHover.hovered || activeFocus ? Theme.surfaceContainerHigh
         : Qt.alpha(Theme.surfaceContainer, 0.78)
-    border.width: 1
+    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: checked ? Qt.alpha(accent, 0.62)
         : activeFocus ? Qt.alpha(Theme.primary, 0.52)
         : Qt.alpha(Theme.outlineVariant, 0.48)
@@ -46,7 +46,7 @@ Rectangle {
                 text: root.icon
                 color: root.checked ? root.accent : Theme.surfaceVariantText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Theme.iconSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
             }
         }
 
@@ -60,7 +60,7 @@ Rectangle {
                 color: Theme.surfaceText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Config.island.expandedPixelSize(11, false)
                 font.weight: Font.DemiBold
             }
 
@@ -70,7 +70,7 @@ Rectangle {
                 color: Theme.surfaceVariantText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
             }
         }
         Text {
@@ -79,7 +79,7 @@ Rectangle {
             color: root.expanded ? root.accent : Theme.surfaceVariantText
             rotation: root.expanded ? 180 : 0
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 13
+            font.pixelSize: Config.island.expandedPixelSize(13, true)
 
             Behavior on rotation {
                 NumberAnimation {

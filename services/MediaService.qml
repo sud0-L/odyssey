@@ -10,6 +10,7 @@ Singleton {
 
     readonly property list<MprisPlayer> players: Mpris.players.values
     property MprisPlayer activePlayer: null
+    property bool selectionPinned: false
     property real position: 0
     property bool eventsEnabled: false
 
@@ -28,7 +29,8 @@ Singleton {
         === MprisPlaybackState.Playing
     readonly property bool paused: activePlayer?.playbackState
         === MprisPlaybackState.Paused
-    readonly property bool canToggle: activePlayer?.canTogglePlaying ?? false
+    readonly property bool canToggle: activePlayer?.canTogglePlaying
+        || (playing ? activePlayer?.canPause : activePlayer?.canPlay) || false
     readonly property bool canPrevious: activePlayer?.canGoPrevious ?? false
     readonly property bool canNext: activePlayer?.canGoNext ?? false
     readonly property bool canSeek: activePlayer?.canSeek ?? false
@@ -45,23 +47,37 @@ Singleton {
     }
 
     function resolveActivePlayer(): void {
-        const playingPlayer = Config.media.preferPlaying
-            ? players.find(player => player && player.isPlaying) : null
-        if (playingPlayer) {
-            activePlayer = playingPlayer
+        const candidates = players.filter(player => player && player.canControl
+            && !isIdle(player))
+        const detailed = candidates.filter(player => player.trackArtist
+            || player.trackAlbum)
+        // Keep the selected track through pause. A browser tab can report
+        // Playing at the same time and must not silently take over the controls.
+        if (activePlayer && players.indexOf(activePlayer) >= 0
+                && !isIdle(activePlayer)) {
+            // MPRIS metadata often arrives after the player list. Promote a
+            // richer track unless the user explicitly selected this player.
+            if (!selectionPinned && !activePlayer.trackArtist
+                    && !activePlayer.trackAlbum && detailed.length > 0) {
+                activePlayer = (Config.media.preferPlaying
+                    ? detailed.find(player => player.isPlaying) : null)
+                    || detailed[0]
+            }
             return
         }
 
-        if (activePlayer && players.indexOf(activePlayer) >= 0 && !isIdle(activePlayer))
-            return
-
-        activePlayer = players.find(player => player && player.canControl
-            && !isIdle(player)) || null
+        selectionPinned = false
+        // Prefer an actual track's metadata over a browser tab's page title.
+        const pool = detailed.length > 0 ? detailed : candidates
+        activePlayer = (Config.media.preferPlaying
+            ? pool.find(player => player.isPlaying) : null) || pool[0] || null
     }
 
     function selectPlayer(player: MprisPlayer): void {
-        if (player && players.indexOf(player) >= 0)
+        if (player && players.indexOf(player) >= 0) {
+            selectionPinned = true
             activePlayer = player
+        }
     }
 
     function selectNextPlayer(): void {
@@ -71,6 +87,7 @@ Singleton {
         for (let offset = 1; offset <= players.length; ++offset) {
             const candidate = players[(currentIndex + offset) % players.length]
             if (candidate && !isIdle(candidate)) {
+                selectionPinned = true
                 activePlayer = candidate
                 return
             }
@@ -102,12 +119,16 @@ Singleton {
     }
 
     function togglePlaying(): void {
-        if (canToggle)
-            activePlayer.togglePlaying()
-        else if (playing && activePlayer?.canPause)
-            activePlayer.pause()
-        else if (activePlayer?.canPlay)
+        if (playing) {
+            if (activePlayer?.canPause)
+                activePlayer.pause()
+            else if (activePlayer?.canTogglePlaying)
+                activePlayer.togglePlaying()
+        } else if (activePlayer?.canPlay) {
             activePlayer.play()
+        } else if (activePlayer?.canTogglePlaying) {
+            activePlayer.togglePlaying()
+        }
     }
 
     function previous(): void {
@@ -126,8 +147,8 @@ Singleton {
     }
 
     function refreshPosition(): void {
-        position = activePlayer?.positionSupported
-            ? Math.max(0, activePlayer.position) : 0
+        if (activePlayer?.positionSupported)
+            position = Math.max(0, activePlayer.position)
     }
 
     function queuePresentation(): void {
@@ -138,6 +159,7 @@ Singleton {
 
     onPlayersChanged: resolveActivePlayer()
     onActivePlayerChanged: {
+        position = 0
         refreshPosition()
         if (eventsEnabled)
             queuePresentation()
@@ -154,6 +176,10 @@ Singleton {
             }
 
             function onTrackChanged(): void {
+                if (modelData === root.activePlayer) {
+                    root.position = 0
+                    root.refreshPosition()
+                }
                 root.resolveActivePlayer()
                 root.queuePresentation()
             }

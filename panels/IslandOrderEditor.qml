@@ -58,7 +58,7 @@ Item {
             text: "ISLAND SLOTS"
             color: Theme.primary
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 9
+            font.pixelSize: Config.island.expandedPixelSize(9, false)
             font.weight: Font.Bold
             font.letterSpacing: 1.1
         }
@@ -89,7 +89,7 @@ Item {
                         color: slot.containsDrag
                             ? Qt.alpha(Theme.primaryContainer, 0.78)
                             : Qt.alpha(Theme.surfaceContainerLow, 0.66)
-                        border.width: 1
+                        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                         border.color: slot.containsDrag ? Theme.primary
                             : Qt.alpha(Theme.outlineVariant, 0.48)
                         Text {
@@ -98,7 +98,7 @@ Item {
                             text: (slot.index + 1).toString()
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.monoFontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Config.island.expandedPixelSize(9, false)
                         }
                     }
 
@@ -124,7 +124,7 @@ Item {
                 text: "AVAILABLE ITEMS"
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
                 font.weight: Font.Bold
                 font.letterSpacing: 1.1
             }
@@ -132,7 +132,7 @@ Item {
                 text: "Drag into a slot · click to add/remove"
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
             }
         }
 
@@ -162,7 +162,7 @@ Item {
                     text: "All items are in the Island"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                 }
             }
         }
@@ -180,7 +180,7 @@ Item {
                 radius: Theme.radiusSmall
                 color: parent.containsDrag ? Qt.alpha(Theme.error, 0.16)
                     : "transparent"
-                border.width: 1
+                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                 border.color: parent.containsDrag ? Theme.error
                     : Qt.alpha(Theme.outlineVariant, 0.4)
                 Text {
@@ -189,7 +189,7 @@ Item {
                     color: parent.parent.containsDrag ? Theme.error
                         : Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                 }
             }
         }
@@ -210,7 +210,7 @@ Item {
         color: tileDrag.drag.active ? Theme.primaryContainer
             : tileHover.hovered ? Theme.surfaceContainerHigh
             : Qt.alpha(Theme.surfaceContainer, 0.9)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: activeFocus ? Theme.primary
             : tileDrag.drag.active ? Theme.primary
             : Qt.alpha(Theme.outlineVariant, 0.54)
@@ -235,7 +235,7 @@ Item {
                 color: tileDrag.drag.active ? Theme.primaryContainerText
                     : Theme.surfaceText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Theme.iconSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
             }
             Text {
                 Layout.alignment: Qt.AlignHCenter
@@ -243,7 +243,7 @@ Item {
                 color: tileDrag.drag.active ? Theme.primaryContainerText
                     : Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 8
+                font.pixelSize: Config.island.expandedPixelSize(8, false)
             }
         }
         HoverHandler { id: tileHover }

@@ -8,6 +8,9 @@ InfoTile 1.0 InfoTile.qml
 IslandSurface 1.0 IslandSurface.qml
 LevelControl 1.0 LevelControl.qml
 LevelTrack 1.0 LevelTrack.qml
+MediaArtwork 1.0 MediaArtwork.qml
+MediaBackdrop 1.0 MediaBackdrop.qml
+MediaTransport 1.0 MediaTransport.qml
 OdysseyMark 1.0 OdysseyMark.qml
 RecordingDot 1.0 RecordingDot.qml
 PersonalLogo 1.0 PersonalLogo.qml

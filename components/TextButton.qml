@@ -17,7 +17,7 @@ Rectangle {
     radius: Theme.radiusSmall
     color: pointer.hovered ? Theme.primaryContainer
         : Qt.alpha(Theme.surfaceContainerHigh, 0.76)
-    border.width: showBorder ? 1 : 0
+    border.width: showBorder && Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: activeFocus && showFocusIndicator
         ? Qt.alpha(Theme.primary, 0.78)
         : Qt.alpha(Theme.outlineVariant, 0.34)
@@ -31,7 +31,7 @@ Rectangle {
         anchors.centerIn: parent
         color: pointer.hovered ? Theme.primaryContainerText : Theme.surfaceText
         font.family: Config.appearance.fontFamily
-        font.pixelSize: root.compact ? Theme.textSmall : Theme.textBody
+        font.pixelSize: Config.island.expandedPixelSize(root.compact ? Theme.textSmall : Theme.textBody, false)
         font.weight: Font.Medium
     }
 

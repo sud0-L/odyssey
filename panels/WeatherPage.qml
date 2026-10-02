@@ -47,7 +47,7 @@ Item {
                 Layout.preferredHeight: 116
                 radius: Theme.radiusLarge
                 color: Qt.alpha(Theme.primaryContainer, Theme.dark ? 0.28 : 0.48)
-                border.width: 1
+                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                 border.color: Qt.alpha(Theme.primary, 0.26)
 
                 RowLayout {
@@ -59,7 +59,7 @@ Item {
                         text: WeatherService.icon
                         color: Theme.tertiary
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 48
+                        font.pixelSize: Config.island.expandedPixelSize(48, true)
                     }
 
                     ColumnLayout {
@@ -69,14 +69,14 @@ Item {
                             text: WeatherService.temperatureLabel
                             color: Theme.surfaceText
                             font.family: Config.appearance.monoFontFamily
-                            font.pixelSize: 44
+                            font.pixelSize: Config.island.expandedPixelSize(44, false)
                             font.weight: Font.DemiBold
                         }
                         Text {
                             text: WeatherService.condition
                             color: Theme.surfaceText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: 12
+                            font.pixelSize: Config.island.expandedPixelSize(12, false)
                             font.weight: Font.DemiBold
                         }
                         Text {
@@ -84,7 +84,7 @@ Item {
                                 + WeatherService.highLowLabel
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Config.island.expandedPixelSize(9, false)
                         }
                     }
 
@@ -98,7 +98,7 @@ Item {
                             text: Config.weather.locationName
                             color: Theme.surfaceText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: Theme.textTitle
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                             font.weight: Font.DemiBold
                         }
                         Text {
@@ -106,7 +106,7 @@ Item {
                             text: "Updated " + Qt.formatTime(WeatherService.lastUpdated, "HH:mm")
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.monoFontFamily
-                            font.pixelSize: 8
+                            font.pixelSize: Config.island.expandedPixelSize(8, false)
                         }
                         Text {
                             Layout.alignment: Qt.AlignRight
@@ -114,7 +114,7 @@ Item {
                             color: refreshHover.hovered ? Theme.primary
                                 : Theme.surfaceVariantText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Config.island.expandedPixelSize(9, false)
                             HoverHandler { id: refreshHover }
                             TapHandler { onTapped: WeatherService.refresh() }
                         }
@@ -127,7 +127,7 @@ Item {
                 Layout.preferredHeight: 104
                 radius: Theme.radiusMedium
                 color: Qt.alpha(Theme.surfaceContainerHigh, 0.54)
-                border.width: 1
+                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                 border.color: Qt.alpha(Theme.outlineVariant, 0.32)
 
                 ColumnLayout {
@@ -139,7 +139,7 @@ Item {
                         text: "HOURLY FORECAST"
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Config.island.expandedPixelSize(9, false)
                         font.letterSpacing: 0.9
                     }
 
@@ -165,21 +165,21 @@ Item {
                                     text: modelData.time
                                     color: Theme.surfaceVariantText
                                     font.family: Config.appearance.monoFontFamily
-                                    font.pixelSize: 8
+                                    font.pixelSize: Config.island.expandedPixelSize(8, false)
                                 }
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.icon
                                     color: Theme.primary
                                     font.family: Config.appearance.monoFontFamily
-                                    font.pixelSize: 16
+                                    font.pixelSize: Config.island.expandedPixelSize(16, true)
                                 }
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.temperature + "°"
                                     color: Theme.surfaceText
                                     font.family: Config.appearance.monoFontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                                     font.weight: Font.DemiBold
                                 }
                                 Text {
@@ -188,7 +188,7 @@ Item {
                                     text: modelData.precipitation + "%"
                                     color: Theme.primary
                                     font.family: Config.appearance.monoFontFamily
-                                    font.pixelSize: 8
+                                    font.pixelSize: Config.island.expandedPixelSize(8, false)
                                 }
                             }
                         }
@@ -201,7 +201,7 @@ Item {
                 Layout.preferredHeight: 218
                 radius: Theme.radiusMedium
                 color: Qt.alpha(Theme.surfaceContainerHigh, 0.54)
-                border.width: 1
+                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                 border.color: Qt.alpha(Theme.outlineVariant, 0.32)
 
                 ColumnLayout {
@@ -213,7 +213,7 @@ Item {
                         text: "7-DAY FORECAST"
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Config.island.expandedPixelSize(9, false)
                         font.letterSpacing: 0.9
                     }
                     Repeater {
@@ -242,7 +242,7 @@ Item {
                                     text: dailyRow.modelData.day
                                     color: Theme.surfaceText
                                     font.family: Config.appearance.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                                     font.weight: Font.DemiBold
                                 }
                                 Text {
@@ -251,7 +251,7 @@ Item {
                                     text: dailyRow.modelData.icon
                                     color: Theme.primary
                                     font.family: Config.appearance.monoFontFamily
-                                    font.pixelSize: 15
+                                    font.pixelSize: Config.island.expandedPixelSize(15, true)
                                 }
                                 RowLayout {
                                     Layout.preferredWidth: 62
@@ -264,13 +264,13 @@ Item {
                                         opacity: dailyRow.modelData.precipitation > 0
                                             ? 1 : 0.34
                                         font.family: Config.appearance.monoFontFamily
-                                        font.pixelSize: 11
+                                        font.pixelSize: Config.island.expandedPixelSize(11, true)
                                     }
                                     Text {
                                         text: dailyRow.modelData.precipitation + "%"
                                         color: Theme.surfaceVariantText
                                         font.family: Config.appearance.monoFontFamily
-                                        font.pixelSize: 9
+                                        font.pixelSize: Config.island.expandedPixelSize(9, false)
                                     }
                                 }
                                 Item { Layout.fillWidth: true }
@@ -280,7 +280,7 @@ Item {
                                     text: dailyRow.modelData.low + "°"
                                     color: Theme.surfaceVariantText
                                     font.family: Config.appearance.monoFontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                                 }
                                 Rectangle {
                                     Layout.preferredWidth: 132
@@ -301,7 +301,7 @@ Item {
                                     text: dailyRow.modelData.high + "°"
                                     color: Theme.surfaceText
                                     font.family: Config.appearance.monoFontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                                     font.weight: Font.DemiBold
                                 }
                             }
@@ -352,7 +352,7 @@ Item {
             text: WeatherService.loading ? "󰡌" : "󰖐"
             color: Theme.tertiary
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 36
+            font.pixelSize: Config.island.expandedPixelSize(36, true)
             RotationAnimation on rotation {
                 running: WeatherService.loading
                     && !Config.appearance.reducedMotion
@@ -367,7 +367,7 @@ Item {
             text: WeatherService.statusLabel
             color: Theme.surfaceText
             font.family: Config.appearance.fontFamily
-            font.pixelSize: Theme.textBody
+            font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
             font.weight: Font.DemiBold
         }
         Text {
@@ -377,7 +377,7 @@ Item {
                 ? "Retry forecast" : "Configure a location in Dashboard settings"
             color: Theme.primary
             font.family: Config.appearance.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: Config.island.expandedPixelSize(10, false)
             TapHandler {
                 enabled: WeatherService.configured
                 onTapped: WeatherService.refresh()

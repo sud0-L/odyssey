@@ -9,45 +9,45 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: Theme.space3
+        spacing: Theme.space2
 
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 34
+            Layout.preferredHeight: 30
             spacing: 0
 
             Text {
                 text: "Battery"
                 color: Theme.surfaceText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textTitle
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                 font.weight: Font.DemiBold
             }
             Text {
                 text: "Power, endurance, and long-term health"
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
             }
         }
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 112
+            Layout.preferredHeight: 94
             radius: Theme.radiusLarge
             color: Qt.alpha(Theme.surfaceContainer, 0.74)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.outlineVariant, 0.42)
 
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: Theme.space4
-                spacing: Theme.space4
+                anchors.margins: Theme.space3
+                spacing: Theme.space3
 
                 Rectangle {
-                    Layout.preferredWidth: 76
-                    Layout.preferredHeight: 76
-                    radius: 38
+                    Layout.preferredWidth: 60
+                    Layout.preferredHeight: 60
+                    radius: 30
                     color: Qt.alpha(Theme.primaryContainer, 0.70)
 
                     Text {
@@ -55,7 +55,7 @@ Item {
                         text: BatteryService.icon
                         color: Theme.primaryContainerText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 30
+                        font.pixelSize: Config.island.expandedPixelSize(30, true)
                     }
                 }
 
@@ -69,7 +69,7 @@ Item {
                             text: BatteryService.percentageInt + "%"
                             color: Theme.surfaceText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: 28
+                            font.pixelSize: Config.island.expandedPixelSize(28, false)
                             font.weight: Font.DemiBold
                         }
                         Item { Layout.fillWidth: true }
@@ -79,7 +79,7 @@ Item {
                                 && BatteryService.onBattery
                                 ? Theme.error : Theme.surfaceVariantText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: Theme.textSmall
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                         }
                     }
 
@@ -97,7 +97,7 @@ Item {
                         color: Theme.surfaceVariantText
                         elide: Text.ElideRight
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Config.island.expandedPixelSize(9, false)
                     }
                 }
             }
@@ -119,6 +119,8 @@ Item {
                     ? BatteryService.healthPercentageInt + "%" : "Unavailable"
                 valueFontSize: Theme.textSmall
                 detail: BatteryService.healthLabel
+                showLevel: BatteryService.healthAvailable
+                level: BatteryService.healthPercentage / 100
                 icon: "󰂑"
                 accent: !BatteryService.healthAvailable ? Theme.surfaceVariantText
                     : BatteryService.healthPercentageInt < 65 ? Theme.error
@@ -134,6 +136,8 @@ Item {
                 valueFontSize: Theme.textSmall
                 detail: BatteryService.charging
                     ? "Estimated time to full" : "Connect AC power to charge"
+                showLevel: BatteryService.charging
+                level: BatteryService.percentage
                 icon: "󰔛"
                 accent: Theme.success
             }
@@ -146,6 +150,8 @@ Item {
                 valueFontSize: Theme.textSmall
                 detail: BatteryService.onBattery
                     ? "Estimated runtime" : "Running from external power"
+                showLevel: BatteryService.onBattery
+                level: BatteryService.percentage
                 icon: "󰥔"
                 accent: BatteryService.percentageInt <= 15
                     && BatteryService.onBattery ? Theme.error : Theme.primary
@@ -158,6 +164,7 @@ Item {
                 value: BatteryService.chargeRateLabel
                 valueFontSize: Theme.textSmall
                 detail: "Live battery energy rate"
+                showLevel: false
                 icon: "󰚥"
                 accent: Theme.tertiary
             }
@@ -165,10 +172,10 @@ Item {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 46
+            Layout.preferredHeight: 40
             radius: Theme.radiusMedium
             color: Qt.alpha(Theme.surfaceContainerHigh, 0.52)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.outlineVariant, 0.34)
 
             RowLayout {
@@ -181,20 +188,20 @@ Item {
                     text: "󰁹"
                     color: Theme.secondary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: Config.island.expandedPixelSize(13, true)
                 }
                 Text {
                     text: "Current capacity"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                 }
                 Item { Layout.fillWidth: true }
                 Text {
                     text: BatteryService.capacityLabel
                     color: Theme.surfaceText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                     font.weight: Font.DemiBold
                 }
             }

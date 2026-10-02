@@ -14,7 +14,7 @@ Rectangle {
     implicitHeight: 74
     radius: Theme.radiusMedium
     color: Qt.alpha(Theme.surfaceContainerHigh, Theme.dark ? 0.58 : 0.72)
-    border.width: 1
+    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: Qt.alpha(Theme.outlineVariant, 0.34)
 
     ColumnLayout {
@@ -28,14 +28,14 @@ Rectangle {
                 text: root.icon
                 color: root.accent
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 12
+                font.pixelSize: Config.island.expandedPixelSize(12, true)
             }
             Text {
                 Layout.fillWidth: true
                 text: root.label.toUpperCase()
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 8
+                font.pixelSize: Config.island.expandedPixelSize(8, false)
                 font.letterSpacing: 0.8
             }
         }
@@ -45,7 +45,7 @@ Rectangle {
             color: Theme.surfaceText
             elide: Text.ElideRight
             font.family: Config.appearance.fontFamily
-            font.pixelSize: 13
+            font.pixelSize: Config.island.expandedPixelSize(13, false)
             font.weight: Font.DemiBold
         }
         Text {
@@ -55,7 +55,7 @@ Rectangle {
             color: Theme.surfaceVariantText
             elide: Text.ElideRight
             font.family: Config.appearance.fontFamily
-            font.pixelSize: 8
+            font.pixelSize: Config.island.expandedPixelSize(8, false)
         }
     }
 }

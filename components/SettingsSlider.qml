@@ -9,11 +9,14 @@ Item {
     property real value: 0
     property real stepSize: 1
     property bool available: true
+    property bool applyOnRelease: false
     signal adjusted(real value)
 
     readonly property real range: Math.max(0.0001, to - from)
+    readonly property real visualValue: dragArea.dragging
+        ? dragArea.pendingValue : value
     readonly property real position: Math.max(0, Math.min(1,
-        (value - from) / range))
+        (visualValue - from) / range))
 
     activeFocusOnTab: available
     implicitHeight: 22
@@ -66,7 +69,7 @@ Item {
             root.width * root.position - width / 2))
         anchors.verticalCenter: parent.verticalCenter
         color: Theme.primary
-        border.width: 2
+        border.width: Config.island.expandedItemBordersEnabled ? 2 : 0
         border.color: Theme.surfaceContainerHigh
 
         Behavior on width { NumberAnimation { duration: Animations.fast } }
@@ -78,16 +81,51 @@ Item {
         enabled: root.available
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        function updateValue(mouseX) {
-            root.adjusted(root.valueAt(mouseX))
+        property real dragStartGlobalX: 0
+        property real dragStartValue: 0
+        property real dragStartGlobalWidth: 1
+        property bool dragging: false
+        property real pendingValue: 0
+        function globalX(mouseX, mouseY) {
+            return root.mapToGlobal(mouseX, mouseY).x
+        }
+        function updateValue(mouseX, mouseY) {
+            if (root.applyOnRelease) {
+                pendingValue = root.valueAt(mouseX)
+                return
+            }
+            const globalDelta = globalX(mouseX, mouseY) - dragStartGlobalX
+            const raw = dragStartValue + globalDelta / dragStartGlobalWidth
+                * root.range
+            const next = Math.max(root.from, Math.min(root.to,
+                Math.round(raw / root.stepSize) * root.stepSize))
+            pendingValue = next
+            if (!root.applyOnRelease)
+                root.adjusted(next)
         }
         onPressed: mouse => {
             root.forceActiveFocus()
-            updateValue(mouse.x)
+            if (!root.applyOnRelease) {
+                dragStartGlobalX = globalX(mouse.x, mouse.y)
+                dragStartGlobalWidth = Math.max(1, Math.abs(
+                    root.mapToGlobal(root.width, 0).x
+                    - root.mapToGlobal(0, 0).x))
+            }
+            dragStartValue = root.valueAt(mouse.x)
+            pendingValue = dragStartValue
+            dragging = true
+            if (!root.applyOnRelease)
+                root.adjusted(dragStartValue)
         }
         onPositionChanged: mouse => {
             if (dragArea.pressed)
-                updateValue(mouse.x)
+                updateValue(mouse.x, mouse.y)
         }
+        onReleased: {
+            if (root.applyOnRelease)
+                root.adjusted(pendingValue)
+            dragging = false
+        }
+        onCanceled: dragging = false
     }
 }

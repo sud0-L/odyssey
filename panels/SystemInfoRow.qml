@@ -20,7 +20,7 @@ Item {
             text: root.label
             color: root.accent
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 8
+            font.pixelSize: Config.island.expandedPixelSize(8, false)
             font.weight: Font.Bold
             font.letterSpacing: 0.8
         }
@@ -30,7 +30,7 @@ Item {
             color: Theme.surfaceText
             elide: Text.ElideRight
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 9
+            font.pixelSize: Config.island.expandedPixelSize(9, false)
         }
     }
 }

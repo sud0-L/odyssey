@@ -105,8 +105,12 @@ QtObject {
             "island", "reservedSpace", 30, 26, 52)
         readonly property int dormantWidth: SettingsStore.numberValue(
             "island", "dormantWidth", 214, 150, 320)
-        readonly property int heightIncrease: SettingsStore.numberValue(
-            "island", "heightIncrease", 0, 0, 32)
+        readonly property int restHeightIncrease: SettingsStore.numberValue(
+            "island", "restHeightIncrease", SettingsStore.numberValue(
+                "island", "heightIncrease", 0, 0, 32), 0, 32)
+        readonly property int hoverHeightIncrease: SettingsStore.numberValue(
+            "island", "hoverHeightIncrease", SettingsStore.numberValue(
+                "island", "heightIncrease", 0, 0, 32), 0, 32)
         readonly property int dormantHeight: 28
         readonly property bool restScaleSynced: SettingsStore.boolValue(
             "island", "restScaleSynced", true)
@@ -165,6 +169,21 @@ QtObject {
         readonly property int expandedWidth: SettingsStore.numberValue(
             "island", "expandedWidth", 789, 620, 900)
         readonly property int expandedHeight: 300
+        readonly property real expandedScale: SettingsStore.numberValue(
+            "island", "expandedScale", 100, 80, 120) / 100
+        readonly property real expandedTextScale: SettingsStore.numberValue(
+            "island", "expandedTextScale", 100, 80, 130) / 100
+        readonly property real expandedIconScale: SettingsStore.numberValue(
+            "island", "expandedIconScale", 100, 80, 130) / 100
+        function expandedPixelSize(baseSize: real, icon: bool): int {
+            return Math.max(1, Math.round(baseSize
+                * (icon ? 1 : expandedTextScale)
+                / expandedScale))
+        }
+        function expandedTopIconPixelSize(baseSize: real): int {
+            return Math.max(1, Math.round(baseSize * expandedIconScale
+                / expandedScale))
+        }
         readonly property int osdWidth: 360
         readonly property int osdHeight: 72
         readonly property int mediaWidth: 460
@@ -178,6 +197,8 @@ QtObject {
             "island", "showRevealLip", true)
         readonly property bool borderEnabled: SettingsStore.boolValue(
             "island", "borderEnabled", true)
+        readonly property bool expandedItemBordersEnabled: SettingsStore.boolValue(
+            "island", "expandedItemBordersEnabled", true)
         readonly property int borderThickness: SettingsStore.numberValue(
             "island", "borderThickness", 1, 1, 4)
         readonly property int revealHeight: 4

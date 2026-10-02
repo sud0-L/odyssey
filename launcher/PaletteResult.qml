@@ -59,7 +59,7 @@ Rectangle {
                 color: root.selected
                     ? root.resultAccent : Theme.surfaceVariantText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Theme.iconSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
             }
         }
 
@@ -74,7 +74,7 @@ Rectangle {
                     ? Theme.primaryContainerText : Theme.surfaceText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                 font.weight: Font.DemiBold
             }
 
@@ -86,7 +86,7 @@ Rectangle {
                     : Theme.surfaceVariantText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
             }
         }
 
@@ -96,7 +96,7 @@ Rectangle {
                 ? Qt.alpha(Theme.primaryContainerText, 0.72)
                 : Theme.surfaceVariantText
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 9
+            font.pixelSize: Config.island.expandedPixelSize(9, false)
         }
 
         Text {
@@ -105,7 +105,7 @@ Rectangle {
             text: "↵"
             color: Theme.primaryContainerText
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: Theme.textBody
+            font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
         }
     }
 

@@ -31,7 +31,8 @@ Item {
         && Number(weatherLongitudeDraft) >= -180
         && Number(weatherLongitudeDraft) <= 180
     readonly property bool livePreviewActive: section === "island"
-        && islandEditor !== "overview"
+        && (islandEditor === "geometry" || islandEditor === "content")
+        && pillPreviewMode !== "expanded"
     function setIslandItem(context: string, item: string,
             enabled: bool): void {
         pillPreviewMode = context
@@ -88,24 +89,13 @@ Item {
             Layout.fillHeight: true
             radius: Theme.radiusLarge
             color: Qt.alpha(Theme.surfaceContainerLow, 0.44)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.outlineVariant, 0.28)
 
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: Theme.space2
                 spacing: Theme.space1
-
-                Text {
-                    Layout.leftMargin: Theme.space1
-                    Layout.bottomMargin: Theme.space1
-                    text: "ODYSSEY  /  SETTINGS"
-                    color: Theme.surfaceVariantText
-                    font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 9
-                    font.weight: Font.Bold
-                    font.letterSpacing: 1.2
-                }
 
                 Repeater {
                     model: root.sections
@@ -121,7 +111,7 @@ Item {
                             : sectionHover.hovered
                                 ? Qt.alpha(Theme.surfaceContainerHigh, 0.72)
                                 : "transparent"
-                        border.width: activeFocus ? 1 : 0
+                        border.width: Config.island.expandedItemBordersEnabled && activeFocus ? 1 : 0
                         border.color: Qt.alpha(Theme.primary, 0.78)
 
                         Keys.onReturnPressed: root.section = modelData.id
@@ -146,7 +136,7 @@ Item {
                                     ? Theme.primary
                                     : Theme.surfaceVariantText
                                 font.family: Config.appearance.monoFontFamily
-                                font.pixelSize: Theme.iconSmall
+                                font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
                             }
                             Text {
                                 Layout.fillWidth: true
@@ -154,7 +144,7 @@ Item {
                                 color: root.section === modelData.id
                                     ? Theme.surfaceText : Theme.surfaceVariantText
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Config.island.expandedPixelSize(11, false)
                                 font.weight: Font.DemiBold
                             }
                         }
@@ -180,7 +170,7 @@ Item {
                     color: Theme.error
                     wrapMode: Text.WordWrap
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                 }
             }
         }
@@ -207,7 +197,7 @@ Item {
                             text: root.currentSection.icon
                             color: Theme.primary
                             font.family: Config.appearance.monoFontFamily
-                            font.pixelSize: Theme.iconSmall
+                            font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
                         }
                     }
                     ColumnLayout {
@@ -219,18 +209,18 @@ Item {
                                 ? "Live Edit"
                                 : root.section === "island"
                                     && root.islandEditor === "content"
-                                    ? "Resting & Hover Island"
+                                    ? "Resting, Hover, & Expanded Island Settings"
                                     : root.currentSection.label
                             color: Theme.surfaceText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: 17
+                            font.pixelSize: Config.island.expandedPixelSize(17, false)
                             font.weight: Font.DemiBold
                         }
                         Text {
                             text: root.section === "appearance"
                                 ? "Color, surfaces, and motion"
                                 : root.section === "island"
-                                    ? "Footprint, rhythm, and resting content"
+                                    ? "Footprint, rhythm, and content by Island state"
                                 : root.section === "idle"
                                     ? "Screen rest and system sleep"
                                 : root.section === "displays"
@@ -250,7 +240,7 @@ Item {
                                     : "Explicit external theme ownership"
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Config.island.expandedPixelSize(10, false)
                         }
                     }
                 }
@@ -407,7 +397,7 @@ Item {
                                         }
                                     }
                                     RowLayout { visible: root.accentPaletteOpen; Layout.fillWidth: true
-                                        Rectangle { Layout.preferredWidth: 36; Layout.preferredHeight: 28; radius: Theme.radiusSmall; color: /^#[0-9a-fA-F]{6}$/.test(accentHex.text) ? accentHex.text : Theme.primary; border.width: 1; border.color: Qt.alpha(Theme.outlineVariant, 0.72) }
+                                        Rectangle { Layout.preferredWidth: 36; Layout.preferredHeight: 28; radius: Theme.radiusSmall; color: /^#[0-9a-fA-F]{6}$/.test(accentHex.text) ? accentHex.text : Theme.primary; border.width: Config.island.expandedItemBordersEnabled ? 1 : 0; border.color: Qt.alpha(Theme.outlineVariant, 0.72) }
                                         TextInput {
                                             id: accentHex
                                             Layout.fillWidth: true
@@ -415,7 +405,7 @@ Item {
                                             selectByMouse: true
                                             color: Theme.surfaceText
                                             font.family: Config.appearance.monoFontFamily
-                                            font.pixelSize: 10
+                                            font.pixelSize: Config.island.expandedPixelSize(10, false)
                                             validator: RegularExpressionValidator {
                                                 regularExpression: /#[0-9a-fA-F]{6}/
                                             }
@@ -638,7 +628,7 @@ Item {
                                     color: Theme.surfaceVariantText
                                     wrapMode: Text.WordWrap
                                     font.family: Config.appearance.fontFamily
-                                    font.pixelSize: Theme.textSmall
+                                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                                 }
                             }
 
@@ -776,7 +766,7 @@ Item {
                             SettingsCard {
                                 Layout.fillWidth: true
                                 title: "Player priority"
-                                detail: "Choose how Odyssey responds when multiple players exist"
+                                detail: "Choose the initial player; the current track stays selected through pause"
                                 inlineLayout: true
                                 contentHeight: 36
                                 RowLayout {
@@ -791,7 +781,7 @@ Item {
                                     }
                                     SettingsChoice {
                                         compact: true
-                                        label: "Follow playing"
+                                        label: "Prefer playing"
                                         selected: Config.media.preferPlaying
                                         onActivated: MediaService.setPreferPlaying(true)
                                     }
@@ -886,9 +876,9 @@ Item {
                                         }
                                     }
                                     RowLayout { Layout.fillWidth: true
-                                        Text { Layout.fillWidth: true; text: "Duration"; color: Theme.surfaceVariantText; font.family: Config.appearance.fontFamily; font.pixelSize: 10 }
+                                        Text { Layout.fillWidth: true; text: "Duration"; color: Theme.surfaceVariantText; font.family: Config.appearance.fontFamily; font.pixelSize: Config.island.expandedPixelSize(10, false) }
                                         SettingsSlider { Layout.preferredWidth: 164; from: 0.3; to: 2.5; stepSize: 0.1; value: Config.wallpaper.transitionDuration; onAdjusted: value => WallpaperService.setTransitionDuration(value) }
-                                        Text { Layout.preferredWidth: 34; horizontalAlignment: Text.AlignHCenter; text: Config.wallpaper.transitionDuration.toFixed(1) + " s"; color: Theme.primary; font.family: Config.appearance.monoFontFamily; font.pixelSize: 9; font.weight: Font.DemiBold }
+                                        Text { Layout.preferredWidth: 34; horizontalAlignment: Text.AlignHCenter; text: Config.wallpaper.transitionDuration.toFixed(1) + " s"; color: Theme.primary; font.family: Config.appearance.monoFontFamily; font.pixelSize: Config.island.expandedPixelSize(9, false); font.weight: Font.DemiBold }
                                     }
                                 }
                             }
@@ -1145,7 +1135,7 @@ Item {
                                         text: "Show local shell history"
                                         color: Theme.surfaceText
                                         font.family: Config.appearance.fontFamily
-                                        font.pixelSize: Theme.textSmall
+                                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                                     }
                                     SettingsToggle {
                                         checked: Config.commandLauncher.historySuggestions
@@ -1181,7 +1171,7 @@ Item {
                                         color: ShortcutService.errorMessage.length > 0
                                             ? Theme.error : Theme.surfaceText
                                         font.family: Config.appearance.fontFamily
-                                        font.pixelSize: Theme.textSmall
+                                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                                     }
                                     SettingsToggle {
                                         checked: ShortcutService.installed
@@ -1215,14 +1205,14 @@ Item {
                                                 elide: Text.ElideRight
                                                 color: Theme.surfaceText
                                                 font.family: Config.appearance.fontFamily
-                                                font.pixelSize: Theme.textSmall
+                                                font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                                             }
                                             Rectangle {
                                                 Layout.preferredWidth: 112
                                                 Layout.preferredHeight: 26
                                                 radius: Theme.radiusSmall
                                                 color: Theme.surfaceContainerHigh
-                                                border.width: 1
+                                                border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
                                                 border.color: Qt.alpha(
                                                     Theme.outlineVariant, 0.48)
                                                 Text {
@@ -1231,7 +1221,7 @@ Item {
                                                     color: Theme.primary
                                                     font.family: Config.appearance
                                                         .monoFontFamily
-                                                    font.pixelSize: 8
+                                                    font.pixelSize: Config.island.expandedPixelSize(8, false)
                                                     font.weight: Font.DemiBold
                                                 }
                                             }
@@ -1274,9 +1264,13 @@ Item {
                             SettingsActionCard {
                                 Layout.fillWidth: true
                                 title: "Island geometry"
-                                detail: "Live placement · " + Config.island.dormantWidth
-                                    + " / " + Config.island.hoverWidth + " / "
-                                    + Config.island.expandedWidth + " px"
+                                detail: "Live placement · resting "
+                                    + Math.round((Config.island.dormantWidth - 150)
+                                        / 170 * 100) + "% · hover "
+                                    + Math.round((Config.island.hoverWidth - 470)
+                                        / 290 * 100) + "% · expanded "
+                                    + Math.round((Config.island.expandedWidth - 620)
+                                        / 280 * 100) + "%"
                                 actionText: "Live edit"
                                 onActivated: {
                                     root.pillPreviewMode = "rest"
@@ -1287,16 +1281,22 @@ Item {
 
                             SettingsActionCard {
                                 Layout.fillWidth: true
-                                title: "Resting & Hover Island"
-                                detail: Config.island.restItemOrder.length
-                                    + " resting · " + Config.island.hoverItemOrder.length
-                                    + " hover items · order, spacing, and scale"
-                                actionText: "Edit items"
+                                title: "Resting, Hover, & Expanded Island Settings"
+                                detail: "Items, spacing, font and icon sizes by Island state"
+                                actionText: "Edit settings"
                                 onActivated: {
                                     root.pillPreviewMode = "rest"
                                     root.islandEditor = "content"
                                     settingsScroll.contentY = 0
                                 }
+                            }
+
+                            SettingsActionCard {
+                                Layout.fillWidth: true
+                                title: "General placement"
+                                detail: "Top gap and workspace clearance for the Island"
+                                actionText: "Edit placement"
+                                onActivated: root.islandEditor = "placement"
                             }
 
                             SettingsCard {
@@ -1692,6 +1692,100 @@ Item {
                                     selected: root.pillPreviewMode === "hover"
                                     onActivated: root.pillPreviewMode = "hover"
                                 }
+                                SettingsChoice {
+                                    Layout.preferredWidth: 78
+                                    label: "Expanded"
+                                    selected: root.pillPreviewMode === "expanded"
+                                    onActivated: root.pillPreviewMode = "expanded"
+                                }
+                            }
+
+                            SettingsCard {
+                                Layout.fillWidth: true
+                                title: root.pillPreviewMode === "rest"
+                                    ? "Resting size" : root.pillPreviewMode === "hover"
+                                        ? "Hover size" : "Expanded size"
+                                detail: root.pillPreviewMode === "expanded"
+                                    ? "Width and layout scale for every expanded page"
+                                    : "Width and height for this Island state"
+                                contentHeight: 52
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    spacing: Theme.space2
+                                    MetricRow {
+                                        visible: root.pillPreviewMode === "rest"
+                                        Layout.fillWidth: true
+                                        label: "Resting width"
+                                        value: Config.island.dormantWidth
+                                        from: 150; to: 320
+                                        displayPercent: true
+                                        onAdjusted: value => AppearanceService
+                                            .setIslandMetric("dormantWidth", value)
+                                    }
+                                    MetricRow {
+                                        visible: root.pillPreviewMode === "hover"
+                                        Layout.fillWidth: true
+                                        label: "Hover width"
+                                        value: Config.island.hoverWidth
+                                        from: 470; to: 760
+                                        displayPercent: true
+                                        onAdjusted: value => AppearanceService
+                                            .setIslandMetric("hoverWidth", value)
+                                    }
+                                    MetricRow {
+                                        visible: root.pillPreviewMode === "expanded"
+                                        Layout.fillWidth: true
+                                        label: "Expanded width"
+                                        value: Config.island.expandedWidth
+                                        from: 620; to: 900
+                                        displayPercent: true
+                                        applyOnRelease: true
+                                        onAdjusted: value => AppearanceService
+                                            .setIslandMetric("expandedWidth", value)
+                                    }
+                                    MetricRow {
+                                        visible: root.pillPreviewMode === "expanded"
+                                        Layout.fillWidth: true
+                                        label: "Expanded scale"
+                                        value: Config.island.expandedScale * 100
+                                        from: 80; to: 120; suffix: "%"
+                                        applyOnRelease: true
+                                        onAdjusted: value => AppearanceService
+                                            .setIslandMetric("expandedScale", value)
+                                    }
+                                    MetricRow {
+                                        visible: root.pillPreviewMode === "rest"
+                                        Layout.fillWidth: true
+                                        label: "Resting height"
+                                        value: Config.island.restHeightIncrease
+                                        from: 0; to: 32
+                                        displayPercent: true
+                                        onAdjusted: value => AppearanceService
+                                            .setIslandMetric("restHeightIncrease", value)
+                                    }
+                                    MetricRow {
+                                        visible: root.pillPreviewMode === "hover"
+                                        Layout.fillWidth: true
+                                        label: "Hover height"
+                                        value: Config.island.hoverHeightIncrease
+                                        from: 0; to: 32
+                                        displayPercent: true
+                                        onAdjusted: value => AppearanceService
+                                            .setIslandMetric("hoverHeightIncrease", value)
+                                    }
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            visible: root.section === "island"
+                                && root.islandEditor === "placement"
+                            Layout.fillWidth: true
+                            spacing: Theme.space2
+
+                            TextButton {
+                                text: "‹ Back"
+                                onClicked: root.islandEditor = "overview"
                             }
 
                             SettingsCard {
@@ -1718,49 +1812,6 @@ Item {
                                         from: 26; to: 52
                                         onAdjusted: value => AppearanceService
                                             .setIslandMetric("reservedSpace", value)
-                                    }
-                                }
-                            }
-
-                            SettingsCard {
-                                Layout.fillWidth: true
-                                title: "Island size"
-                                detail: "Height adjustment applies to every Island phase"
-                                contentHeight: 110
-                                ColumnLayout {
-                                    anchors.fill: parent
-                                    spacing: Theme.space2
-                                    MetricRow {
-                                        Layout.fillWidth: true
-                                        label: "Resting width"
-                                        value: Config.island.dormantWidth
-                                        from: 150; to: 320
-                                        onAdjusted: value => AppearanceService
-                                            .setIslandMetric("dormantWidth", value)
-                                    }
-                                    MetricRow {
-                                        Layout.fillWidth: true
-                                        label: "Hover width"
-                                        value: Config.island.hoverWidth
-                                        from: 470; to: 760
-                                        onAdjusted: value => AppearanceService
-                                            .setIslandMetric("hoverWidth", value)
-                                    }
-                                    MetricRow {
-                                        Layout.fillWidth: true
-                                        label: "Expanded width"
-                                        value: Config.island.expandedWidth
-                                        from: 620; to: 900
-                                        onAdjusted: value => AppearanceService
-                                            .setIslandMetric("expandedWidth", value)
-                                    }
-                                    MetricRow {
-                                        Layout.fillWidth: true
-                                        label: "Height"
-                                        value: Config.island.heightIncrease
-                                        from: 0; to: 32
-                                        onAdjusted: value => AppearanceService
-                                            .setIslandMetric("heightIncrease", value)
                                     }
                                 }
                             }
@@ -1791,9 +1842,16 @@ Item {
                                     selected: root.pillPreviewMode === "hover"
                                     onActivated: root.pillPreviewMode = "hover"
                                 }
+                                SettingsChoice {
+                                    Layout.preferredWidth: 84
+                                    label: "Expanded"
+                                    selected: root.pillPreviewMode === "expanded"
+                                    onActivated: root.pillPreviewMode = "expanded"
+                                }
                             }
 
                             SettingsCard {
+                                visible: root.pillPreviewMode !== "expanded"
                                 Layout.fillWidth: true
                                 title: root.pillPreviewMode === "rest"
                                     ? "Resting Island items" : "Hover Island items"
@@ -1803,7 +1861,8 @@ Item {
                                 contentHeight: root.pillPreviewMode === "rest" ? 185 : 224
                                 IslandOrderEditor {
                                     anchors.fill: parent
-                                    context: root.pillPreviewMode
+                                    context: root.pillPreviewMode === "hover"
+                                        ? "hover" : "rest"
                                 }
                             }
 
@@ -1811,16 +1870,21 @@ Item {
                                 Layout.fillWidth: true
                                 title: root.pillPreviewMode === "rest"
                                     ? "Resting spacing & scale"
-                                    : "Hover spacing & scale"
+                                    : root.pillPreviewMode === "hover"
+                                        ? "Hover spacing & scale"
+                                        : "Expanded font & top icons"
                                 detail: root.pillPreviewMode === "rest"
                                     ? "Tune resting spacing, text, and icon scale"
-                                    : "Adjust item gaps and outer padding independently"
+                                    : root.pillPreviewMode === "hover"
+                                        ? "Adjust item gaps and outer padding independently"
+                                        : "Size text and top navigation icons independently of layout scale"
                                 contentHeight: root.pillPreviewMode === "rest"
-                                    ? 110 : 140
+                                    ? 110 : root.pillPreviewMode === "hover" ? 140 : 84
                                 ColumnLayout {
                                     anchors.fill: parent
                                     spacing: Theme.space2
                                     MetricRow {
+                                        visible: root.pillPreviewMode !== "expanded"
                                         Layout.fillWidth: true
                                         label: "Item spacing"
                                         value: root.pillPreviewMode === "rest"
@@ -1841,8 +1905,9 @@ Item {
                                             .setIslandMetric("hoverEdgePadding", value)
                                     }
                                     PreferenceToggleRow {
+                                        visible: root.pillPreviewMode !== "expanded"
                                         Layout.fillWidth: true
-                                        label: "Sync text and icons"
+                                        label: "Sync font and icons"
                                         checked: root.pillPreviewMode === "rest"
                                             ? Config.island.restScaleSynced
                                             : Config.island.hoverScaleSynced
@@ -1852,10 +1917,12 @@ Item {
                                     }
                                     MetricRow {
                                         Layout.fillWidth: true
-                                        label: "Text size"
+                                        label: "Font size"
                                         value: (root.pillPreviewMode === "rest"
                                             ? Config.island.restTextScale
-                                            : Config.island.hoverTextScale) * 100
+                                            : root.pillPreviewMode === "hover"
+                                                ? Config.island.hoverTextScale
+                                                : Config.island.expandedTextScale) * 100
                                         from: 80; to: 130; suffix: "%"
                                         onAdjusted: value => SettingsStore
                                             .setIslandContentScale(
@@ -1863,14 +1930,25 @@ Item {
                                     }
                                     MetricRow {
                                         Layout.fillWidth: true
-                                        label: "Icon size"
+                                        label: root.pillPreviewMode === "expanded"
+                                            ? "Top icon size" : "Icon size"
                                         value: (root.pillPreviewMode === "rest"
                                             ? Config.island.restIconScale
-                                            : Config.island.hoverIconScale) * 100
+                                            : root.pillPreviewMode === "hover"
+                                                ? Config.island.hoverIconScale
+                                                : Config.island.expandedIconScale) * 100
                                         from: 80; to: 130; suffix: "%"
                                         onAdjusted: value => SettingsStore
                                             .setIslandContentScale(
                                                 root.pillPreviewMode, "icon", value)
+                                    }
+                                    PreferenceToggleRow {
+                                        visible: root.pillPreviewMode === "expanded"
+                                        Layout.fillWidth: true
+                                        label: "Show borders on cards and controls"
+                                        checked: Config.island.expandedItemBordersEnabled
+                                        onToggled: enabled => SettingsStore
+                                            .setExpandedItemBordersEnabled(enabled)
                                     }
                                 }
                             }
@@ -1946,7 +2024,7 @@ Item {
         radius: Theme.radiusMedium
         color: Qt.alpha(Theme.surfaceContainerHigh,
             Theme.dark ? 0.58 : 0.48)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: Qt.alpha(Theme.outlineVariant, 0.28)
 
         GridLayout {
@@ -1969,7 +2047,7 @@ Item {
                         text: card.title
                         color: Theme.surfaceText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                         font.weight: Font.DemiBold
                     }
                     Text {
@@ -1977,7 +2055,7 @@ Item {
                         text: card.detail
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Config.island.expandedPixelSize(10, false)
                         elide: Text.ElideRight
                     }
                 }
@@ -2009,7 +2087,7 @@ Item {
         radius: Theme.radiusMedium
         color: Qt.alpha(Theme.surfaceContainerHigh,
             Theme.dark ? 0.42 : 0.34)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: Qt.alpha(Theme.outlineVariant, 0.28)
 
         RowLayout {
@@ -2023,7 +2101,7 @@ Item {
                     text: actionCard.title
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
@@ -2031,7 +2109,7 @@ Item {
                     text: actionCard.detail
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                     elide: Text.ElideRight
                 }
             }
@@ -2053,7 +2131,7 @@ Item {
         Layout.preferredHeight: 28
         radius: width / 2
         color: swatch.swatchColor
-        border.width: swatch.selected || swatch.activeFocus ? 2 : 1
+        border.width: Config.island.expandedItemBordersEnabled ? (swatch.selected || swatch.activeFocus ? 2 : 1) : 0
         border.color: swatch.selected || swatch.activeFocus
             ? Theme.surfaceText : Qt.alpha(Theme.outlineVariant, 0.72)
         activeFocusOnTab: true
@@ -2064,7 +2142,7 @@ Item {
             text: swatch.glyph
             color: Theme.foregroundFor(swatch.swatchColor)
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: Theme.iconSmall
+            font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
         }
         Keys.onReturnPressed: swatch.activated()
         Keys.onEnterPressed: swatch.activated()
@@ -2086,7 +2164,7 @@ Item {
         Layout.preferredHeight: 22
         radius: 5
         color: swatchColor
-        border.width: selected || activeFocus ? 2 : 1
+        border.width: Config.island.expandedItemBordersEnabled ? (selected || activeFocus ? 2 : 1) : 0
         border.color: selected || activeFocus ? Theme.surfaceText
             : Qt.alpha(Theme.outlineVariant, 0.72)
         activeFocusOnTab: true
@@ -2106,7 +2184,7 @@ Item {
             + Theme.space2 * 2)
         radius: Theme.radiusMedium
         color: Qt.alpha(Theme.primaryContainer, 0.16)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: Qt.alpha(accent, 0.30)
 
         RowLayout {
@@ -2117,7 +2195,7 @@ Item {
                 text: infoStrip.glyph
                 color: infoStrip.accent
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Theme.iconSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
             }
             Text {
                 id: infoMessage
@@ -2126,7 +2204,7 @@ Item {
                 color: infoStrip.error ? Theme.error : Theme.surfaceVariantText
                 wrapMode: Text.WordWrap
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
             }
         }
     }
@@ -2141,7 +2219,7 @@ Item {
         radius: Theme.radiusMedium
         color: Qt.alpha(Theme.surfaceContainerHigh,
             Theme.dark ? 0.42 : 0.34)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: Qt.alpha(Theme.outlineVariant, 0.28)
 
         RowLayout {
@@ -2155,7 +2233,7 @@ Item {
                     text: headerToggle.title
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
@@ -2163,7 +2241,7 @@ Item {
                     text: headerToggle.detail
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                     elide: Text.ElideRight
                 }
             }
@@ -2192,7 +2270,7 @@ Item {
             text: stepperRow.label
             color: Theme.surfaceText
             font.family: Config.appearance.fontFamily
-            font.pixelSize: Theme.textSmall
+            font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
             elide: Text.ElideRight
         }
         SettingsStepper {
@@ -2216,6 +2294,8 @@ Item {
         property bool available: true
         property bool editable: false
         property string suffix: " px"
+        property bool displayPercent: false
+        property bool applyOnRelease: false
         property real valueWidth: 44
         property real sliderWidth: 164
         signal adjusted(real value)
@@ -2227,10 +2307,11 @@ Item {
             text: metric.label
             color: Theme.surfaceText
             font.family: Config.appearance.fontFamily
-            font.pixelSize: Theme.textSmall
+            font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
             elide: Text.ElideRight
         }
         SettingsSlider {
+            id: metricSlider
             Layout.preferredWidth: metric.sliderWidth
             Layout.maximumWidth: metric.sliderWidth
             from: metric.from
@@ -2238,6 +2319,7 @@ Item {
             value: metric.value
             available: metric.available
             stepSize: 1
+            applyOnRelease: metric.applyOnRelease
             onAdjusted: value => metric.adjusted(value)
         }
         Rectangle {
@@ -2248,10 +2330,13 @@ Item {
             color: Qt.alpha(Theme.surfaceContainer, 0.72)
             Text {
                 anchors.centerIn: parent
-                text: Math.round(metric.value) + metric.suffix
+                text: metric.displayPercent
+                    ? Math.round((metricSlider.visualValue - metric.from)
+                        / (metric.to - metric.from) * 100) + "%"
+                    : Math.round(metricSlider.visualValue) + metric.suffix
                 color: Theme.primary
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
                 font.weight: Font.DemiBold
             }
         }
@@ -2263,7 +2348,7 @@ Item {
             color: valueInput.activeFocus
                 ? Qt.alpha(Theme.primaryContainer, 0.42)
                 : Qt.alpha(Theme.surfaceContainerHigh, 0.72)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: valueInput.activeFocus
                 ? Theme.primary : Qt.alpha(Theme.outlineVariant, 0.54)
 
@@ -2288,7 +2373,7 @@ Item {
                         top: Math.floor(metric.to)
                     }
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                     font.weight: Font.DemiBold
                     function restoreValue(): void {
                         text = Math.round(metric.value).toString()
@@ -2327,7 +2412,7 @@ Item {
                     text: metric.suffix.trim()
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                 }
             }
 
@@ -2346,7 +2431,7 @@ Item {
         color: weatherInput.activeFocus
             ? Qt.alpha(Theme.primaryContainer, 0.36)
             : Qt.alpha(Theme.surfaceContainerHigh, 0.60)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: weatherInput.activeFocus
             ? Theme.primary : Qt.alpha(Theme.outlineVariant, 0.42)
 
@@ -2362,7 +2447,7 @@ Item {
             verticalAlignment: TextInput.AlignVCenter
             selectByMouse: true
             font.family: Config.appearance.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: Config.island.expandedPixelSize(10, false)
             onTextEdited: weatherField.edited(text)
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -2389,7 +2474,7 @@ Item {
             text: preference.label
             color: Theme.surfaceText
             font.family: Config.appearance.fontFamily
-            font.pixelSize: Theme.textSmall
+            font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
             elide: Text.ElideRight
         }
         SettingsToggle {
@@ -2411,7 +2496,7 @@ Item {
         radius: Theme.radiusMedium
         color: Qt.alpha(Theme.surfaceContainerHigh,
             Theme.dark ? 0.42 : 0.34)
-        border.width: 1
+        border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
         border.color: Qt.alpha(Theme.outlineVariant, 0.28)
         RowLayout {
             anchors.fill: parent
@@ -2424,7 +2509,7 @@ Item {
                     text: integration.name
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
@@ -2432,7 +2517,7 @@ Item {
                     text: integration.detail
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Config.island.expandedPixelSize(10, false)
                     elide: Text.ElideRight
                 }
             }
@@ -2447,7 +2532,7 @@ Item {
                     text: "MANUAL"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 8
+                    font.pixelSize: Config.island.expandedPixelSize(8, false)
                     font.weight: Font.Bold
                 }
             }

@@ -14,7 +14,7 @@ Rectangle {
     radius: Theme.radiusMedium
     clip: true
     color: Theme.surfaceContainerHigh
-    border.width: current ? 2 : 1
+    border.width: Config.island.expandedItemBordersEnabled ? (current ? 2 : 1) : 0
     border.color: current ? Theme.primary
         : cardHover.hovered ? Qt.alpha(Theme.primary, 0.56)
         : Qt.alpha(Theme.outlineVariant, 0.42)
@@ -49,7 +49,7 @@ Rectangle {
                 color: Theme.surfaceText
                 elide: Text.ElideRight
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
                 font.weight: Font.DemiBold
             }
             Text {
@@ -57,7 +57,7 @@ Rectangle {
                 text: root.applying ? "󰔟" : "󰄬"
                 color: root.applying ? Theme.tertiary : Theme.primary
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 12
+                font.pixelSize: Config.island.expandedPixelSize(12, true)
             }
         }
     }
@@ -77,7 +77,7 @@ Rectangle {
             text: root.currentLabel
             color: Theme.primaryText
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: 7
+            font.pixelSize: Config.island.expandedPixelSize(7, false)
             font.weight: Font.Bold
         }
     }

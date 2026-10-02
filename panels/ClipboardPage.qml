@@ -87,7 +87,7 @@ Item {
                     text: "Clipboard"
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textTitle
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                     font.weight: Font.DemiBold
                 }
                 RowLayout {
@@ -97,7 +97,7 @@ Item {
                         text: root.filteredEntries.length + " history entries"
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                     }
 
                     Item { Layout.fillWidth: true }
@@ -106,7 +106,7 @@ Item {
                         text: "󰑐  Refresh"
                         color: refreshHover.hovered ? Theme.primary : Theme.surfaceVariantText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                         HoverHandler { id: refreshHover }
                         TapHandler { onTapped: ClipboardService.refresh() }
                     }
@@ -115,7 +115,7 @@ Item {
                         text: "󰆴  Clear"
                         color: clearHover.hovered ? Theme.error : Theme.surfaceVariantText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                         HoverHandler { id: clearHover }
                         TapHandler { onTapped: root.confirmClear() }
                     }
@@ -128,7 +128,7 @@ Item {
             Layout.preferredHeight: ClipboardService.currentKind === "image" ? 70 : 48
             radius: Theme.radiusMedium
             color: Qt.alpha(Theme.surfaceContainerHigh, 0.72)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.outlineVariant, 0.38)
 
             RowLayout {
@@ -157,7 +157,7 @@ Item {
                         : ClipboardService.currentKind === "image" ? "󰋩" : "󰋩"
                     color: Theme.primary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: Theme.textBody + 2
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textBody + 2, true)
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -166,7 +166,7 @@ Item {
                         text: "Current selection"
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                     }
                     Text {
                         Layout.fillWidth: true
@@ -177,7 +177,7 @@ Item {
                             : "Clipboard is empty or unavailable"
                         color: Theme.surfaceText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textBody
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                         elide: Text.ElideRight
                         maximumLineCount: 1
                     }
@@ -193,7 +193,7 @@ Item {
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: Theme.space3
-                Text { text: "󰍉"; color: Theme.primary; font.family: Config.appearance.monoFontFamily }
+                Text { text: "󰍉"; color: Theme.primary; font.family: Config.appearance.monoFontFamily; font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, true) }
                 TextInput {
                     id: searchField
                     Layout.fillWidth: true
@@ -203,7 +203,7 @@ Item {
                     selectionColor: Theme.primaryContainer
                     selectedTextColor: Theme.primaryContainerText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textBody
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                     clip: true
                     selectByMouse: true
                     verticalAlignment: TextInput.AlignVCenter
@@ -264,7 +264,7 @@ Item {
             Layout.preferredHeight: visible ? 44 : 0
             radius: Theme.radiusMedium
             color: Qt.alpha(Theme.error, Theme.dark ? 0.13 : 0.09)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.error, 0.36)
 
             RowLayout {
@@ -278,7 +278,7 @@ Item {
                     text: "Clear all local clipboard history? This cannot be undone."
                     color: Theme.surfaceText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textSmall
+                    font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                     elide: Text.ElideRight
                 }
 
@@ -293,7 +293,7 @@ Item {
                         text: "Cancel"
                         color: Theme.surfaceVariantText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                     }
                     HoverHandler { id: cancelHover }
                     TapHandler { onTapped: root.clearConfirmationVisible = false }
@@ -310,7 +310,7 @@ Item {
                         text: "Clear history"
                         color: Theme.dark ? Theme.surfaceText : Theme.primaryText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                         font.weight: Font.DemiBold
                     }
                     HoverHandler { id: confirmHover }
@@ -376,6 +376,8 @@ Item {
                                     text: "󰋩"
                                     color: Theme.surfaceVariantText
                                     font.family: Config.appearance.monoFontFamily
+                                    font.pixelSize: Config.island.expandedPixelSize(
+                                        Theme.textBody, true)
                                 }
                             }
                             Text {
@@ -383,6 +385,8 @@ Item {
                                 text: "󰅌"
                                 color: Theme.primary
                                 font.family: Config.appearance.monoFontFamily
+                                font.pixelSize: Config.island.expandedPixelSize(
+                                    Theme.textBody, true)
                             }
                             Text {
                                 Layout.fillWidth: true
@@ -391,7 +395,7 @@ Item {
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: Theme.textBody
+                                font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
                             }
                         }
                         HoverHandler { id: rowHover }
@@ -410,6 +414,8 @@ Item {
                             text: "󰆴"
                             color: deleteHover.hovered ? Theme.error : Theme.surfaceVariantText
                             font.family: Config.appearance.monoFontFamily
+                            font.pixelSize: Config.island.expandedPixelSize(
+                                Theme.textBody, true)
                         }
                         HoverHandler { id: deleteHover }
                         TapHandler {
@@ -430,7 +436,7 @@ Item {
                     : ClipboardService.errorMessage || "No matching text entries"
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textBody
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textBody, false)
             }
         }
     }

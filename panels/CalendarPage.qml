@@ -59,7 +59,7 @@ Item {
             Layout.fillHeight: true
             radius: Theme.radiusLarge
             color: Qt.alpha(Theme.primaryContainer, Theme.dark ? 0.25 : 0.42)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.primary, 0.24)
 
             ColumnLayout {
@@ -71,7 +71,7 @@ Item {
                     text: Qt.formatDate(root.selectedDate, "dddd").toUpperCase()
                     color: Theme.primary
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                     font.letterSpacing: 1.1
                     font.weight: Font.DemiBold
                 }
@@ -79,14 +79,14 @@ Item {
                     text: Qt.formatDate(root.selectedDate, "d")
                     color: Theme.surfaceText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 54
+                    font.pixelSize: Config.island.expandedPixelSize(54, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
                     text: Qt.formatDate(root.selectedDate, "MMMM yyyy")
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: Config.island.expandedPixelSize(12, false)
                     font.weight: Font.Medium
                 }
 
@@ -100,7 +100,7 @@ Item {
                     text: "SCHEDULE"
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 8
+                    font.pixelSize: Config.island.expandedPixelSize(8, false)
                     font.letterSpacing: 1
                 }
                 Text {
@@ -110,7 +110,7 @@ Item {
                     color: Theme.surfaceText
                     wrapMode: Text.WordWrap
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Config.island.expandedPixelSize(11, false)
                     font.weight: Font.DemiBold
                 }
                 Text {
@@ -119,7 +119,7 @@ Item {
                     color: Theme.surfaceVariantText
                     wrapMode: Text.WordWrap
                     font.family: Config.appearance.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                 }
 
                 Item { Layout.fillHeight: true }
@@ -136,7 +136,7 @@ Item {
                         color: todayHover.hovered ? Theme.primaryContainerText
                             : Theme.surfaceText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Config.island.expandedPixelSize(9, false)
                         font.weight: Font.DemiBold
                     }
                     HoverHandler { id: todayHover }
@@ -151,7 +151,7 @@ Item {
             Layout.fillHeight: true
             radius: Theme.radiusLarge
             color: Qt.alpha(Theme.surfaceContainerHigh, 0.52)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.outlineVariant, 0.34)
 
             ColumnLayout {
@@ -168,7 +168,7 @@ Item {
                         text: Qt.formatDate(root.displayedMonth, "MMMM yyyy")
                         color: Theme.surfaceText
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: Theme.textTitle
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                         font.weight: Font.DemiBold
                     }
                     Repeater {
@@ -188,7 +188,7 @@ Item {
                                 text: modelData.icon
                                 color: Theme.surfaceVariantText
                                 font.family: Config.appearance.fontFamily
-                                font.pixelSize: 18
+                                font.pixelSize: Config.island.expandedPixelSize(18, true)
                             }
                             HoverHandler { id: monthHover }
                             TapHandler { onTapped: root.changeMonth(modelData.offset) }
@@ -210,7 +210,7 @@ Item {
                             text: modelData
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.monoFontFamily
-                            font.pixelSize: 7
+                            font.pixelSize: Config.island.expandedPixelSize(7, false)
                             font.weight: Font.DemiBold
                         }
                     }
@@ -236,7 +236,7 @@ Item {
                                 : modelData.today ? Qt.alpha(Theme.primary, 0.16)
                                 : dayHover.hovered ? Theme.surfaceContainerHigh
                                 : "transparent"
-                            border.width: modelData.today && !modelData.selected ? 1 : 0
+                            border.width: Config.island.expandedItemBordersEnabled && modelData.today && !modelData.selected ? 1 : 0
                             border.color: Qt.alpha(Theme.primary, 0.54)
 
                             Text {
@@ -246,7 +246,7 @@ Item {
                                     : modelData.inMonth ? Theme.surfaceText
                                     : Qt.alpha(Theme.surfaceVariantText, 0.38)
                                 font.family: Config.appearance.monoFontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Config.island.expandedPixelSize(9, false)
                                 font.weight: modelData.today || modelData.selected
                                     ? Font.Bold : Font.Normal
                             }

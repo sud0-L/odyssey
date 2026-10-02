@@ -22,7 +22,7 @@ Rectangle {
     color: selected ? Qt.alpha(Theme.primaryContainer, 0.92)
         : hover.hovered || activeFocus ? Theme.surfaceContainerHigh
         : Qt.alpha(Theme.surfaceContainerHigh, 0.34)
-    border.width: 1
+    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: activeFocus ? Qt.alpha(accent, 0.82)
         : selected ? Qt.alpha(accent, 0.46) : "transparent"
 
@@ -43,7 +43,7 @@ Rectangle {
             color: root.selected ? Theme.primaryContainerText
                 : Theme.surfaceText
             font.family: Config.appearance.fontFamily
-            font.pixelSize: Theme.textSmall
+            font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
             font.weight: Font.DemiBold
             elide: Text.ElideRight
         }
@@ -56,7 +56,7 @@ Rectangle {
                 ? Qt.alpha(Theme.primaryContainerText, 0.76)
                 : Theme.surfaceVariantText
             font.family: Config.appearance.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: Config.island.expandedPixelSize(10, false)
             elide: Text.ElideRight
         }
     }

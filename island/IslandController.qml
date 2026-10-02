@@ -60,7 +60,7 @@ QtObject {
         || transientActive || recordingActive || dismissing
         || Config.island.autoHide || fullscreen
 
-    readonly property int targetWidth: visualState === expanded
+    readonly property int expandedContentWidth: visualState === expanded
         ? (dashboardPage ? Config.dashboard.width
             : expandedPage === "notifications" ? Config.notifications.width
             : wallpaperPage ? Config.wallpaper.width
@@ -78,6 +78,9 @@ QtObject {
         : visualState === hover ? hoverContentWidth
         : Math.max(Config.island.dormantWidth,
             Config.island.restMinimumWidth)
+    readonly property int targetWidth: visualState === expanded
+        ? Math.round(expandedContentWidth * Config.island.expandedScale)
+        : expandedContentWidth
     readonly property int baseTargetHeight: visualState === expanded
         ? (dashboardPage ? Config.dashboard.height
             : expandedPage === "notifications" ? Config.notifications.height
@@ -99,8 +102,12 @@ QtObject {
         : transientActive ? Config.island.osdHeight
         : visualState === hover ? Config.island.hoverHeight
         : Config.island.dormantHeight
-    readonly property int targetHeight: baseTargetHeight
-        + Config.island.heightIncrease
+    readonly property int expandedContentHeight: baseTargetHeight
+        + (visualState === dormant ? Config.island.restHeightIncrease
+            : visualState === hover ? Config.island.hoverHeightIncrease : 0)
+    readonly property int targetHeight: visualState === expanded
+        ? Math.round(expandedContentHeight * Config.island.expandedScale)
+        : expandedContentHeight
 
     function statePriority(state): int {
         if (state === screenshot)

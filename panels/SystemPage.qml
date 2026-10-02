@@ -21,14 +21,14 @@ Item {
                 text: "System overview"
                 color: Theme.surfaceText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textTitle
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textTitle, false)
                 font.weight: Font.DemiBold
             }
             Text {
                 text: "Live system health"
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Config.island.expandedPixelSize(9, false)
             }
         }
 
@@ -135,7 +135,7 @@ Item {
             Layout.preferredHeight: 98
             radius: Theme.radiusMedium
             color: Qt.alpha(Theme.surfaceContainerHigh, 0.52)
-            border.width: 1
+            border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
             border.color: Qt.alpha(Theme.outlineVariant, 0.34)
 
             RowLayout {

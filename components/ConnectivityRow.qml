@@ -48,7 +48,7 @@ Rectangle {
                         text: root.busy ? "󰡌" : root.icon
                         color: root.selected ? root.accent : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: Theme.iconSmall
+                        font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
 
                         RotationAnimation on rotation {
                             running: root.busy && !Config.appearance.reducedMotion
@@ -71,7 +71,7 @@ Rectangle {
                         color: Theme.surfaceText
                         elide: Text.ElideRight
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Config.island.expandedPixelSize(10, false)
                         font.weight: Font.DemiBold
                     }
                     Text {
@@ -80,7 +80,7 @@ Rectangle {
                         color: Theme.surfaceVariantText
                         elide: Text.ElideRight
                         font.family: Config.appearance.fontFamily
-                        font.pixelSize: 8
+                        font.pixelSize: Config.island.expandedPixelSize(8, false)
                     }
                 }
             }
@@ -102,7 +102,7 @@ Rectangle {
                 text: "Active"
                 color: root.accent
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 8
+                font.pixelSize: Config.island.expandedPixelSize(8, false)
                 font.weight: Font.DemiBold
             }
         }
@@ -119,7 +119,7 @@ Rectangle {
                 text: root.informationAvailable ? "󰋼" : "󰌾"
                 color: Theme.surfaceVariantText
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: 13
+                font.pixelSize: Config.island.expandedPixelSize(13, true)
             }
             HoverHandler { id: infoHover; enabled: root.informationAvailable }
             TapHandler {
@@ -138,7 +138,7 @@ Rectangle {
                 text: root.selected ? "✓" : "›"
                 color: root.selected ? root.accent : Theme.surfaceVariantText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: root.selected ? 11 : 16
+                font.pixelSize: Config.island.expandedPixelSize(root.selected ? 11 : 16, false)
             }
             HoverHandler { id: actionHover; enabled: root.available }
             TapHandler {

@@ -23,7 +23,7 @@ Rectangle {
     color: cardHover.hovered && NotificationService.canActivate(entry)
         ? Theme.surfaceContainerHigh
         : Qt.alpha(Theme.surfaceContainerHigh, Theme.dark ? 0.78 : 0.68)
-    border.width: 1
+    border.width: Config.island.expandedItemBordersEnabled ? 1 : 0
     border.color: Qt.alpha(root.accent, entry?.critical ? 0.38 : 0.12)
 
     RowLayout {
@@ -54,7 +54,7 @@ Rectangle {
                 text: root.entry?.critical ? "󰀦" : "󰂚"
                 color: root.accent
                 font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Theme.iconSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
             }
         }
 
@@ -72,7 +72,7 @@ Rectangle {
                     color: root.accent
                     elide: Text.ElideRight
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                     font.weight: Font.DemiBold
                 }
 
@@ -80,7 +80,7 @@ Rectangle {
                     text: Qt.formatTime(new Date(root.entry?.timestamp || 0), "HH:mm")
                     color: Theme.surfaceVariantText
                     font.family: Config.appearance.monoFontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Config.island.expandedPixelSize(9, false)
                 }
             }
 
@@ -91,7 +91,7 @@ Rectangle {
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: Theme.textSmall
+                font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
                 font.weight: Font.DemiBold
             }
 
@@ -103,7 +103,7 @@ Rectangle {
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
             }
         }
 
@@ -122,7 +122,7 @@ Rectangle {
                 color: actionHover.hovered
                     ? Theme.primaryContainerText : Theme.surfaceText
                 font.family: Config.appearance.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Config.island.expandedPixelSize(10, false)
                 font.weight: Font.Medium
             }
 
@@ -134,7 +134,7 @@ Rectangle {
             text: "󰆴"
             color: removeHover.hovered ? Theme.error : Theme.surfaceVariantText
             font.family: Config.appearance.monoFontFamily
-            font.pixelSize: Theme.iconSmall
+            font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
 
             HoverHandler { id: removeHover }
             TapHandler { onTapped: NotificationService.remove(root.entry) }
